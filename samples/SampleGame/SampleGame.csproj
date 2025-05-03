@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Engine.Core\Engine.Core.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Rendering\Engine.Rendering.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Tools\Engine.Tools.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Animation\Engine.Animation.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Scripting\Engine.Scripting.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Physics\Engine.Physics.csproj" />
+    <ProjectReference Include="..\..\src\Engine.AI\Engine.AI.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Input\Engine.Input.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Networking\Engine.Networking.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Audio\Engine.Audio.csproj" />
+    <ProjectReference Include="..\..\src\Engine.Assets\Engine.Assets.csproj" />
+    <ProjectReference Include="..\..\src\Engine.ECS\Engine.ECS.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

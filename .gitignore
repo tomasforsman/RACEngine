@@ -1,0 +1,99 @@
+﻿# Build Folders
+bin/
+obj/
+out/
+
+# Visual Studio / Rider / Qodo / VSCode files
+.vs/
+.vscode/
+.idea/
+.qodo/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+*.sln.iml
+
+# Dotnet Core / .NET 5+ / .NET 6+ / .NET 7+ / .NET 8+ / .NET 9+
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+# NuGet v3's global packages folder
+~/.nuget/packages/
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Silk.NET native binaries (if any)
+runtimes/**/native/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Coverage files
+*.coverage
+*.coveragexml
+*.codecoverage
+
+# JetBrains Rider caches
+.idea/
+.idea_modules/
+
+# Others
+*.pidb
+*.svd
+
+# Ignore generated assembly info files (optional)
+**/obj/**/AssemblyInfo.cs
+
+# Ignore generated global usings (optional)
+**/obj/**/GlobalUsings.g.cs
+
+# Ignore user secrets (if used)
+secrets.json
+
+# Ignore test results
+TestResults/
+
+# Ignore publish output
+publish/
+
+# Ignore local launch settings
+launchSettings.json
+
+# Ignore dotnet watch files
+.dotnetwatch/
+
+# Ignore Visual Studio Code workspace storage
+.vscode/*storage.json
+
+# Ignore any local environment files
+.env
+.env.local
+.env.*.local
+
+generate-engine.ps1
+
+RACEngine
