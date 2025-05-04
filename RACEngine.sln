@@ -5,29 +5,29 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{16D68806-95C0-4EF6-9029-30FB1B41CDBE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core", "src\Engine.Core\Engine.Core.csproj", "{3DC13F69-59D3-4179-AF6A-BAA759D7D445}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Core", "src\Rac.Core\Rac.Core.csproj", "{3DC13F69-59D3-4179-AF6A-BAA759D7D445}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Rendering", "src\Engine.Rendering\Engine.Rendering.csproj", "{7A86CE80-394C-4340-9364-23C3978B9989}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Rendering", "src\Rac.Rendering\Rac.Rendering.csproj", "{7A86CE80-394C-4340-9364-23C3978B9989}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Tools", "src\Engine.Tools\Engine.Tools.csproj", "{CC1769E1-E7A2-4D5D-96E9-AB91AFAB01D7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Tools", "src\Rac.Tools\Rac.Tools.csproj", "{CC1769E1-E7A2-4D5D-96E9-AB91AFAB01D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Animation", "src\Engine.Animation\Engine.Animation.csproj", "{93378B74-1EDF-48A2-A353-D692B1BF146B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Animation", "src\Rac.Animation\Rac.Animation.csproj", "{93378B74-1EDF-48A2-A353-D692B1BF146B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Scripting", "src\Engine.Scripting\Engine.Scripting.csproj", "{1E8CC405-CDE9-47AF-A9FB-D030A37DBE72}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Scripting", "src\Rac.Scripting\Rac.Scripting.csproj", "{1E8CC405-CDE9-47AF-A9FB-D030A37DBE72}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Physics", "src\Engine.Physics\Engine.Physics.csproj", "{23550313-77FE-4154-90FD-7A5ADB006269}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Physics", "src\Rac.Physics\Rac.Physics.csproj", "{23550313-77FE-4154-90FD-7A5ADB006269}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.AI", "src\Engine.AI\Engine.AI.csproj", "{EE194788-89B1-491D-A868-ACAB88EA15D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.AI", "src\Rac.AI\Rac.AI.csproj", "{EE194788-89B1-491D-A868-ACAB88EA15D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Input", "src\Engine.Input\Engine.Input.csproj", "{D82704CD-B5B9-445F-8C8B-E1A94D43B416}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Input", "src\Rac.Input\Rac.Input.csproj", "{D82704CD-B5B9-445F-8C8B-E1A94D43B416}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Networking", "src\Engine.Networking\Engine.Networking.csproj", "{54B619BD-ADF3-4CFC-AFA8-B3FD11B91D74}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Networking", "src\Rac.Networking\Rac.Networking.csproj", "{54B619BD-ADF3-4CFC-AFA8-B3FD11B91D74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Audio", "src\Engine.Audio\Engine.Audio.csproj", "{24BD5903-0D00-47C7-9CA7-12D66990C243}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Audio", "src\Rac.Audio\Rac.Audio.csproj", "{24BD5903-0D00-47C7-9CA7-12D66990C243}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Assets", "src\Engine.Assets\Engine.Assets.csproj", "{2EA24D82-2C93-4D04-B110-B7845BA3FFF6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.Assets", "src\Rac.Assets\Rac.Assets.csproj", "{2EA24D82-2C93-4D04-B110-B7845BA3FFF6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.ECS", "src\Engine.ECS\Engine.ECS.csproj", "{7FB4A448-70D4-459D-AB8C-95251ACEF658}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rac.ECS", "src\Rac.ECS\Rac.ECS.csproj", "{7FB4A448-70D4-459D-AB8C-95251ACEF658}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{4BA05353-0713-4E7A-9486-ECCF6B2BB2D4}"
 EndProject

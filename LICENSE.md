@@ -1,2 +1,2 @@
 
-Copyright (C) 2025 
+Copyright (C) Tomas Forsman 2025 
