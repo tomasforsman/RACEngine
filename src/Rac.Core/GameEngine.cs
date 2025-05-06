@@ -1,82 +1,84 @@
+// File: src/Rac.Core/GameEngine.cs
+using System;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
-using System;
 using Engine.Rendering;
 using Rac.Core.Manager;
 using Rac.Input.Service;
 using Rac.Input.State;
-using Silk.NET.Input;
 
-namespace Rac.Core
+namespace Rac.Core;
+
+/// <summary>
+/// Central game loop: drives ECS updates and multi‐pass rendering.
+/// </summary>
+public class GameEngine
 {
-    public class GameEngine
+    private readonly IWindowManager _windowManager;
+    private readonly IInputService _inputService;
+    private readonly ConfigManager _configManager;
+    private IWindow _window = null!;
+    private OpenGLRenderer _renderer = null!;
+    private float[]? _pendingVertices;
+
+    /// <summary>Fires once after the GL context and window are ready.</summary>
+    public event Action? OnLoadEvent;
+
+    /// <summary>Fires each frame before rendering: run your ECS systems here.</summary>
+    public event Action<float>? OnEcsUpdate;
+
+    /// <summary>Fires during the render pass: issue SetColor/UpdateVertices/Draw calls here.</summary>
+    public event Action<float>? OnRenderFrame;
+
+    public event Action<Vector2D<float>>? OnLeftClick;
+    public event Action<Key, KeyboardKeyState.KeyEvent>? OnKeyEvent;
+
+    /// <summary>Expose the renderer so samples can call SetColor/Draw directly.</summary>
+    public IRenderer Renderer => _renderer;
+
+    /// <summary>Expose window manager for resize/native‐window hooks.</summary>
+    public IWindowManager WindowManager => _windowManager;
+
+    public GameEngine(
+        IWindowManager windowManager,
+        IInputService inputService,
+        ConfigManager configManager)
     {
-        private readonly IWindowManager _windowManager;
-        private readonly IInputService _inputService;
-        private readonly ConfigManager _configManager;
-        private IWindow _window;
-        private OpenGLRenderer _renderer;
-        private Vector2D<int> _windowSize;
-        private float[]? _pendingVertices;
-        /// <summary>
-        /// Fires every frame with the elapsed time in seconds.
-        /// </summary>
-        public event Action<float>? OnUpdateFrame;
+        _windowManager = windowManager;
+        _inputService  = inputService;
+        _configManager = configManager;
+    }
 
-        public event Action<Vector2D<float>>? OnLeftClick;
-        public event Action<Key, KeyboardKeyState.KeyEvent>? OnKeyEvent;
+    public void Run()
+    {
+        var builder  = WindowBuilder.Configure(_windowManager);
+        var settings = _configManager.Window;
 
-        public GameEngine(IWindowManager windowManager,
-                          IInputService inputService,
-                          ConfigManager configManager)
+        if (!string.IsNullOrEmpty(settings.Title))
+            builder = builder.WithTitle(settings.Title);
+
+        if (!string.IsNullOrEmpty(settings.Size))
         {
-            _windowManager = windowManager ?? throw new ArgumentNullException(nameof(windowManager));
-            _inputService  = inputService  ?? throw new ArgumentNullException(nameof(inputService));
-            _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
-        }
-
-        public void Run()
-        {
-            // Create and configure window via builder and config manager
-            var builder  = WindowBuilder.Configure(_windowManager);
-            var settings = _configManager.Window;
-
-            if (!string.IsNullOrEmpty(settings.Title))
-                builder = builder.WithTitle(settings.Title);
-
-            if (!string.IsNullOrEmpty(settings.Size))
+            var parts = settings.Size.Split(',');
+            if (parts.Length == 2
+                && int.TryParse(parts[0], out var w)
+                && int.TryParse(parts[1], out var h))
             {
-                var parts = settings.Size.Split(',');
-                if (parts.Length == 2
-                    && int.TryParse(parts[0], out var w)
-                    && int.TryParse(parts[1], out var h))
-                {
-                    builder = builder.WithSize(w, h);
-                }
+                builder = builder.WithSize(w, h);
             }
-
-            if (settings.VSync.HasValue)
-                builder = builder.WithVSync(settings.VSync.Value);
-
-            _window     = builder.Create();
-            _windowSize = _window.Size;
-
-            _renderer = new OpenGLRenderer();
-            _windowManager.OnResize += size => _renderer.Resize(size);
-
-            _window.Load    += OnLoad;
-            _window.Render  += OnRender;
-            _window.Update  += OnUpdate;
-            _window.Update  += delta => OnUpdateFrame?.Invoke((float)delta);
-            _window.Closing += OnClosing;
-
-            _inputService.OnLeftClick += pos   => OnLeftClick?.Invoke(pos);
-            _inputService.OnKeyEvent  += (k,e) => OnKeyEvent?.Invoke(k, e);
-
-            _window.Run();
         }
 
-        private void OnLoad()
+        if (settings.VSync.HasValue)
+            builder = builder.WithVSync(settings.VSync.Value);
+
+        _window = builder.Create();
+
+        _renderer = new OpenGLRenderer();
+        _windowManager.OnResize += newSize => _renderer.Resize(newSize);
+
+        // Load: initialize GL, pending vertices, then notify sample
+        _window.Load += () =>
         {
             _renderer.Initialize(_window);
             if (_pendingVertices is not null)
@@ -85,24 +87,44 @@ namespace Rac.Core
                 _pendingVertices = null;
             }
             _inputService.Initialize(_window);
-        }
+            OnLoadEvent?.Invoke();
+        };
 
-        private void OnRender(double dt) => _renderer.Render(dt);
+        // Render pass: clear once, let sample draw, then flush
+        _window.Render += dt =>
+        {
+            _renderer.Clear();
+            OnRenderFrame?.Invoke((float)dt);
+            _renderer.Draw();
+        };
 
-        private void OnUpdate(double dt) => _inputService.Update(dt);
+        // Update pass: input + ECS
+        _window.Update += OnUpdate;
+        _window.Update += delta => OnEcsUpdate?.Invoke((float)delta);
 
-        private void OnClosing()
+        _window.Closing += () =>
         {
             _inputService.Shutdown();
             _renderer.Shutdown();
-        }
+        };
 
-        public void UpdateVertices(float[] vertices)
-        {
-            if (_renderer is not null)
-                _renderer.UpdateVertices(vertices);
-            else
-                _pendingVertices = vertices;
-        }
+        _inputService.OnLeftClick += pos => OnLeftClick?.Invoke(pos);
+        _inputService.OnKeyEvent  += (k, e) => OnKeyEvent?.Invoke(k, e);
+
+        _window.Run();
+    }
+
+    private void OnUpdate(double delta)
+        => _inputService.Update(delta);
+
+    /// <summary>
+    /// Upload vertex data to GPU (buffer if not ready).
+    /// </summary>
+    public void UpdateVertices(float[] vertices)
+    {
+        if (_renderer != null)
+            _renderer.UpdateVertices(vertices);
+        else
+            _pendingVertices = vertices;
     }
 }

@@ -1,99 +1,114 @@
-using Engine.Rendering.Shader;
+// File: src/Engine/Rendering/OpenGLRenderer.cs
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
+using Engine.Rendering.Shader;
 
-namespace Engine.Rendering
+namespace Engine.Rendering;
+
+/// <inheritdoc/>
+public class OpenGLRenderer : IRenderer
 {
-    public class OpenGLRenderer : IRenderer
+    private GL _gl = null!;
+    private ShaderProgram _shader = null!;
+    private uint _programHandle;
+    private int _aspectLocation;
+    private int _colorLocation;
+
+    private uint _vao;
+    private uint _vbo;
+    private uint _vertexCount;
+    private float _aspectRatio;
+
+    public unsafe void Initialize(IWindow window)
     {
-        private GL _gl;
-        private uint _shaderProgram;
-        private uint _vbo, _vao;
-        private uint _vertexCount;
-        private int _aspectLocation;
-        private float _aspect = 1.0f;
-        private ShaderProgram _shader;
+        _gl = GL.GetApi(window);
+        _gl.ClearColor(0f, 0f, 0f, 1f);
 
-        public void Initialize(IWindow window)
-        {
-            _gl = GL.GetApi(window);
-            _gl.ClearColor(0, 0, 0, 1);
-            
-            // compile shaders
-            _shader = new ShaderProgram(_gl, vertexSrc, fragmentSrc);
-            _shaderProgram = _shader.Handle;
-            _aspectLocation = _gl.GetUniformLocation(_shaderProgram, "uAspect");
-            
-            // setup viewport and aspect ratio
-            var initialSize = window.Size;
-            _gl.Viewport(0, 0, (uint)initialSize.X, (uint)initialSize.Y);
-            _aspect = (float)initialSize.Y / initialSize.X;
-            
-            // setup VBO/VAO
-            _vao = _gl.GenVertexArray();
-            _gl.BindVertexArray(_vao);
+        _shader = new ShaderProgram(_gl, VertexShaderSource, FragmentShaderSource);
+        _programHandle = _shader.Handle;
 
-            _vbo = _gl.GenBuffer();
-            _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+        _aspectLocation = _gl.GetUniformLocation(_programHandle, "uAspect");
+        _colorLocation  = _gl.GetUniformLocation(_programHandle, "uColor");
 
-            _gl.EnableVertexAttribArray(0);
-            _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
-        }
+        _vao = _gl.GenVertexArray();
+        _gl.BindVertexArray(_vao);
 
-        public void Render(double delta)
-        {
-            _gl.Clear(ClearBufferMask.ColorBufferBit);
-            _gl.UseProgram(_shaderProgram);
-            _gl.Uniform1(_aspectLocation, _aspect);
-            _gl.BindVertexArray(_vao);
-            _gl.DrawArrays(PrimitiveType.Triangles, 0, _vertexCount);
-        }
+        _vbo = _gl.GenBuffer();
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
 
-        public void Resize(Vector2D<int> newSize)
-        {
-            // update viewport so NDC stays centered
-            _gl.Viewport(0, 0, (uint)newSize.X, (uint)newSize.Y);
-            // Recalculate aspect ratio
-            _aspect = (float)newSize.Y / newSize.X;
-        }
+        _gl.EnableVertexAttribArray(0);
+        _gl.VertexAttribPointer(
+            /* index     */ 0,
+            /* size      */ 2,
+            /* type      */ VertexAttribPointerType.Float,
+            /* normalized*/ false,
+            /* stride    */ (uint)(2 * sizeof(float)),
+            /* pointer   */ (IntPtr)0
+        );
 
-        public void Shutdown()
-        {
-            _shader.Dispose();
-            _gl.DeleteBuffer(_vbo);
-            _gl.DeleteVertexArray(_vao);
-        }
-
-        // New method to update vertex data dynamically
-        public unsafe void UpdateVertices(float[] vertices)
-        {
-            _vertexCount = (uint)(vertices.Length / 2);
-
-            _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
-            fixed (float* v = vertices)
-            {
-                nuint size = (nuint)(vertices.Length * sizeof(float));
-                _gl.BufferData(BufferTargetARB.ArrayBuffer, size, v, BufferUsageARB.DynamicDraw);
-            }
-        }
-
-        // GLSL shaders (fixed syntax)
-        private const string vertexSrc = @"#version 330 core
-            layout(location = 0) in vec2 position;
-            uniform float uAspect;
-            void main()
-            {
-                gl_Position = vec4(position.x * uAspect, position.y, 0.0, 1.0);
-            }
-        ";
-
-        private const string fragmentSrc = @"#version 330 core
-            out vec4 color;
-            void main()
-            {
-                color = vec4(1);
-            }
-        ";
+        Resize(window.Size);
     }
+
+    public void Clear()
+    {
+        _gl.Clear(ClearBufferMask.ColorBufferBit);
+    }
+
+    public void SetColor(Vector4D<float> rgba)
+    {
+        _gl.Uniform4(_colorLocation, rgba.X, rgba.Y, rgba.Z, rgba.W);
+    }
+
+    public unsafe void UpdateVertices(float[] vertices)
+    {
+        _vertexCount = (uint)(vertices.Length / 2);
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+        fixed (float* ptr = vertices)
+        {
+            _gl.BufferData(
+                BufferTargetARB.ArrayBuffer,
+                (nuint)(vertices.Length * sizeof(float)),
+                ptr,
+                BufferUsageARB.DynamicDraw
+            );
+        }
+    }
+
+    public void Draw()
+    {
+        _gl.UseProgram(_programHandle);
+        _gl.Uniform1(_aspectLocation, _aspectRatio);
+        _gl.BindVertexArray(_vao);
+        _gl.DrawArrays(PrimitiveType.Triangles, first: 0, count: _vertexCount);
+    }
+
+    public void Resize(Vector2D<int> newSize)
+    {
+        _gl.Viewport(0, 0, (uint)newSize.X, (uint)newSize.Y);
+        _aspectRatio = newSize.Y / (float)newSize.X;
+    }
+
+    public void Shutdown()
+    {
+        _shader.Dispose();
+        _gl.DeleteBuffer(_vbo);
+        _gl.DeleteVertexArray(_vao);
+    }
+
+    private const string VertexShaderSource = @"#version 330 core
+layout(location = 0) in vec2 position;
+uniform float uAspect;
+void main()
+{
+    gl_Position = vec4(position.x * uAspect, position.y, 0.0, 1.0);
+}";
+
+    private const string FragmentShaderSource = @"#version 330 core
+out vec4 fragColor;
+uniform vec4 uColor;
+void main()
+{
+    fragColor = uColor;
+}";
 }

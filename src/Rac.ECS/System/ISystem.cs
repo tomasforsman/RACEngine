@@ -2,6 +2,6 @@ namespace Rac.ECS.System
 {
     public interface ISystem
     {
-        // TODO: implement ISystem
+        void Update(float delta);
     }
 }
