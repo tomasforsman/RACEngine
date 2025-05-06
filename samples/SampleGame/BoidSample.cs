@@ -24,12 +24,12 @@ namespace SampleGame
             var windowManager       = new WindowManager();
             var inputService        = new SilkInputService();
             var configurationManager = new ConfigManager();
-            var gameEngine          = new Engine(windowManager, inputService, configurationManager);
+            var gameEngine          = new EngineFacade(windowManager, inputService, configurationManager);
 
             // ─── ECS Setup ───────────────────────────────────────────
-            var world            = new World();
-            var systemScheduler  = new SystemScheduler();
-            var settingsEntity   = world.CreateEntity();
+            var world = gameEngine.World;
+            gameEngine.AddSystem(new BoidSystem(world));
+            
 
             // Data‐driven species identifiers and scales/colors
             var speciesIdentifiers = new List<string> { "White", "Blue", "Red" };
@@ -47,31 +47,25 @@ namespace SampleGame
             };
 
             // Update settings when window loads or resizes
-            gameEngine.OnLoadEvent      += () => UpdateBoidSettings(windowManager.Size);
+            gameEngine.LoadEvent      += () => UpdateBoidSettings(windowManager.Size);
             windowManager.OnResize      += newSize => UpdateBoidSettings(newSize);
 
-            // Register the BoidSystem
-            systemScheduler.Add(new BoidSystem(world));
-
-            // Spawn initial boids and obstacles
-            SpawnAllSpecies();
-            SpawnObstacles();
-
-            // ─── Update Loop ─────────────────────────────────────────
-            gameEngine.OnEcsUpdate += deltaSeconds =>
+            gameEngine.UpdateEvent    += deltaTime =>
             {
-                systemScheduler.Update(deltaSeconds);
             };
 
-            // ─── Render Loop ─────────────────────────────────────────
-            gameEngine.OnRenderFrame += deltaSeconds =>
+            gameEngine.RenderEvent    += deltaTime =>
             {
+                // Draw all species
                 foreach (var speciesId in speciesIdentifiers)
                 {
                     DrawSpecies(speciesId);
                 }
-                DrawObstacles(new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f));
+
+                // Draw obstacles
+                DrawObstacles(new Vector4D<float>(0.5f, 0.5f, 0.5f, 1f));
             };
+
 
             // Start the engine (fires OnLoadEvent → initial bounds/settings)
             gameEngine.Run();
@@ -134,7 +128,10 @@ namespace SampleGame
                     ObstacleAvoidanceWeight: 1.5f
                 );
 
-                world.SetComponent(settingsEntity, boidSettings);
+                world.SetComponent(
+                    world.CreateEntity(),
+                    boidSettings
+                );
             }
 
             void SpawnAllSpecies()

@@ -6,11 +6,10 @@ using Rac.Input.Service;
 using Rac.ECS.Core;
 using Rac.ECS.System;
 using Rac.Rendering;
-using Silk.NET.Maths;
 using Rac.GameEngine;
 
 /// <summary>
-/// High‐level façade: composes the core loop, ECS & rendering into one Engine API.
+/// High-level façade: composes the core loop, ECS & rendering into one Engine API.
 /// </summary>
 public class EngineFacade
 {
@@ -34,24 +33,22 @@ public class EngineFacade
 	{
 		World           = new World();
 		SystemScheduler = new SystemScheduler();
+		_inner          = new Rac.GameEngine.Engine(windowManager, inputService, configManager);
 
-		_inner = new Rac.GameEngine.Engine(windowManager, inputService, configManager);
-
-		// wire up callbacks
-		_inner.OnLoadEvent += () => LoadEvent?.Invoke();
-		_inner.OnEcsUpdate += dt =>
+		_inner.OnLoadEvent      += () => LoadEvent?.Invoke();
+		_inner.OnEcsUpdate      += dt =>
 		{
 			SystemScheduler.Update(dt);
 			UpdateEvent?.Invoke(dt);
 		};
-		_inner.OnRenderFrame += dt => RenderEvent?.Invoke(dt);
+		_inner.OnRenderFrame    += dt => RenderEvent?.Invoke(dt);
 	}
 
 	/// <summary>Register your ECS systems here.</summary>
-	public void AddSystem(ISystem system) 
+	public void AddSystem(ISystem system)
 		=> SystemScheduler.Add(system);
 
 	/// <summary>Kick everything off.</summary>
-	public void Run() 
+	public void Run()
 		=> _inner.Run();
 }
