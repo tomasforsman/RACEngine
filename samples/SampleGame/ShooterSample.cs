@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-using Rac.Core;
+using Rac.Engine;
 using Rac.Core.Manager;
+using Rac.GameEngine;
 using Rac.Input.Service;
 using Rac.Input.State;
 
@@ -11,7 +12,7 @@ namespace SampleGame;
 
 public class ShooterSample
 { 
-    private static GameEngine _gameEngine;
+    private static Engine _gameEngine;
 
     private enum Direction { Up, Right, Down, Left }
     private static Direction _direction = Direction.Up;
@@ -40,9 +41,8 @@ public class ShooterSample
     {
         var windowManager = new WindowManager();
         var inputService  = new SilkInputService();
-        var configManager = new ConfigManager();
-
-        _gameEngine = new GameEngine(windowManager, inputService, configManager);
+        var configurationManager = new ConfigManager();
+        _gameEngine   = new Engine(windowManager, inputService, configurationManager);
 
         _gameEngine.OnKeyEvent    += OnKeyEvent;
         _gameEngine.OnEcsUpdate += HandleGameEcsUpdate;

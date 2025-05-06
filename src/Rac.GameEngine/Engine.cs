@@ -8,12 +8,12 @@ using Rac.Input.Service;
 using Rac.Input.State;
 using Rac.Rendering;
 
-namespace Rac.Core;
+namespace Rac.GameEngine;
 
 /// <summary>
 /// Central game loop: drives ECS updates and multi‐pass rendering.
 /// </summary>
-public class GameEngine
+public class Engine
 {
     private readonly IWindowManager _windowManager;
     private readonly IInputService _inputService;
@@ -40,7 +40,7 @@ public class GameEngine
     /// <summary>Expose window manager for resize/native‐window hooks.</summary>
     public IWindowManager WindowManager => _windowManager;
 
-    public GameEngine(
+    public Engine(
         IWindowManager windowManager,
         IInputService inputService,
         ConfigManager configManager)

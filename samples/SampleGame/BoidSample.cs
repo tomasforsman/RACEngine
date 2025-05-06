@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Silk.NET.Maths;
 using Rac.Core.Manager;
 using Rac.Input.Service;
-using Rac.Core;
+using Rac.GameEngine;
 using Rac.Core.Extension;
 using Rac.ECS.Core;
 using Rac.ECS.Component;
@@ -23,7 +23,7 @@ namespace SampleGame
             var windowManager       = new WindowManager();
             var inputService        = new SilkInputService();
             var configurationManager = new ConfigManager();
-            var gameEngine          = new GameEngine(windowManager, inputService, configurationManager);
+            var gameEngine          = new Engine(windowManager, inputService, configurationManager);
 
             // ─── ECS Setup ───────────────────────────────────────────
             var world            = new World();
@@ -273,4 +273,6 @@ namespace SampleGame
             }
         }
     }
+
+
 }

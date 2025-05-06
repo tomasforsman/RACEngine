@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Rac.Core\Rac.Core.csproj" />
+    <ProjectReference Include="..\..\src\Rac.Engine\Rac.Engine.csproj" />
+    <ProjectReference Include="..\..\src\Rac.GameEngine\Rac.GameEngine.csproj" />
     <ProjectReference Include="..\..\src\Rac.Rendering\Rac.Rendering.csproj" />
     <ProjectReference Include="..\..\src\Rac.Tools\Rac.Tools.csproj" />
     <ProjectReference Include="..\..\src\Rac.Animation\Rac.Animation.csproj" />
