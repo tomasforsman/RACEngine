@@ -34,7 +34,7 @@ namespace SampleGame
 		private static string PromptForSample()
 		{
 			Console.WriteLine("Available samples:");
-			Console.WriteLine("  shootersample1   - Stand‐in‐middle shooter demo");
+			Console.WriteLine("  shootersample   - Stand‐in‐middle shooter demo");
 			Console.WriteLine("  boidsample       - Fish/Boids swarm demo");
 			// … list additional samples here …
 			Console.Write("Enter sample name: ");

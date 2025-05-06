@@ -1,4 +1,8 @@
-﻿namespace Rac.Engine;
+﻿// File: src/Rac.Engine/EngineFacade.cs
+
+using Rac.Input.State;
+
+namespace Rac.Engine;
 
 using System;
 using Rac.Core.Manager;
@@ -7,23 +11,24 @@ using Rac.ECS.Core;
 using Rac.ECS.System;
 using Rac.Rendering;
 using Rac.GameEngine;
+using Silk.NET.Input;
 
-/// <summary>
-/// High-level façade: composes the core loop, ECS & rendering into one Engine API.
-/// </summary>
 public class EngineFacade
 {
 	readonly Rac.GameEngine.Engine _inner;
 	public World World { get; }
-	public SystemScheduler SystemScheduler { get; }
+	public SystemScheduler Systems { get; }
 	public IRenderer Renderer => _inner.Renderer;
 
 	/// <summary>Fires once on init/load (before first UpdateEvent)</summary>
 	public event Action? LoadEvent;
-	/// <summary>Fires each frame, after ECS systems have run.</summary>
+	/// <summary>Fires each frame after ECS updates.</summary>
 	public event Action<float>? UpdateEvent;
-	/// <summary>Fires each frame, before Draw calls.</summary>
+	/// <summary>Fires each frame right before rendering.</summary>
 	public event Action<float>? RenderEvent;
+
+	/// <summary>Fires whenever a key is pressed or released.</summary>
+	public event Action<Key, KeyboardKeyState.KeyEvent>? KeyEvent;
 
 	public EngineFacade(
 		IWindowManager windowManager,
@@ -31,24 +36,28 @@ public class EngineFacade
 		ConfigManager configManager
 	)
 	{
-		World           = new World();
-		SystemScheduler = new SystemScheduler();
-		_inner          = new Rac.GameEngine.Engine(windowManager, inputService, configManager);
+		World   = new World();
+		Systems = new SystemScheduler();
+		_inner  = new Rac.GameEngine.Engine(windowManager, inputService, configManager);
 
-		_inner.OnLoadEvent      += () => LoadEvent?.Invoke();
-		_inner.OnEcsUpdate      += dt =>
+		// hook up core pipeline
+		_inner.OnLoadEvent   += () => LoadEvent?.Invoke();
+		_inner.OnEcsUpdate   += dt =>
 		{
-			SystemScheduler.Update(dt);
+			Systems.Update(dt);
 			UpdateEvent?.Invoke(dt);
 		};
-		_inner.OnRenderFrame    += dt => RenderEvent?.Invoke(dt);
+		_inner.OnRenderFrame += dt => RenderEvent?.Invoke(dt);
+
+		// forward key events
+		_inner.OnKeyEvent    += (key, evt) => KeyEvent?.Invoke(key, evt);
 	}
 
-	/// <summary>Register your ECS systems here.</summary>
+	/// <summary>Register an ECS system.</summary>
 	public void AddSystem(ISystem system)
-		=> SystemScheduler.Add(system);
+		=> Systems.Add(system);
 
-	/// <summary>Kick everything off.</summary>
+	/// <summary>Start the engine loop.</summary>
 	public void Run()
 		=> _inner.Run();
 }

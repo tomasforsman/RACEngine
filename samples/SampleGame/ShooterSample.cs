@@ -1,152 +1,193 @@
-﻿using System;
-using System.Collections.Generic;
-using Silk.NET.Input;
-using Silk.NET.Maths;
-using Rac.Engine;
+﻿// File: samples/SampleGame/ShooterSample.cs
+
 using Rac.Core.Manager;
-using Rac.GameEngine;
 using Rac.Input.Service;
 using Rac.Input.State;
 
 namespace SampleGame;
 
-public class ShooterSample
-{ 
-    private static Engine _gameEngine;
+using System;
+using System.Collections.Generic;
+using Silk.NET.Input;
+using Silk.NET.Maths;
+using Rac.Engine;
 
-    private enum Direction { Up, Right, Down, Left }
-    private static Direction _direction = Direction.Up;
-    private static float _angle = 0f;
+public static class ShooterSample
+{
+    // Facade providing World, Update/Render callbacks, KeyEvent, Renderer
+    private static EngineFacade? engineFacade;
 
-    private static readonly Vector2D<float>[] _baseTriangle = new[]
-    {
-        new Vector2D<float>(-0.03f, -0.05f),
-        new Vector2D<float>( 0.03f, -0.05f),
-        new Vector2D<float>( 0.00f,  0.05f)
-    };
+    // Current facing direction of the ship
+    private static Direction   shipDirection = Direction.Up;
+    // Whether auto‐fire is toggled on
+    private static bool        isAutoFireEnabled = false;
+    // Time accumulator for auto‐fire spacing
+    private static float       timeSinceLastShot = 0f;
+    // Current rotation of the ship in radians
+    private static float       shipRotation = 0f;
 
-    private static bool _autoFire;
-    private static float _fireTimer;
-    private const float FireInterval = 0.5f;
-    private const float BulletSpeed = 0.75f;
+    private const float BulletSpeed  = 0.75f;
+    private const float FireInterval = 0.2f;
 
+    // Represents a bullet in flight
     private class Bullet
     {
-        public Vector2D<float> Position;
-        public Vector2D<float> Direction;
+        public Vector2D<float> Position { get; set; }
+        public Vector2D<float> Velocity { get; set; }
     }
-    private static readonly List<Bullet> _bullets = new();
+
+    // Active bullets in the scene
+    private static readonly List<Bullet> activeBullets = new();
+
+    // Triangle model for the ship, centered at origin
+    private static readonly Vector2D<float>[] shipModel = new[]
+    {
+        new Vector2D<float>(-0.05f, -0.05f),
+        new Vector2D<float>( 0.05f, -0.05f),
+        new Vector2D<float>( 0.00f,  0.10f)
+    };
 
     public static void Run(string[] args)
     {
-        var windowManager = new WindowManager();
-        var inputService  = new SilkInputService();
+        // ─── Setup Engine & Services ────────────────────────────
+        var windowManager       = new WindowManager();
+        var inputService        = new SilkInputService();
         var configurationManager = new ConfigManager();
-        _gameEngine   = new Engine(windowManager, inputService, configurationManager);
 
-        _gameEngine.OnKeyEvent    += OnKeyEvent;
-        _gameEngine.OnEcsUpdate += HandleGameEcsUpdate;
+        engineFacade = new EngineFacade(
+            windowManager,
+            inputService,
+            configurationManager
+        );
 
-        RedrawScene();
+        // ─── Initial Draw when Renderer is ready ────────────────
+        engineFacade.LoadEvent += () => RedrawScene();
 
-        _gameEngine.Run();
+        // ─── Hook Input through the facade’s KeyEvent ───────────
+        engineFacade.KeyEvent += OnKeyPressed;
+
+        // ─── Hook Game Loop ─────────────────────────────────────
+        engineFacade.UpdateEvent += OnUpdate;
+        engineFacade.RenderEvent += _ => RedrawScene();
+
+        // ─── Start the Engine Loop ──────────────────────────────
+        engineFacade.Run();
     }
 
-    private static void OnKeyEvent(Key key, KeyboardKeyState.KeyEvent keyEvent)
+    private static void OnKeyPressed(Key key, KeyboardKeyState.KeyEvent keyEvent)
     {
-        if (keyEvent == KeyboardKeyState.KeyEvent.Pressed && key == Key.X)
-        {
-            _autoFire = !_autoFire;
-        }
-
+        // Only respond on key-down
         if (keyEvent != KeyboardKeyState.KeyEvent.Pressed)
             return;
 
-        _direction = key switch
+        // Rotate ship based on WASD or arrow keys
+        shipDirection = key switch
         {
             Key.W or Key.Up    => Direction.Up,
             Key.D or Key.Right => Direction.Right,
             Key.S or Key.Down  => Direction.Down,
             Key.A or Key.Left  => Direction.Left,
-            _                  => _direction
+            _                  => shipDirection
         };
 
-        _angle = _direction switch
+        // Map direction to rotation angle
+        shipRotation = shipDirection switch
         {
             Direction.Up    => 0f,
-            Direction.Right => -MathF.PI / 2f,
-            Direction.Down  =>  MathF.PI,
-            Direction.Left  =>  MathF.PI / 2f,
-            _               => 0f
+            Direction.Right => 3f * MathF.PI / 2f,
+            Direction.Down  => MathF.PI,
+            Direction.Left  => MathF.PI / 2f,
+            _               => shipRotation
         };
+
+        // Toggle auto-fire and spawn one bullet immediately
+        if (key == Key.Space)
+        {
+            isAutoFireEnabled = !isAutoFireEnabled;
+            SpawnBulletInCurrentDirection();
+        }
     }
 
-    private static void HandleGameEcsUpdate(float frameTimeInSeconds)
+    private static void OnUpdate(float deltaTime)
     {
-        if (_autoFire)
+        // Handle continuous auto-fire
+        if (isAutoFireEnabled)
         {
-            _fireTimer += frameTimeInSeconds;
-            if (_fireTimer >= FireInterval)
+            timeSinceLastShot += deltaTime;
+            if (timeSinceLastShot >= FireInterval)
             {
-                _fireTimer -= FireInterval;
-                var directionVector = _direction switch
-                {
-                    Direction.Up    => new Vector2D<float>(0,  1),
-                    Direction.Right => new Vector2D<float>(1,  0),
-                    Direction.Down  => new Vector2D<float>(0, -1),
-                    Direction.Left  => new Vector2D<float>(-1, 0),
-                    _               => new Vector2D<float>(0,  1)
-                };
-                _bullets.Add(new Bullet
-                {
-                    Position  = Vector2D<float>.Zero,
-                    Direction = directionVector
-                });
+                timeSinceLastShot -= FireInterval;
+                SpawnBulletInCurrentDirection();
             }
         }
 
-        for (int index = _bullets.Count - 1; index >= 0; index--)
+        // Move all bullets
+        foreach (var bullet in activeBullets)
         {
-            var bullet = _bullets[index];
-            bullet.Position += bullet.Direction * BulletSpeed * frameTimeInSeconds;
-            if (Math.Abs(bullet.Position.X) > 1.1f ||
-                Math.Abs(bullet.Position.Y) > 1.1f)
-            {
-                _bullets.RemoveAt(index);
-            }
+            bullet.Position += bullet.Velocity * deltaTime;
         }
+    }
 
-        RedrawScene();
+    private static void SpawnBulletInCurrentDirection()
+    {
+        // Compute unit vector for current shipDirection
+        Vector2D<float> directionVector = shipDirection switch
+        {
+            Direction.Up    => new Vector2D<float>( 0f,  1f),
+            Direction.Right => new Vector2D<float>( 1f,  0f),
+            Direction.Down  => new Vector2D<float>( 0f, -1f),
+            Direction.Left  => new Vector2D<float>(-1f,  0f),
+            _               => Vector2D<float>.Zero
+        };
+
+        activeBullets.Add(new Bullet
+        {
+            Position = Vector2D<float>.Zero,
+            Velocity = directionVector * BulletSpeed
+        });
     }
 
     private static void RedrawScene()
     {
-        var vertices = new List<float>();
+        if (engineFacade == null)
+            return;
 
-        foreach (var vertex in _baseTriangle)
+        var vertexBuffer = new List<float>();
+
+        // Draw the ship model, rotated by shipRotation
+        foreach (var vertex in shipModel)
         {
-            float x = vertex.X * MathF.Cos(_angle) - vertex.Y * MathF.Sin(_angle);
-            float y = vertex.X * MathF.Sin(_angle) + vertex.Y * MathF.Cos(_angle);
-            vertices.Add(x);
-            vertices.Add(y);
+            float x = vertex.X * MathF.Cos(shipRotation)
+                      - vertex.Y * MathF.Sin(shipRotation);
+            float y = vertex.X * MathF.Sin(shipRotation)
+                      + vertex.Y * MathF.Cos(shipRotation);
+            vertexBuffer.Add(x);
+            vertexBuffer.Add(y);
         }
 
-        foreach (var bullet in _bullets)
+        // Draw each bullet as two triangles
+        foreach (var bullet in activeBullets)
         {
-            const float halfBulletSize = 0.02f;
-            vertices.AddRange(new float[]
+            const float halfSize = 0.02f;
+            vertexBuffer.AddRange(new float[]
             {
-                // Triangle 1
-                bullet.Position.X - halfBulletSize, bullet.Position.Y - halfBulletSize,
-                bullet.Position.X + halfBulletSize, bullet.Position.Y - halfBulletSize,
-                bullet.Position.X + halfBulletSize, bullet.Position.Y + halfBulletSize,
-                // Triangle 2
-                bullet.Position.X - halfBulletSize, bullet.Position.Y - halfBulletSize,
-                bullet.Position.X + halfBulletSize, bullet.Position.Y + halfBulletSize,
-                bullet.Position.X - halfBulletSize, bullet.Position.Y + halfBulletSize,
+                bullet.Position.X - halfSize, bullet.Position.Y - halfSize,
+                bullet.Position.X + halfSize, bullet.Position.Y - halfSize,
+                bullet.Position.X + halfSize, bullet.Position.Y + halfSize,
+
+                bullet.Position.X - halfSize, bullet.Position.Y - halfSize,
+                bullet.Position.X + halfSize, bullet.Position.Y + halfSize,
+                bullet.Position.X - halfSize, bullet.Position.Y + halfSize,
             });
         }
 
-        _gameEngine.UpdateVertices(vertices.ToArray());
+        if (vertexBuffer.Count == 0)
+            return;
+
+        engineFacade.Renderer.SetColor(new Vector4D<float>(1f, 1f, 1f, 1f));
+        engineFacade.Renderer.UpdateVertices(vertexBuffer.ToArray());
+        engineFacade.Renderer.Draw();
     }
+
+    private enum Direction { Up, Right, Down, Left }
 }
