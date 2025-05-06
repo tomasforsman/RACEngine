@@ -1,4 +1,4 @@
-namespace Engine.Rendering.Text
+namespace Rac.Rendering.Text
 {
     public class TextRenderer
     {

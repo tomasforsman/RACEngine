@@ -1,4 +1,4 @@
-namespace Engine.Rendering.GUI
+namespace Rac.Rendering.GUI
 {
     public interface ImGuiRenderer
     {

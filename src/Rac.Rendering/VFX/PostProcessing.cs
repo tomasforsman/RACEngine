@@ -1,4 +1,4 @@
-namespace Engine.Rendering.VFX
+namespace Rac.Rendering.VFX
 {
     public class PostProcessing
     {

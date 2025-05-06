@@ -1,4 +1,4 @@
-﻿namespace Rac.GameEngine;
+﻿namespace Rac.GameEngine.GameObject;
 
 public interface IGameObject
 {

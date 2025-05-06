@@ -1,4 +1,4 @@
-namespace Engine.Rendering.FrameGraph
+namespace Rac.Rendering.FrameGraph
 {
     public class RenderPassBase
     {

@@ -1,8 +1,9 @@
 ﻿// File: src/Engine/Rendering/IRenderer.cs
+
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
-namespace Engine.Rendering;
+namespace Rac.Rendering;
 
 /// <summary>
 /// Rendering abstraction: supports multiple draw calls per frame with colors.

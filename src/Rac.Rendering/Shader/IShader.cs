@@ -1,4 +1,4 @@
-namespace Engine.Rendering.Shader
+namespace Rac.Rendering.Shader
 {
     public interface IShader
     {

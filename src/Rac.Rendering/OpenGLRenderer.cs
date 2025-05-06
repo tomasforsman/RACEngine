@@ -1,10 +1,11 @@
 // File: src/Engine/Rendering/OpenGLRenderer.cs
+
+using Rac.Rendering.Shader;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
-using Engine.Rendering.Shader;
 
-namespace Engine.Rendering;
+namespace Rac.Rendering;
 
 /// <inheritdoc/>
 public class OpenGLRenderer : IRenderer

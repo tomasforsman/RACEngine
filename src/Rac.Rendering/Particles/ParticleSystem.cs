@@ -1,4 +1,4 @@
-namespace Engine.Rendering.Particles
+namespace Rac.Rendering.Particles
 {
     public class ParticleSystem
     {
