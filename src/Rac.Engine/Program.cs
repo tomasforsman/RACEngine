@@ -1,8 +1,8 @@
-﻿using Rac.Core.Manager;
-using Rac.Input.Service;
-using Rac.GameEngine;
+﻿namespace Rac.Engine;
 
-namespace Rac.Engine;
+using Rac.GameEngine;
+using Rac.Core.Manager;
+using Rac.Input.Service;
 
 public class Program
 {
@@ -20,7 +20,10 @@ public class Program
 			var configManager = new ConfigManager();
 
 			// Inject into engine
-			var engine = new GameEngine.Engine(windowManager, inputService, configManager);
+			var engine = new Engine(
+				windowManager, 
+				inputService, 
+				configManager);
 			engine.Run();
 		}
 		
