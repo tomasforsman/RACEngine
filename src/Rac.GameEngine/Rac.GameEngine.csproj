@@ -6,11 +6,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-      <Folder Include="GameObject\" />
-      <Folder Include="Pooling\" />
-      <Folder Include="Prefab\" />
-      <Folder Include="Serialization\" />
-    </ItemGroup>
-
 </Project>
