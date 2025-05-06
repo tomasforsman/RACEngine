@@ -1,20 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Rac.Core\Rac.Core.csproj" />
     <ProjectReference Include="..\..\src\Rac.Engine\Rac.Engine.csproj" />
-    <ProjectReference Include="..\..\src\Rac.GameEngine\Rac.GameEngine.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Rendering\Rac.Rendering.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Tools\Rac.Tools.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Animation\Rac.Animation.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Scripting\Rac.Scripting.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Physics\Rac.Physics.csproj" />
-    <ProjectReference Include="..\..\src\Rac.AI\Rac.AI.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Input\Rac.Input.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Networking\Rac.Networking.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Audio\Rac.Audio.csproj" />
-    <ProjectReference Include="..\..\src\Rac.Assets\Rac.Assets.csproj" />
-    <ProjectReference Include="..\..\src\Rac.ECS\Rac.ECS.csproj" />
   </ItemGroup>
 
   <ItemGroup>
