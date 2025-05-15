@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Rac.ProjectTools.MainWindow"
+        Title="New Component Wizard"
+        Width="500" Height="260"
+        Padding="20">
+    <StackPanel Spacing="8">
+        <!-- Component Name -->
+        <TextBlock Text="Component Name" />
+        <TextBox x:Name="ComponentNameBox"
+                 Watermark="Enter name…"/>
+
+        <!-- Namespace -->
+        <TextBlock Text="Namespace" Margin="0,8,0,0"/>
+        <TextBox x:Name="NamespaceBox"
+                 Text="YourGame.Components"
+                 Watermark="e.g. YourGame.Components"/>
+
+        <!-- Folder Picker -->
+        <TextBlock Text="Output Folder" Margin="0,8,0,0"/>
+        <DockPanel>
+            <TextBox x:Name="FolderPathBox"
+                     IsReadOnly="True"
+                     Watermark="Select output folder…"
+                     DockPanel.Dock="Left"
+                     HorizontalAlignment="Stretch"/>
+            <Button Content="Browse…" 
+                    Width="80" 
+                    Margin="8,0,0,0"
+                    Click="BrowseButton_Click"
+                    DockPanel.Dock="Right"/>
+        </DockPanel>
+
+        <!-- Generate -->
+        <Button Content="Generate"
+                HorizontalAlignment="Right"
+                Margin="0,12,0,0"
+                Click="GenerateButton_Click"/>
+    </StackPanel>
+</Window>
