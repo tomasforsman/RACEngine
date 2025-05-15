@@ -1,4 +1,4 @@
-namespace Rac.ECS.Entity
+namespace Rac.ECS.Entities
 {
     public interface IEntity
 

@@ -1,5 +1,6 @@
 ﻿// File: src/Rac.ECS.Component/BoidSpeciesComponent.cs
 
+using Rac.ECS.Components;
 using Rac.ECS.Core;
 
 namespace Rac.ECS.Component

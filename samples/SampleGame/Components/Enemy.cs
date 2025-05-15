@@ -1,4 +1,5 @@
 
+using Rac.ECS.Components;
 using Rac.ECS.Core;
 
 namespace SampleGame.Components

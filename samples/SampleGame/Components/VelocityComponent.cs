@@ -1,4 +1,5 @@
-﻿using Rac.ECS.Core;
+﻿using Rac.ECS.Components;
+using Rac.ECS.Core;
 using Silk.NET.Maths;
 
 namespace Rac.ECS.Component;

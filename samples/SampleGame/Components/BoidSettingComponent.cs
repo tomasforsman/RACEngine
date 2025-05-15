@@ -1,6 +1,7 @@
 ﻿// File: src/Rac.ECS.Component/BoidSettingsComponent.cs
 
 
+using Rac.ECS.Components;
 using Rac.ECS.Core;
 using Silk.NET.Maths;
 

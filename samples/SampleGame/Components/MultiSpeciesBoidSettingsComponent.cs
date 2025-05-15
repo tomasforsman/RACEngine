@@ -1,5 +1,6 @@
 ﻿// File: src/Rac.ECS.Component/MultiSpeciesBoidSettingsComponent.cs
 using System.Collections.Generic;
+using Rac.ECS.Components;
 using Silk.NET.Maths;
 using Rac.ECS.Core;
 

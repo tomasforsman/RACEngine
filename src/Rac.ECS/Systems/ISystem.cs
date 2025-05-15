@@ -1,4 +1,4 @@
-namespace Rac.ECS.System
+namespace Rac.ECS.Systems
 {
     public interface ISystem
     {

@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace Rac.ECS.System
+namespace Rac.ECS.Systems
 {
 	/// <summary>
 	/// Holds and runs a collection of ECS systems each frame.

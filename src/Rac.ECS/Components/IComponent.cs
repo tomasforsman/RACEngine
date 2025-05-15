@@ -1,4 +1,4 @@
-namespace Rac.ECS.Core;
+namespace Rac.ECS.Components;
 
 public interface IComponent
 {
