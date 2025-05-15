@@ -1,4 +1,5 @@
-﻿using Silk.NET.Input;
+﻿using System.Collections.Generic;
+using Silk.NET.Input;
 
 namespace Rac.Input.State;
 

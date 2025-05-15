@@ -1,5 +1,6 @@
 ﻿// File: src/Rac.ECS.System/BoidSystem.cs
 using System;
+using System.Linq;
 using Silk.NET.Maths;
 using Rac.Core.Extension;
 using Rac.ECS.Core;

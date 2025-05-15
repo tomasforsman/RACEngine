@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Rac.Core\Rac.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Component\" />
+  </ItemGroup>
+
 </Project>

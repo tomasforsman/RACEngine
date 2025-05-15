@@ -139,6 +139,7 @@ public static class ShooterSample
             Direction.Left  => new Vector2D<float>(-1f,  0f),
             _               => Vector2D<float>.Zero
         };
+        
 
         activeBullets.Add(new Bullet
         {
