@@ -127,4 +127,20 @@ public sealed class World
         }
         return pool;
     }
+    
+    /// <summary>
+    /// Removes a component of type <typeparamref name="T"/> from the given <paramref name="entity"/>.
+    /// Returns true if a component was removed.
+    /// </summary>
+    public bool RemoveComponent<T>(Entity entity)
+        where T : IComponent
+    {
+        var componentType = typeof(T);
+        if (_components.TryGetValue(componentType, out var pool))
+        {
+            return pool.Remove(entity.Id);
+        }
+        return false;
+    }
+
 }

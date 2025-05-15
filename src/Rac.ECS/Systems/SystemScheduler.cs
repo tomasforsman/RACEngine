@@ -36,6 +36,18 @@ namespace Rac.ECS.Systems
 				system.Update(delta);
 			}
 		}
+		
+		/// <summary>
+		/// Calls <see cref="ISystem.Update"/> on each registered system in specified order.
+		/// </summary>
+		/// <param name="delta">Elapsed time in seconds since the last update.</param>
+		public void Update(float delta, IEnumerable<ISystem> systems)
+		{
+			foreach (var system in systems)
+			{
+				system.Update(delta);
+			}
+		}
 
 		/// <summary>
 		/// Clears all registered systems.
