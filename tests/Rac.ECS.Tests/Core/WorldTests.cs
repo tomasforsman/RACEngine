@@ -93,6 +93,31 @@ public class WorldTests
     }
 
     [Fact]
+    public void Query_SingleComponent_ReturnsEntitiesWithComponent()
+    {
+        // Arrange
+        var world = new World();
+        
+        // Create entities with components
+        var entity1 = world.CreateEntity();
+        world.SetComponent(entity1, new TestComponent1(1));
+        
+        var entity2 = world.CreateEntity();
+        world.SetComponent(entity2, new TestComponent1(2));
+        
+        var entity3 = world.CreateEntity();
+        world.SetComponent(entity3, new TestComponent2("Text"));
+
+        // Act
+        var results = world.Query<TestComponent1>().ToList();
+
+        // Assert
+        Assert.Equal(2, results.Count);
+        Assert.Contains(results, r => r.Entity.Id == entity1.Id && r.Component1.Value == 1);
+        Assert.Contains(results, r => r.Entity.Id == entity2.Id && r.Component1.Value == 2);
+    }
+
+    [Fact]
     public void Query_TwoComponents_ReturnsEntitiesWithBothComponents()
     {
         // Arrange
