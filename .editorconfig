@@ -1,0 +1,64 @@
+﻿# .editorconfig for RACEngine
+root = true
+
+####################
+# General Formatting
+####################
+[*.cs]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+##########################
+# C# Coding Conventions
+##########################
+
+# Use file-scoped namespaces
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Use expression-bodied members when possible
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = when_on_single_line:suggestion
+csharp_style_expression_bodied_operators = when_on_single_line:suggestion
+
+# Use auto-properties when possible
+dotnet_style_prefer_auto_properties = true:suggestion
+
+# Use explicit type unless initializer type is obvious
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_require_accessibility_modifiers = always:suggestion
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Field naming: use _camelCase for private fields
+dotnet_naming_rule.private_fields_should_be_camel_case.severity = suggestion
+dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_camel_case.style = camel_case_prefix_underscore
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers =
+
+dotnet_naming_style.camel_case_prefix_underscore.capitalization = camel_case
+dotnet_naming_style.camel_case_prefix_underscore.required_prefix = _
+
+# Prefer one public type per file but allow multiple small types when related
+dotnet_naming_rule.one_public_type_per_file.severity = suggestion
+dotnet_naming_rule.one_public_type_per_file.symbols = public_types
+dotnet_naming_rule.one_public_type_per_file.style = camel_case
+dotnet_naming_style.camel_case.capitalization = camel_case
+dotnet_naming_symbols.public_types.applicable_kinds = class, struct, interface, enum
+
+# Remove unused usings
+dotnet_separate_import_directive_groups = true
+dotnet_sort_system_directives_first = true
+
+####################
+# CSharpier (optional, for formatting)
+####################
+# If using CSharpier, it picks up most formatting from .editorconfig
+
