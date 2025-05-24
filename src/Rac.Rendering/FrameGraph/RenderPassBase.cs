@@ -1,7 +1,6 @@
-namespace Rac.Rendering.FrameGraph
+namespace Rac.Rendering.FrameGraph;
+
+public class RenderPassBase
 {
-    public class RenderPassBase
-    {
-        // TODO: implement RenderPassBase
-    }
+	// TODO: implement RenderPassBase
 }

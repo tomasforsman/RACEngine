@@ -1,7 +1,6 @@
-namespace Rac.Physics.Collision
+namespace Rac.Physics.Collision;
+
+public interface IBroadphase
 {
-    public interface IBroadphase
-    {
-        // TODO: implement IBroadphase
-    }
+	// TODO: implement IBroadphase
 }

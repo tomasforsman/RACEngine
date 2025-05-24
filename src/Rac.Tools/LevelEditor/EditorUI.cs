@@ -1,7 +1,6 @@
-namespace Rac.Tools.LevelEditor
+namespace Rac.Tools.LevelEditor;
+
+public class EditorUI
 {
-    public class EditorUI
-    {
-        // TODO: implement EditorUI
-    }
+	// TODO: implement EditorUI
 }

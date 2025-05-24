@@ -1,7 +1,6 @@
-namespace Rac.Networking
+namespace Rac.Networking;
+
+public class ENetClient
 {
-    public class ENetClient
-    {
-        // TODO: implement ENetClient
-    }
+	// TODO: implement ENetClient
 }

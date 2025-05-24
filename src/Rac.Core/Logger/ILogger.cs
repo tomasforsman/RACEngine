@@ -1,7 +1,6 @@
-namespace Rac.Core.Logger
+namespace Rac.Core.Logger;
+
+public interface ILogger
 {
-    public interface ILogger
-    {
-        // TODO: implement ILogger
-    }
+	// TODO: implement ILogger
 }

@@ -1,7 +1,6 @@
-namespace Rac.Core.Scheduler
+namespace Rac.Core.Scheduler;
+
+public class TaskScheduler
 {
-    public class TaskScheduler
-    {
-        // TODO: implement TaskScheduler
-    }
+	// TODO: implement TaskScheduler
 }

@@ -1,7 +1,6 @@
-namespace Rac.Assets.Serializer
+namespace Rac.Assets.Serializer;
+
+public interface ISerializer
 {
-    public interface ISerializer
-    {
-        // TODO: implement ISerializer
-    }
+	// TODO: implement ISerializer
 }

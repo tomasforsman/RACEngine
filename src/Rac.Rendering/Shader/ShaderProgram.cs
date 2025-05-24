@@ -1,45 +1,45 @@
-using System;
 using Silk.NET.OpenGL;
 
-namespace Rac.Rendering.Shader
+namespace Rac.Rendering.Shader;
+
+public class ShaderProgram : IDisposable
 {
-    public class ShaderProgram : IDisposable
-    {
-        public uint Handle { get; }
-        private GL _gl;
+	private readonly GL _gl;
 
-        public ShaderProgram(GL gl, string vertSrc, string fragSrc)
-        {
-            _gl = gl;
-            uint vs = Compile(ShaderType.VertexShader,   vertSrc);
-            uint fs = Compile(ShaderType.FragmentShader, fragSrc);
+	public ShaderProgram(GL gl, string vertSrc, string fragSrc)
+	{
+		_gl = gl;
+		uint vs = Compile(ShaderType.VertexShader, vertSrc);
+		uint fs = Compile(ShaderType.FragmentShader, fragSrc);
 
-            Handle = _gl.CreateProgram();
-            _gl.AttachShader(Handle, vs);
-            _gl.AttachShader(Handle, fs);
-            _gl.LinkProgram(Handle);
+		Handle = _gl.CreateProgram();
+		_gl.AttachShader(Handle, vs);
+		_gl.AttachShader(Handle, fs);
+		_gl.LinkProgram(Handle);
 
-            _gl.DeleteShader(vs);
-            _gl.DeleteShader(fs);
-        }
+		_gl.DeleteShader(vs);
+		_gl.DeleteShader(fs);
+	}
 
-        private uint Compile(ShaderType type, string src)
-        {
-            uint s = _gl.CreateShader(type);
-            _gl.ShaderSource(s, src);
-            _gl.CompileShader(s);
-            _gl.GetShader(s, ShaderParameterName.CompileStatus, out int ok);
-            if (ok == 0)
-            {
-                string log = _gl.GetShaderInfoLog(s);
-                throw new Exception($"Shader compile error: {log}");
-            }
-            return s;
-        }
+	public uint Handle { get; }
 
-        public void Dispose()
-        {
-            _gl.DeleteProgram(Handle);
-        }
-    }
+	public void Dispose()
+	{
+		_gl.DeleteProgram(Handle);
+	}
+
+	private uint Compile(ShaderType type, string src)
+	{
+		uint s = _gl.CreateShader(type);
+		_gl.ShaderSource(s, src);
+		_gl.CompileShader(s);
+		_gl.GetShader(s, ShaderParameterName.CompileStatus, out int ok);
+		if (ok == 0)
+		{
+			string log = _gl.GetShaderInfoLog(s);
+			throw new Exception($"Shader compile error: {log}");
+		}
+
+		return s;
+	}
 }

@@ -1,7 +1,6 @@
-namespace Rac.Core.Scheduler
+namespace Rac.Core.Scheduler;
+
+public interface ITaskScheduler
 {
-    public interface ITaskScheduler
-    {
-        // TODO: implement ITaskScheduler
-    }
+	// TODO: implement ITaskScheduler
 }

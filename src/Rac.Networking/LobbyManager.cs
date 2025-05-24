@@ -1,7 +1,6 @@
-namespace Rac.Networking
+namespace Rac.Networking;
+
+public class LobbyManager
 {
-    public class LobbyManager
-    {
-        // TODO: implement LobbyManager
-    }
+	// TODO: implement LobbyManager
 }

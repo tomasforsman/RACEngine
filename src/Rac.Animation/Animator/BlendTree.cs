@@ -1,7 +1,6 @@
-namespace Rac.Animation.Animator
+namespace Rac.Animation.Animator;
+
+public class BlendTree
 {
-    public class BlendTree
-    {
-        // TODO: implement BlendTree
-    }
+	// TODO: implement BlendTree
 }

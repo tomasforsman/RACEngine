@@ -1,5 +1,4 @@
 ﻿using Rac.ECS.Components;
-using Rac.ECS.Core;
 
 namespace Rac.ECS.Component;
 

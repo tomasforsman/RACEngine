@@ -1,7 +1,6 @@
-namespace Rac.Animation.Animator
+namespace Rac.Animation.Animator;
+
+public interface IAnimationPlayer
 {
-    public interface IAnimationPlayer
-    {
-        // TODO: implement IAnimationPlayer
-    }
+	// TODO: implement IAnimationPlayer
 }

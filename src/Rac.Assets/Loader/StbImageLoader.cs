@@ -1,7 +1,6 @@
-namespace Rac.Assets.Loader
+namespace Rac.Assets.Loader;
+
+public class StbImageLoader
 {
-    public class StbImageLoader
-    {
-        // TODO: implement StbImageLoader
-    }
+	// TODO: implement StbImageLoader
 }

@@ -1,7 +1,6 @@
-namespace Rac.Tools.ShaderEditor
+namespace Rac.Tools.ShaderEditor;
+
+public class ShaderEditorApp
 {
-    public class ShaderEditorApp
-    {
-        // TODO: implement ShaderEditorApp
-    }
+	// TODO: implement ShaderEditorApp
 }

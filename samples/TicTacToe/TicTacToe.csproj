@@ -1,23 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Rac.Core\Rac.Core.csproj" />
-      <ProjectReference Include="..\..\src\Rac.ECS\Rac.ECS.csproj" />
-      <ProjectReference Include="..\..\src\Rac.Engine\Rac.Engine.csproj" />
-      <ProjectReference Include="..\..\src\Rac.GameEngine\Rac.GameEngine.csproj" />
-      <ProjectReference Include="..\..\src\Rac.Input\Rac.Input.csproj" />
-      <ProjectReference Include="..\..\src\Rac.Rendering\Rac.Rendering.csproj" />
-      <ProjectReference Include="..\src\Rac.ECS\Rac.ECS.csproj" />
-      <ProjectReference Include="..\src\Rac.Engine\Rac.Engine.csproj" />
-      <ProjectReference Include="..\src\Rac.GameEngine\Rac.GameEngine.csproj" />
-      <ProjectReference Include="..\src\Rac.Input\Rac.Input.csproj" />
+        <ProjectReference Include="..\..\src\Rac.Core\Rac.Core.csproj"/>
+        <ProjectReference Include="..\..\src\Rac.ECS\Rac.ECS.csproj"/>
+        <ProjectReference Include="..\..\src\Rac.Engine\Rac.Engine.csproj"/>
+        <ProjectReference Include="..\..\src\Rac.GameEngine\Rac.GameEngine.csproj"/>
+        <ProjectReference Include="..\..\src\Rac.Input\Rac.Input.csproj"/>
+        <ProjectReference Include="..\..\src\Rac.Rendering\Rac.Rendering.csproj"/>
+        <ProjectReference Include="..\src\Rac.ECS\Rac.ECS.csproj"/>
+        <ProjectReference Include="..\src\Rac.Engine\Rac.Engine.csproj"/>
+        <ProjectReference Include="..\src\Rac.GameEngine\Rac.GameEngine.csproj"/>
+        <ProjectReference Include="..\src\Rac.Input\Rac.Input.csproj"/>
     </ItemGroup>
-
 </Project>

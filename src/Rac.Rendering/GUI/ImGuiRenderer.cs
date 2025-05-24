@@ -1,7 +1,6 @@
-namespace Rac.Rendering.GUI
+namespace Rac.Rendering.GUI;
+
+public interface ImGuiRenderer
 {
-    public interface ImGuiRenderer
-    {
-        // TODO: implement ImGuiRenderer
-    }
+	// TODO: implement ImGuiRenderer
 }

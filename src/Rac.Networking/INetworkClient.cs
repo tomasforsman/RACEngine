@@ -1,7 +1,6 @@
-namespace Rac.Networking
+namespace Rac.Networking;
+
+public interface INetworkClient
 {
-    public interface INetworkClient
-    {
-        // TODO: implement INetworkClient
-    }
+	// TODO: implement INetworkClient
 }

@@ -1,7 +1,6 @@
-namespace Rac.AI.Pathfinder
+namespace Rac.AI.Pathfinder;
+
+public interface IPathfinder
 {
-    public interface IPathfinder
-    {
-        // TODO: implement IPathfinder
-    }
+	// TODO: implement IPathfinder
 }

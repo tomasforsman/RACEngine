@@ -8,33 +8,33 @@
         <!-- Component Name -->
         <TextBlock Text="Component Name" />
         <TextBox x:Name="ComponentNameBox"
-                 Watermark="Enter name…"/>
+                 Watermark="Enter name…" />
 
         <!-- Namespace -->
-        <TextBlock Text="Namespace" Margin="0,8,0,0"/>
+        <TextBlock Text="Namespace" Margin="0,8,0,0" />
         <TextBox x:Name="NamespaceBox"
                  Text="YourGame.Components"
-                 Watermark="e.g. YourGame.Components"/>
+                 Watermark="e.g. YourGame.Components" />
 
         <!-- Folder Picker -->
-        <TextBlock Text="Output Folder" Margin="0,8,0,0"/>
+        <TextBlock Text="Output Folder" Margin="0,8,0,0" />
         <DockPanel>
             <TextBox x:Name="FolderPathBox"
                      IsReadOnly="True"
                      Watermark="Select output folder…"
                      DockPanel.Dock="Left"
-                     HorizontalAlignment="Stretch"/>
-            <Button Content="Browse…" 
-                    Width="80" 
+                     HorizontalAlignment="Stretch" />
+            <Button Content="Browse…"
+                    Width="80"
                     Margin="8,0,0,0"
                     Click="BrowseButton_Click"
-                    DockPanel.Dock="Right"/>
+                    DockPanel.Dock="Right" />
         </DockPanel>
 
         <!-- Generate -->
         <Button Content="Generate"
                 HorizontalAlignment="Right"
                 Margin="0,12,0,0"
-                Click="GenerateButton_Click"/>
+                Click="GenerateButton_Click" />
     </StackPanel>
 </Window>

@@ -1,7 +1,6 @@
 ﻿namespace TicTacToe.Systems;
 
-/* applies moves, switches turns */ 
+/* applies moves, switches turns */
 public class GameLogicSystem
 {
-	
 }

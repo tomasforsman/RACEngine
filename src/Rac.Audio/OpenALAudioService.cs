@@ -1,7 +1,6 @@
-namespace Rac.Audio
+namespace Rac.Audio;
+
+public class OpenALAudioService
 {
-    public class OpenALAudioService
-    {
-        // TODO: implement OpenALAudioService
-    }
+	// TODO: implement OpenALAudioService
 }

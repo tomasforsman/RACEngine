@@ -1,8 +1,6 @@
-namespace Rac.ECS.Entities
-{
-    public interface IEntity
+namespace Rac.ECS.Entities;
 
-    {
-    // TODO: implement IEntity
-    }
+public interface IEntity
+{
+	// TODO: implement IEntity
 }

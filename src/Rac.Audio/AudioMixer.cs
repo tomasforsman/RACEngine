@@ -1,7 +1,6 @@
-namespace Rac.Audio
+namespace Rac.Audio;
+
+public class AudioMixer
 {
-    public class AudioMixer
-    {
-        // TODO: implement AudioMixer
-    }
+	// TODO: implement AudioMixer
 }

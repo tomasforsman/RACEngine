@@ -1,7 +1,6 @@
-namespace Rac.Rendering.Mesh
+namespace Rac.Rendering.Mesh;
+
+public interface IMesh
 {
-    public interface IMesh
-    {
-        // TODO: implement IMesh
-    }
+	// TODO: implement IMesh
 }

@@ -1,7 +1,6 @@
-namespace Rac.Rendering.Mesh
+namespace Rac.Rendering.Mesh;
+
+public class Mesh
 {
-    public class Mesh
-    {
-        // TODO: implement Mesh
-    }
+	// TODO: implement Mesh
 }

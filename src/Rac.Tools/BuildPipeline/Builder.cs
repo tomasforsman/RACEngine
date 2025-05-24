@@ -1,7 +1,6 @@
-namespace Rac.Tools.BuildPipeline
+namespace Rac.Tools.BuildPipeline;
+
+public class Builder
 {
-    public class Builder
-    {
-        // TODO: implement Builder
-    }
+	// TODO: implement Builder
 }

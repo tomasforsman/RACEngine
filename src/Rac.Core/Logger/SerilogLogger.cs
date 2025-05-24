@@ -1,7 +1,6 @@
-namespace Rac.Core.Logger
+namespace Rac.Core.Logger;
+
+public class SerilogLogger
 {
-    public class SerilogLogger
-    {
-        // TODO: implement SerilogLogger
-    }
+	// TODO: implement SerilogLogger
 }

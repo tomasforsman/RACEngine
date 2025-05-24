@@ -1,8 +1,8 @@
 ﻿namespace TicTacToe;
 
-class Program
+internal class Program
 {
-	static void Main(string[] args)
+	private static void Main(string[] args)
 	{
 		// Entry point: setup ECS world, initialize, run game loop
 	}

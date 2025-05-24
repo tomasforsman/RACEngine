@@ -1,7 +1,6 @@
-namespace Rac.Animation.Animator
+namespace Rac.Animation.Animator;
+
+public class SkeletalAnimator
 {
-    public class SkeletalAnimator
-    {
-        // TODO: implement SkeletalAnimator
-    }
+	// TODO: implement SkeletalAnimator
 }

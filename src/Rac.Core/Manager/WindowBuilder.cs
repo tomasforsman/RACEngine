@@ -4,7 +4,7 @@ using Silk.NET.Windowing;
 namespace Rac.Core.Manager;
 
 /// <summary>
-/// Fluent builder for constructing and creating a window via IWindowManager.
+///   Fluent builder for constructing and creating a window via IWindowManager.
 /// </summary>
 public class WindowBuilder
 {
@@ -18,7 +18,9 @@ public class WindowBuilder
 	}
 
 	public static WindowBuilder Configure(IWindowManager manager)
-		=> new WindowBuilder(manager);
+	{
+		return new WindowBuilder(manager);
+	}
 
 	public WindowBuilder WithTitle(string title)
 	{
@@ -46,17 +48,17 @@ public class WindowBuilder
 
 	public WindowBuilder WithResizable(bool resizable = true)
 	{
-		_options.WindowBorder = resizable
-			? WindowBorder.Resizable
-			: WindowBorder.Fixed;
+		_options.WindowBorder = resizable ? WindowBorder.Resizable : WindowBorder.Fixed;
 		return this;
 	}
 
 	// add more WithXxx(...) methods as needed…
 
-	/// <summary>
-	/// Creates the window with the accumulated options.
-	/// </summary>
-	public IWindow Create()
-		=> _manager.CreateWindow(_options);
+    /// <summary>
+    ///   Creates the window with the accumulated options.
+    /// </summary>
+    public IWindow Create()
+	{
+		return _manager.CreateWindow(_options);
+	}
 }

@@ -1,7 +1,6 @@
-namespace Rac.Physics
+namespace Rac.Physics;
+
+public class BepuPhysicsWorld
 {
-    public class BepuPhysicsWorld
-    {
-        // TODO: implement BepuPhysicsWorld
-    }
+	// TODO: implement BepuPhysicsWorld
 }

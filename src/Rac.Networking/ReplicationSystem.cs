@@ -1,7 +1,6 @@
-namespace Rac.Networking
+namespace Rac.Networking;
+
+public class ReplicationSystem
 {
-    public class ReplicationSystem
-    {
-        // TODO: implement ReplicationSystem
-    }
+	// TODO: implement ReplicationSystem
 }

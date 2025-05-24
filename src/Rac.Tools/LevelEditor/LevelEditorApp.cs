@@ -1,7 +1,6 @@
-namespace Rac.Tools.LevelEditor
+namespace Rac.Tools.LevelEditor;
+
+public class LevelEditorApp
 {
-    public class LevelEditorApp
-    {
-        // TODO: implement LevelEditorApp
-    }
+	// TODO: implement LevelEditorApp
 }

@@ -1,7 +1,6 @@
-namespace Rac.Assets.Serializer
+namespace Rac.Assets.Serializer;
+
+public class JsonSerializer
 {
-    public class JsonSerializer
-    {
-        // TODO: implement JsonSerializer
-    }
+	// TODO: implement JsonSerializer
 }

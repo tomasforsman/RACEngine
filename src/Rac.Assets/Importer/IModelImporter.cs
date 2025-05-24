@@ -1,7 +1,6 @@
-namespace Rac.Assets.Importer
+namespace Rac.Assets.Importer;
+
+public interface IModelImporter
 {
-    public interface IModelImporter
-    {
-        // TODO: implement IModelImporter
-    }
+	// TODO: implement IModelImporter
 }

@@ -1,7 +1,6 @@
-namespace Rac.Scripting
+namespace Rac.Scripting;
+
+public class LuaScriptEngine
 {
-    public class LuaScriptEngine
-    {
-        // TODO: implement LuaScriptEngine
-    }
+	// TODO: implement LuaScriptEngine
 }

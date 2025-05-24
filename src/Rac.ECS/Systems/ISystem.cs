@@ -1,7 +1,6 @@
-namespace Rac.ECS.Systems
+namespace Rac.ECS.Systems;
+
+public interface ISystem
 {
-    public interface ISystem
-    {
-        void Update(float delta);
-    }
+	void Update(float delta);
 }

@@ -1,7 +1,6 @@
-namespace Rac.Scripting
+namespace Rac.Scripting;
+
+public class CSharpScriptEngine
 {
-    public class CSharpScriptEngine
-    {
-        // TODO: implement CSharpScriptEngine
-    }
+	// TODO: implement CSharpScriptEngine
 }

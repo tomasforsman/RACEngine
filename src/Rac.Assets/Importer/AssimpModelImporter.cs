@@ -1,7 +1,6 @@
-namespace Rac.Assets.Importer
+namespace Rac.Assets.Importer;
+
+public class AssimpModelImporter
 {
-    public class AssimpModelImporter
-    {
-        // TODO: implement AssimpModelImporter
-    }
+	// TODO: implement AssimpModelImporter
 }

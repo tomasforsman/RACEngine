@@ -1,7 +1,6 @@
-namespace Rac.Physics.Collision
+namespace Rac.Physics.Collision;
+
+public class AABBCheckBroadphase
 {
-    public class AABBCheckBroadphase
-    {
-        // TODO: implement AABBCheckBroadphase
-    }
+	// TODO: implement AABBCheckBroadphase
 }

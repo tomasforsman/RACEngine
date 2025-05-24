@@ -1,7 +1,6 @@
-namespace Rac.Audio
+namespace Rac.Audio;
+
+public class Sound
 {
-    public class Sound
-    {
-        // TODO: implement Sound
-    }
+	// TODO: implement Sound
 }

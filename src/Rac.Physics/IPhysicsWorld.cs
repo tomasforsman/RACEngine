@@ -1,7 +1,6 @@
-namespace Rac.Physics
+namespace Rac.Physics;
+
+public interface IPhysicsWorld
 {
-    public interface IPhysicsWorld
-    {
-        // TODO: implement IPhysicsWorld
-    }
+	// TODO: implement IPhysicsWorld
 }

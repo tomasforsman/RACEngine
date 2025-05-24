@@ -6,7 +6,7 @@ using Silk.NET.Windowing;
 namespace Rac.Rendering;
 
 /// <summary>
-/// Rendering abstraction: supports multiple draw calls per frame with colors.
+///   Rendering abstraction: supports multiple draw calls per frame with colors.
 /// </summary>
 public interface IRenderer
 {

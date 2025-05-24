@@ -1,7 +1,6 @@
-namespace Rac.Assets.Loader
+namespace Rac.Assets.Loader;
+
+public interface ITextureLoader
 {
-    public interface ITextureLoader
-    {
-        // TODO: implement ITextureLoader
-    }
+	// TODO: implement ITextureLoader
 }

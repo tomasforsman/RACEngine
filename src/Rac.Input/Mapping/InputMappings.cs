@@ -1,7 +1,6 @@
-namespace Rac.Input.Mapping
+namespace Rac.Input.Mapping;
+
+public interface InputMappings
 {
-    public interface InputMappings
-    {
-        // TODO: implement InputMappings
-    }
+	// TODO: implement InputMappings
 }

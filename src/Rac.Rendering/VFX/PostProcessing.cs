@@ -1,7 +1,6 @@
-namespace Rac.Rendering.VFX
+namespace Rac.Rendering.VFX;
+
+public class PostProcessing
 {
-    public class PostProcessing
-    {
-        // TODO: implement PostProcessing
-    }
+	// TODO: implement PostProcessing
 }

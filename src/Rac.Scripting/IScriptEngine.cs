@@ -1,7 +1,6 @@
-namespace Rac.Scripting
+namespace Rac.Scripting;
+
+public interface IScriptEngine
 {
-    public interface IScriptEngine
-    {
-        // TODO: implement IScriptEngine
-    }
+	// TODO: implement IScriptEngine
 }

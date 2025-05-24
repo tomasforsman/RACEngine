@@ -1,7 +1,6 @@
-namespace Rac.Rendering.Particles
+namespace Rac.Rendering.Particles;
+
+public class ParticleSystem
 {
-    public class ParticleSystem
-    {
-        // TODO: implement ParticleSystem
-    }
+	// TODO: implement ParticleSystem
 }

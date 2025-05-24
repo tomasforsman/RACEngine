@@ -1,7 +1,6 @@
-namespace Rac.Rendering.Shader
+namespace Rac.Rendering.Shader;
+
+public interface IShader
 {
-    public interface IShader
-    {
-        // TODO: implement IShader
-    }
+	// TODO: implement IShader
 }

@@ -1,7 +1,6 @@
-namespace Rac.Audio
+namespace Rac.Audio;
+
+public interface IAudioService
 {
-    public interface IAudioService
-    {
-        // TODO: implement IAudioService
-    }
+	// TODO: implement IAudioService
 }
