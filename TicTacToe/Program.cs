@@ -1,3 +1,9 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿namespace TicTacToe;
 
-Console.WriteLine("Hello, World!");
+class Program
+{
+	static void Main(string[] args)
+	{
+		// Entry point: setup ECS world, initialize, run game loop
+	}
+}
