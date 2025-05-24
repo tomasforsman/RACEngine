@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <RootNamespace>Rac.Engine</RootNamespace>
-    </PropertyGroup>
-    <ItemGroup>
-        <ProjectReference Include="..\Rac.Audio\Rac.Audio.csproj"/>
-        <ProjectReference Include="..\Rac.Core\Rac.Core.csproj"/>
-        <ProjectReference Include="..\Rac.ECS\Rac.ECS.csproj"/>
-        <ProjectReference Include="..\Rac.GameEngine\Rac.GameEngine.csproj"/>
-        <ProjectReference Include="..\Rac.Input\Rac.Input.csproj"/>
-        <ProjectReference Include="..\Rac.Rendering\Rac.Rendering.csproj"/>
-    </ItemGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Rac.Engine</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rac.Audio\Rac.Audio.csproj" />
+    <ProjectReference Include="..\Rac.Core\Rac.Core.csproj" />
+    <ProjectReference Include="..\Rac.ECS\Rac.ECS.csproj" />
+    <ProjectReference Include="..\Rac.GameEngine\Rac.GameEngine.csproj" />
+    <ProjectReference Include="..\Rac.Input\Rac.Input.csproj" />
+    <ProjectReference Include="..\Rac.Rendering\Rac.Rendering.csproj" />
+  </ItemGroup>
 </Project>

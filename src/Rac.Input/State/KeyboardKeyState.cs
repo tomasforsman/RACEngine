@@ -8,30 +8,30 @@ public class KeyboardKeyState
     ///   Key event that just occurred.
     /// </summary>
     public enum KeyEvent
-	{
-		Pressed,
-		Released
-	}
+    {
+        Pressed,
+        Released,
+    }
 
-	private readonly HashSet<Key> keysDown = new();
+    private readonly HashSet<Key> keysDown = new();
 
-	public void KeyDown(Key key)
-	{
-		keysDown.Add(key);
-	}
+    public void KeyDown(Key key)
+    {
+        keysDown.Add(key);
+    }
 
-	public void KeyUp(Key key)
-	{
-		keysDown.Remove(key);
-	}
+    public void KeyUp(Key key)
+    {
+        keysDown.Remove(key);
+    }
 
-	public bool IsKeyDown(Key key)
-	{
-		return keysDown.Contains(key);
-	}
+    public bool IsKeyDown(Key key)
+    {
+        return keysDown.Contains(key);
+    }
 
-	public void Reset()
-	{
-		keysDown.Clear();
-	}
+    public void Reset()
+    {
+        keysDown.Clear();
+    }
 }

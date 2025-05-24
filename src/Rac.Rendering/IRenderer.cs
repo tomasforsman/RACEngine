@@ -10,24 +10,24 @@ namespace Rac.Rendering;
 /// </summary>
 public interface IRenderer
 {
-	/// <summary>Initialize GL state, compile shaders, setup VAO/VBO.</summary>
-	void Initialize(IWindow window);
+    /// <summary>Initialize GL state, compile shaders, setup VAO/VBO.</summary>
+    void Initialize(IWindow window);
 
-	/// <summary>Clear the color buffer at start of a frame.</summary>
-	void Clear();
+    /// <summary>Clear the color buffer at start of a frame.</summary>
+    void Clear();
 
-	/// <summary>Set the RGBA color for subsequent draw calls.</summary>
-	void SetColor(Vector4D<float> rgba);
+    /// <summary>Set the RGBA color for subsequent draw calls.</summary>
+    void SetColor(Vector4D<float> rgba);
 
-	/// <summary>Upload vertex positions (2D) into the VBO.</summary>
-	void UpdateVertices(float[] vertices);
+    /// <summary>Upload vertex positions (2D) into the VBO.</summary>
+    void UpdateVertices(float[] vertices);
 
-	/// <summary>Issue DrawArrays on the currently bound VAO/VBO.</summary>
-	void Draw();
+    /// <summary>Issue DrawArrays on the currently bound VAO/VBO.</summary>
+    void Draw();
 
-	/// <summary>Handle window resize (update viewport & aspect).</summary>
-	void Resize(Vector2D<int> newSize);
+    /// <summary>Handle window resize (update viewport & aspect).</summary>
+    void Resize(Vector2D<int> newSize);
 
-	/// <summary>Release GL resources.</summary>
-	void Shutdown();
+    /// <summary>Release GL resources.</summary>
+    void Shutdown();
 }

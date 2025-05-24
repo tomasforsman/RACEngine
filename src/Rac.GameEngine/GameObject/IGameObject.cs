@@ -1,5 +1,3 @@
 ﻿namespace Rac.GameEngine.GameObject;
 
-public interface IGameObject
-{
-}
+public interface IGameObject { }

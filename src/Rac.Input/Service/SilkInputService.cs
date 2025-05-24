@@ -7,60 +7,60 @@ namespace Rac.Input.Service;
 
 public class SilkInputService : IInputService
 {
-	private IMouse _mouse;
+    private IMouse _mouse;
 
-	// Event to notify left mouse clicks with position in pixels
-	// public event Action<Vector2D<float>>? OnLeftClick;
+    // Event to notify left mouse clicks with position in pixels
+    // public event Action<Vector2D<float>>? OnLeftClick;
 
-	public event Action<Key, KeyboardKeyState.KeyEvent>? PressedKey;
+    public event Action<Key, KeyboardKeyState.KeyEvent>? PressedKey;
 
-	public event Action<Vector2D<float>>? OnLeftClick;
-	public event Action<Key, KeyboardKeyState.KeyEvent>? OnKeyEvent;
-	public KeyboardKeyState KeyboardKeyKeyState { get; } = new();
+    public event Action<Vector2D<float>>? OnLeftClick;
+    public event Action<Key, KeyboardKeyState.KeyEvent>? OnKeyEvent;
+    public KeyboardKeyState KeyboardKeyKeyState { get; } = new();
 
-	public KeyboardKeyState KeyEvent { get; }
+    public KeyboardKeyState KeyEvent { get; }
 
-	public void Initialize(IWindow window)
-	{
-		var inputContext = window.CreateInput();
-		_mouse =
-			inputContext.Mice.Count > 0
-				? inputContext.Mice[0]
-				: throw new InvalidOperationException("No mouse found");
-		_mouse.MouseDown += OnMouseDown;
+    public void Initialize(IWindow window)
+    {
+        var inputContext = window.CreateInput();
+        _mouse =
+            inputContext.Mice.Count > 0
+                ? inputContext.Mice[0]
+                : throw new InvalidOperationException("No mouse found");
+        _mouse.MouseDown += OnMouseDown;
 
-		// Keyboard
-		foreach (var keyboard in inputContext.Keyboards)
-		{
-			keyboard.KeyDown += (_, key, _) =>
-			{
-				KeyboardKeyKeyState.KeyDown(key);
-				OnKeyEvent?.Invoke(key, KeyboardKeyState.KeyEvent.Pressed);
-			};
-			keyboard.KeyUp += (_, key, _) =>
-			{
-				KeyboardKeyKeyState.KeyUp(key);
-				OnKeyEvent?.Invoke(key, KeyboardKeyState.KeyEvent.Released);
-			};
-		}
-	}
+        // Keyboard
+        foreach (var keyboard in inputContext.Keyboards)
+        {
+            keyboard.KeyDown += (_, key, _) =>
+            {
+                KeyboardKeyKeyState.KeyDown(key);
+                OnKeyEvent?.Invoke(key, KeyboardKeyState.KeyEvent.Pressed);
+            };
+            keyboard.KeyUp += (_, key, _) =>
+            {
+                KeyboardKeyKeyState.KeyUp(key);
+                OnKeyEvent?.Invoke(key, KeyboardKeyState.KeyEvent.Released);
+            };
+        }
+    }
 
-	public void Update(double delta)
-	{
-		// Poll or update input state if needed
-	}
+    public void Update(double delta)
+    {
+        // Poll or update input state if needed
+    }
 
-	public void Shutdown()
-	{
-		_mouse.MouseDown -= OnMouseDown;
-	}
+    public void Shutdown()
+    {
+        _mouse.MouseDown -= OnMouseDown;
+    }
 
-	private void OnMouseDown(IMouse m, MouseButton b)
-	{
-		if (b != MouseButton.Left)
-			return;
+    private void OnMouseDown(IMouse m, MouseButton b)
+    {
+        if (b != MouseButton.Left)
+            return;
 
-		var pos = m.Position;
-		OnLeftClick?.Invoke(new Vector2D<float>(pos.X, pos.Y));
-	}
+        var pos = m.Position;
+        OnLeftClick?.Invoke(new Vector2D<float>(pos.X, pos.Y));
+    }
 }

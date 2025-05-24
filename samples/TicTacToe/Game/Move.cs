@@ -1,5 +1,3 @@
 ﻿namespace TicTacToe.Game;
 
-public class Move
-{
-}
+public class Move { }

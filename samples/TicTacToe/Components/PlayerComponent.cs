@@ -2,8 +2,8 @@
 
 public enum Player
 {
-	X,
-	O
+    X,
+    O,
 }
 
 public record struct PlayerComponent(Player PlayerId, bool IsCurrent);

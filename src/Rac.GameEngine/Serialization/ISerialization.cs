@@ -1,5 +1,3 @@
 ﻿namespace Rac.GameEngine.Serialization;
 
-public class ISerialization
-{
-}
+public class ISerialization { }

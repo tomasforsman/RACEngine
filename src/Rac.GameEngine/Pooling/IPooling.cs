@@ -1,5 +1,3 @@
 ﻿namespace Rac.GameEngine.Pooling;
 
-public class IPooling
-{
-}
+public class IPooling { }

@@ -1,5 +1,3 @@
 ﻿namespace TicTacToe.Game;
 
-public class TicTacToeRules
-{
-}
+public class TicTacToeRules { }

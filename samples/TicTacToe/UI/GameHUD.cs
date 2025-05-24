@@ -1,5 +1,3 @@
 ﻿namespace TicTacToe.UI;
 
-public class GameHUD
-{
-}
+public class GameHUD { }

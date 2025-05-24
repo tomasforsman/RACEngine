@@ -8,8 +8,8 @@ namespace Rac.ECS.Component;
 ///   Attaches a runtime species identifier to a boid, plus its draw scale.
 /// </summary>
 public readonly record struct BoidSpeciesComponent(
-	/// <summary>Arbitrary identifier (e.g. "White", "Blue", "Red", or "Enemy", "Ally", etc.)</summary>
-	string SpeciesId,
-	/// <summary>Scale factor for drawing this species.</summary>
-	float Scale
+    /// <summary>Arbitrary identifier (e.g. "White", "Blue", "Red", or "Enemy", "Ally", etc.)</summary>
+    string SpeciesId,
+    /// <summary>Scale factor for drawing this species.</summary>
+    float Scale
 ) : IComponent;

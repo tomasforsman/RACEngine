@@ -2,5 +2,5 @@ namespace Rac.AI.Pathfinder;
 
 public class AStarPathfinder
 {
-	// TODO: implement AStarPathfinder
+    // TODO: implement AStarPathfinder
 }

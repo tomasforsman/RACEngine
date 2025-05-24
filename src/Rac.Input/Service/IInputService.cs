@@ -7,15 +7,15 @@ namespace Rac.Input.Service;
 
 public interface IInputService
 {
-	/// <summary>Realtime polling of which keys are pressed.</summary>
-	KeyboardKeyState KeyboardKeyKeyState { get; }
+    /// <summary>Realtime polling of which keys are pressed.</summary>
+    KeyboardKeyState KeyboardKeyKeyState { get; }
 
-	/// <summary>Realtime polling of which keys are currently down.</summary>
-	KeyboardKeyState KeyEvent { get; }
+    /// <summary>Realtime polling of which keys are currently down.</summary>
+    KeyboardKeyState KeyEvent { get; }
 
-	void Initialize(IWindow window);
-	void Update(double delta);
-	void Shutdown();
+    void Initialize(IWindow window);
+    void Update(double delta);
+    void Shutdown();
 
     /// <summary>
     ///   Occurs when the left mouse button is pressed, providing the position in pixels.

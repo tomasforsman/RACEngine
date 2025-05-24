@@ -2,5 +2,5 @@ namespace Rac.Rendering.GUI;
 
 public interface ImGuiRenderer
 {
-	// TODO: implement ImGuiRenderer
+    // TODO: implement ImGuiRenderer
 }

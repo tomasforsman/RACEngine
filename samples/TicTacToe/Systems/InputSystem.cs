@@ -2,5 +2,5 @@
 
 public class InputSystem
 {
-	/* handles clicks, grid mapping, using Rac.Input */
+    /* handles clicks, grid mapping, using Rac.Input */
 }

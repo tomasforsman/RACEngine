@@ -1,5 +1,3 @@
 ﻿namespace TicTacToe.Systems;
 
-public class RenderSystem
-{
-}
+public class RenderSystem { }
