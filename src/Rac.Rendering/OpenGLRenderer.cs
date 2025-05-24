@@ -1,6 +1,5 @@
 // File: src/Engine/Rendering/OpenGLRenderer.cs
 
-using System;
 using Rac.Rendering.Shader;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -22,7 +21,7 @@ public class OpenGLRenderer : IRenderer
     private uint _vertexCount;
     private float _aspectRatio;
 
-    public unsafe void Initialize(IWindow window)
+    public void Initialize(IWindow window)
     {
         _gl = GL.GetApi(window);
         _gl.ClearColor(0f, 0f, 0f, 1f);
@@ -45,8 +44,8 @@ public class OpenGLRenderer : IRenderer
             /* size      */ 2,
             /* type      */ VertexAttribPointerType.Float,
             /* normalized*/ false,
-            /* stride    */ (uint)(2 * sizeof(float)),
-            /* pointer   */ (IntPtr)0
+            /* stride    */ 2 * sizeof(float),
+            /* pointer   */ IntPtr.Zero
         );
 
         Resize(window.Size);

@@ -50,6 +50,21 @@ public sealed class World
         throw new InvalidOperationException(
             $"No singleton component of type {componentType.Name} registered.");
     }
+    
+    /// <summary>
+    /// Queries all entities that have component <typeparamref name="T1"/>.
+    /// </summary>
+    public IEnumerable<(Entity Entity, T1 Component1)> Query<T1>()
+        where T1 : IComponent
+    {
+        var pool1 = GetPool<T1>();
+
+        foreach (var (entityId, component) in pool1)
+        {
+            yield return (new Entity(entityId), (T1)component);
+        }
+    }
+
 
     /// <summary>
     /// Queries all entities that have both components T1 and T2.
