@@ -37,6 +37,7 @@ public class OpenGLRenderer : IRenderer
     // Post-processing
     private PostProcessing? _postProcessing;
     private bool _isBloomActive = false;
+    private Vector2D<int> _windowSize;
 
     /// <summary>Gets the post-processing system for bloom parameter configuration.</summary>
     public PostProcessing? PostProcessing => _postProcessing;
@@ -88,9 +89,8 @@ public class OpenGLRenderer : IRenderer
             /* pointer   */IntPtr.Zero
         );
 
-        // Initialize post-processing
-        _postProcessing = new PostProcessing(_gl);
-        _postProcessing.Initialize(window.Size.X, window.Size.Y);
+        // Post-processing will be initialized lazily when first needed
+        _windowSize = window.Size;
 
         Resize(window.Size);
     }
@@ -98,9 +98,18 @@ public class OpenGLRenderer : IRenderer
     public void Clear()
     {
         // If bloom is active, begin scene pass to render to framebuffer
-        if (_isBloomActive && _postProcessing != null)
+        if (_isBloomActive)
         {
-            _postProcessing.BeginScenePass();
+            EnsurePostProcessingInitialized();
+            if (_postProcessing != null)
+            {
+                _postProcessing.BeginScenePass();
+            }
+            else
+            {
+                // Fallback to normal clearing if post-processing failed to initialize
+                _gl.Clear(ClearBufferMask.ColorBufferBit);
+            }
         }
         else
         {
@@ -201,6 +210,28 @@ public class OpenGLRenderer : IRenderer
     }
 
     /// <summary>
+    /// Ensures post-processing is initialized when bloom is needed.
+    /// </summary>
+    private void EnsurePostProcessingInitialized()
+    {
+        if (_postProcessing == null)
+        {
+            try
+            {
+                _postProcessing = new PostProcessing(_gl);
+                _postProcessing.Initialize(_windowSize.X, _windowSize.Y);
+            }
+            catch (Exception ex)
+            {
+                // If post-processing initialization fails, disable bloom
+                Console.WriteLine($"Warning: Failed to initialize bloom post-processing: {ex.Message}");
+                _isBloomActive = false;
+                _postProcessing = null;
+            }
+        }
+    }
+
+    /// <summary>
     /// Finalizes the frame, applying bloom post-processing if active.
     /// </summary>
     public void FinalizeFrame()
@@ -215,8 +246,9 @@ public class OpenGLRenderer : IRenderer
     {
         _gl.Viewport(0, 0, (uint)newSize.X, (uint)newSize.Y);
         _aspectRatio = newSize.Y / (float)newSize.X;
+        _windowSize = newSize;
         
-        // Resize post-processing framebuffers
+        // Resize post-processing framebuffers if initialized
         _postProcessing?.Resize(newSize.X, newSize.Y);
     }
 
