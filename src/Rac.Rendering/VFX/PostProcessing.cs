@@ -55,6 +55,9 @@ public class PostProcessing
     /// </summary>
     public void Initialize(int screenWidth, int screenHeight)
     {
+        // Validate OpenGL context and required features
+        ValidateOpenGLContext();
+        
         _screenWidth = screenWidth;
         _screenHeight = screenHeight;
         
@@ -73,6 +76,16 @@ public class PostProcessing
 
         // Load shaders
         LoadShaders();
+    }
+
+    private void ValidateOpenGLContext()
+    {
+        // Check that basic OpenGL functions are available
+        var error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            throw new InvalidOperationException($"OpenGL context has existing error: {error}");
+        }
     }
 
     private void LoadShaders()
