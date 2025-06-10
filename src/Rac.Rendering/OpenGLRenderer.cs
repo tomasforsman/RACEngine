@@ -38,6 +38,9 @@ public class OpenGLRenderer : IRenderer
     private PostProcessing? _postProcessing;
     private bool _isBloomActive = false;
 
+    /// <summary>Gets the post-processing system for bloom parameter configuration.</summary>
+    public PostProcessing? PostProcessing => _postProcessing;
+
     private uint _vao;
     private uint _vbo;
     private uint _vertexCount;
