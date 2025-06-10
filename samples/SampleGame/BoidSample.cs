@@ -6,6 +6,7 @@ using Rac.ECS.Component;
 using Rac.ECS.System;
 using Rac.Engine;
 using Rac.Input.Service;
+using Rac.Rendering.Shader;
 using Silk.NET.Maths;
 
 namespace SampleGame;
@@ -189,6 +190,16 @@ public static class BoidSample
             if (verts.Count == 0)
                 return;
 
+            // Use glow shader for red boids, normal shader for others
+            if (filterId == "Red")
+            {
+                engine.Renderer.SetShaderMode(ShaderMode.Bloom);
+            }
+            else
+            {
+                engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            }
+
             engine.Renderer.SetColor(speciesColors[filterId]);
             engine.Renderer.UpdateVertices(verts.ToArray());
             engine.Renderer.Draw();
@@ -224,6 +235,7 @@ public static class BoidSample
             if (verts.Count == 0)
                 return;
 
+            engine.Renderer.SetShaderMode(ShaderMode.Normal);
             engine.Renderer.SetColor(color);
             engine.Renderer.UpdateVertices(verts.ToArray());
             engine.Renderer.Draw();

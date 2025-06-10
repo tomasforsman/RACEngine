@@ -1,0 +1,16 @@
+namespace Rac.Rendering.Shader;
+
+/// <summary>
+/// Defines the available shader rendering modes for different visual effects.
+/// </summary>
+public enum ShaderMode
+{
+    /// <summary>Standard flat color rendering.</summary>
+    Normal,
+    
+    /// <summary>Soft edge glow effect with radial gradient alpha.</summary>
+    SoftGlow,
+    
+    /// <summary>Advanced bloom effect with enhanced glow radius.</summary>
+    Bloom
+}
