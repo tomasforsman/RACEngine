@@ -10,70 +10,7 @@ namespace Rac.Rendering;
 /// <inheritdoc />
 public class OpenGLRenderer : IRenderer
 {
-    private const string VertexShaderSource =
-        @"#version 330 core
-layout(location = 0) in vec2 position;
-uniform float uAspect;
-void main()
-{
-    gl_Position = vec4(position.x * uAspect, position.y, 0.0, 1.0);
-}";
 
-    private const string FragmentShaderSource =
-        @"#version 330 core
-out vec4 fragColor;
-uniform vec4 uColor;
-void main()
-{
-    fragColor = uColor;
-}";
-
-    private const string SoftGlowFragmentShaderSource =
-        @"#version 330 core
-out vec4 fragColor;
-uniform vec4 uColor;
-void main()
-{
-    // Soft glow effect with moderate brightness boost and slight desaturation
-    vec3 baseColor = uColor.rgb;
-    
-    // Boost brightness moderately
-    vec3 glowColor = baseColor * 1.3;
-    
-    // Slight desaturation for softer appearance
-    float luminance = dot(glowColor, vec3(0.299, 0.587, 0.114));
-    glowColor = mix(glowColor, vec3(luminance), 0.1);
-    
-    // Clamp to prevent overflow
-    glowColor = min(glowColor, vec3(1.0));
-    
-    fragColor = vec4(glowColor, uColor.a);
-}";
-
-    private const string BloomFragmentShaderSource =
-        @"#version 330 core
-out vec4 fragColor;
-uniform vec4 uColor;
-void main()
-{
-    // Enhanced bloom effect with strong brightness boost and color saturation
-    vec3 baseColor = uColor.rgb;
-    
-    // Strong brightness boost for bloom
-    vec3 bloomColor = baseColor * 2.2;
-    
-    // Increase color saturation for more vibrant bloom
-    float luminance = dot(bloomColor, vec3(0.299, 0.587, 0.114));
-    bloomColor = mix(vec3(luminance), bloomColor, 1.4);
-    
-    // Slight shift towards white for authentic bloom look
-    bloomColor = mix(bloomColor, vec3(1.0), 0.1);
-    
-    // Clamp to prevent overflow
-    bloomColor = min(bloomColor, vec3(1.0));
-    
-    fragColor = vec4(bloomColor, uColor.a * 1.1);
-}";
 
     private int _aspectLocation;
     private float _aspectRatio;
@@ -105,10 +42,11 @@ void main()
         _gl = GL.GetApi(window);
         _gl.ClearColor(0f, 0f, 0f, 1f);
 
-        // Create all shader programs
-        _normalShader = new ShaderProgram(_gl, VertexShaderSource, FragmentShaderSource);
-        _softGlowShader = new ShaderProgram(_gl, VertexShaderSource, SoftGlowFragmentShaderSource);
-        _bloomShader = new ShaderProgram(_gl, VertexShaderSource, BloomFragmentShaderSource);
+        // Create all shader programs using ShaderLoader
+        var vertexShaderSource = ShaderLoader.LoadVertexShader();
+        _normalShader = new ShaderProgram(_gl, vertexShaderSource, ShaderLoader.LoadFragmentShader(ShaderMode.Normal));
+        _softGlowShader = new ShaderProgram(_gl, vertexShaderSource, ShaderLoader.LoadFragmentShader(ShaderMode.SoftGlow));
+        _bloomShader = new ShaderProgram(_gl, vertexShaderSource, ShaderLoader.LoadFragmentShader(ShaderMode.Bloom));
 
         // Set initial shader and program handle
         _shader = _normalShader;

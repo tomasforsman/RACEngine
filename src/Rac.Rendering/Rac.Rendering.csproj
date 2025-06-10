@@ -10,4 +10,9 @@
     <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Windowing.Common" Version="2.22.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Shader/Files/*.glsl" CopyToOutputDirectory="Always" />
+    <Content Include="Shader/Files/*.frag" CopyToOutputDirectory="Always" />
+  </ItemGroup>
 </Project>
