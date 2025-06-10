@@ -28,12 +28,54 @@ void main()
     fragColor = uColor;
 }";
 
+    private const string SoftGlowFragmentShaderSource =
+        @"#version 330 core
+out vec4 fragColor;
+uniform vec4 uColor;
+void main()
+{
+    // For triangle-based rendering, create a simple glow effect
+    // by modulating alpha based on fragment position
+    vec2 coord = gl_FragCoord.xy;
+    
+    // Simple soft edge effect - brighten the color for glow appearance
+    vec3 glowColor = uColor.rgb * 1.5; // Boost brightness
+    fragColor = vec4(glowColor, uColor.a);
+}";
+
+    private const string BloomFragmentShaderSource =
+        @"#version 330 core
+out vec4 fragColor;
+uniform vec4 uColor;
+void main()
+{
+    // Enhanced bloom effect with brighter, more saturated colors
+    vec3 bloomColor = uColor.rgb * 2.0; // Strong boost for bloom
+    bloomColor = min(bloomColor, vec3(1.0)); // Clamp to prevent overflow
+    
+    fragColor = vec4(bloomColor, uColor.a);
+}";
+
     private int _aspectLocation;
     private float _aspectRatio;
     private int _colorLocation;
     private GL _gl = null!;
     private uint _programHandle;
     private ShaderProgram _shader = null!;
+
+    // Multiple shader support
+    private ShaderProgram _normalShader = null!;
+    private ShaderProgram _softGlowShader = null!;
+    private ShaderProgram _bloomShader = null!;
+    private ShaderMode _currentShaderMode = ShaderMode.Normal;
+    
+    // Uniform locations for each shader
+    private int _normalAspectLocation;
+    private int _normalColorLocation;
+    private int _softGlowAspectLocation;
+    private int _softGlowColorLocation;
+    private int _bloomAspectLocation;
+    private int _bloomColorLocation;
 
     private uint _vao;
     private uint _vbo;
@@ -44,11 +86,26 @@ void main()
         _gl = GL.GetApi(window);
         _gl.ClearColor(0f, 0f, 0f, 1f);
 
-        _shader = new ShaderProgram(_gl, VertexShaderSource, FragmentShaderSource);
+        // Create all shader programs
+        _normalShader = new ShaderProgram(_gl, VertexShaderSource, FragmentShaderSource);
+        _softGlowShader = new ShaderProgram(_gl, VertexShaderSource, SoftGlowFragmentShaderSource);
+        _bloomShader = new ShaderProgram(_gl, VertexShaderSource, BloomFragmentShaderSource);
+
+        // Set initial shader and program handle
+        _shader = _normalShader;
         _programHandle = _shader.Handle;
 
-        _aspectLocation = _gl.GetUniformLocation(_programHandle, "uAspect");
-        _colorLocation = _gl.GetUniformLocation(_programHandle, "uColor");
+        // Get uniform locations for all shaders
+        _normalAspectLocation = _gl.GetUniformLocation(_normalShader.Handle, "uAspect");
+        _normalColorLocation = _gl.GetUniformLocation(_normalShader.Handle, "uColor");
+        _softGlowAspectLocation = _gl.GetUniformLocation(_softGlowShader.Handle, "uAspect");
+        _softGlowColorLocation = _gl.GetUniformLocation(_softGlowShader.Handle, "uColor");
+        _bloomAspectLocation = _gl.GetUniformLocation(_bloomShader.Handle, "uAspect");
+        _bloomColorLocation = _gl.GetUniformLocation(_bloomShader.Handle, "uColor");
+
+        // Set legacy uniform locations for backward compatibility
+        _aspectLocation = _normalAspectLocation;
+        _colorLocation = _normalColorLocation;
 
         _vao = _gl.GenVertexArray();
         _gl.BindVertexArray(_vao);
@@ -76,7 +133,49 @@ void main()
 
     public void SetColor(Vector4D<float> rgba)
     {
-        _gl.Uniform4(_colorLocation, rgba.X, rgba.Y, rgba.Z, rgba.W);
+        // Use the appropriate color location based on current shader mode
+        var colorLocation = _currentShaderMode switch
+        {
+            ShaderMode.Normal => _normalColorLocation,
+            ShaderMode.SoftGlow => _softGlowColorLocation,
+            ShaderMode.Bloom => _bloomColorLocation,
+            _ => _normalColorLocation
+        };
+        
+        _gl.Uniform4(colorLocation, rgba.X, rgba.Y, rgba.Z, rgba.W);
+    }
+
+    public void SetShaderMode(ShaderMode mode)
+    {
+        _currentShaderMode = mode;
+        
+        // Update current shader and program handle
+        _shader = mode switch
+        {
+            ShaderMode.Normal => _normalShader,
+            ShaderMode.SoftGlow => _softGlowShader,
+            ShaderMode.Bloom => _bloomShader,
+            _ => _normalShader
+        };
+        
+        _programHandle = _shader.Handle;
+        
+        // Update legacy uniform locations for backward compatibility
+        _aspectLocation = mode switch
+        {
+            ShaderMode.Normal => _normalAspectLocation,
+            ShaderMode.SoftGlow => _softGlowAspectLocation,
+            ShaderMode.Bloom => _bloomAspectLocation,
+            _ => _normalAspectLocation
+        };
+        
+        _colorLocation = mode switch
+        {
+            ShaderMode.Normal => _normalColorLocation,
+            ShaderMode.SoftGlow => _softGlowColorLocation,
+            ShaderMode.Bloom => _bloomColorLocation,
+            _ => _normalColorLocation
+        };
     }
 
     public unsafe void UpdateVertices(float[] vertices)
@@ -110,7 +209,9 @@ void main()
 
     public void Shutdown()
     {
-        _shader.Dispose();
+        _normalShader.Dispose();
+        _softGlowShader.Dispose();
+        _bloomShader.Dispose();
         _gl.DeleteBuffer(_vbo);
         _gl.DeleteVertexArray(_vao);
     }
