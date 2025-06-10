@@ -14,5 +14,6 @@
   <ItemGroup>
     <Content Include="Shader/Files/*.glsl" CopyToOutputDirectory="Always" />
     <Content Include="Shader/Files/*.frag" CopyToOutputDirectory="Always" />
+    <Content Include="Shader/Files/*.vert" CopyToOutputDirectory="Always" />
   </ItemGroup>
 </Project>

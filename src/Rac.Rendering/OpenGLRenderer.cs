@@ -1,6 +1,7 @@
 // File: src/Engine/Rendering/OpenGLRenderer.cs
 
 using Rac.Rendering.Shader;
+using Rac.Rendering.VFX;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
@@ -32,6 +33,10 @@ public class OpenGLRenderer : IRenderer
     private int _softGlowColorLocation;
     private int _bloomAspectLocation;
     private int _bloomColorLocation;
+
+    // Post-processing
+    private PostProcessing? _postProcessing;
+    private bool _isBloomActive = false;
 
     private uint _vao;
     private uint _vbo;
@@ -80,12 +85,24 @@ public class OpenGLRenderer : IRenderer
             /* pointer   */IntPtr.Zero
         );
 
+        // Initialize post-processing
+        _postProcessing = new PostProcessing(_gl);
+        _postProcessing.Initialize(window.Size.X, window.Size.Y);
+
         Resize(window.Size);
     }
 
     public void Clear()
     {
-        _gl.Clear(ClearBufferMask.ColorBufferBit);
+        // If bloom is active, begin scene pass to render to framebuffer
+        if (_isBloomActive && _postProcessing != null)
+        {
+            _postProcessing.BeginScenePass();
+        }
+        else
+        {
+            _gl.Clear(ClearBufferMask.ColorBufferBit);
+        }
         
         // Reset to normal shader mode at the start of each frame
         if (_currentShaderMode != ShaderMode.Normal)
@@ -112,24 +129,28 @@ public class OpenGLRenderer : IRenderer
     {
         _currentShaderMode = mode;
         
+        // Determine if bloom post-processing should be active
+        _isBloomActive = (mode == ShaderMode.Bloom);
+        
         // Configure blending based on shader mode
-        if (mode == ShaderMode.Normal)
+        if (mode == ShaderMode.Normal || _isBloomActive)
         {
             _gl.Disable(EnableCap.Blend);
         }
         else
         {
-            // Enable additive blending for glow effects
+            // Enable additive blending for SoftGlow effects
             _gl.Enable(EnableCap.Blend);
             _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
         }
         
         // Update current shader and program handle
+        // For bloom mode, we use the simplified bloom shader for scene rendering
         _shader = mode switch
         {
             ShaderMode.Normal => _normalShader,
             ShaderMode.SoftGlow => _softGlowShader,
-            ShaderMode.Bloom => _bloomShader,
+            ShaderMode.Bloom => _bloomShader, // This now uses the simplified version
             _ => _normalShader
         };
         
@@ -176,10 +197,24 @@ public class OpenGLRenderer : IRenderer
         _gl.DrawArrays(PrimitiveType.Triangles, 0, _vertexCount);
     }
 
+    /// <summary>
+    /// Finalizes the frame, applying bloom post-processing if active.
+    /// </summary>
+    public void FinalizeFrame()
+    {
+        if (_isBloomActive && _postProcessing != null)
+        {
+            _postProcessing.EndScenePassAndApplyBloom();
+        }
+    }
+
     public void Resize(Vector2D<int> newSize)
     {
         _gl.Viewport(0, 0, (uint)newSize.X, (uint)newSize.Y);
         _aspectRatio = newSize.Y / (float)newSize.X;
+        
+        // Resize post-processing framebuffers
+        _postProcessing?.Resize(newSize.X, newSize.Y);
     }
 
     public void Shutdown()
@@ -187,6 +222,7 @@ public class OpenGLRenderer : IRenderer
         _normalShader.Dispose();
         _softGlowShader.Dispose();
         _bloomShader.Dispose();
+        _postProcessing?.Shutdown();
         _gl.DeleteBuffer(_vbo);
         _gl.DeleteVertexArray(_vao);
     }

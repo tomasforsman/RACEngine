@@ -97,6 +97,7 @@ public class Engine
             _renderer.Clear();
             OnRenderFrame?.Invoke((float)dt);
             _renderer.Draw();
+            _renderer.FinalizeFrame();
         };
 
         // Update pass: input + ECS

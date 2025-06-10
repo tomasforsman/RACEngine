@@ -29,6 +29,9 @@ public interface IRenderer
     /// <summary>Issue DrawArrays on the currently bound VAO/VBO.</summary>
     void Draw();
 
+    /// <summary>Finalize frame rendering with post-processing effects.</summary>
+    void FinalizeFrame();
+
     /// <summary>Handle window resize (update viewport & aspect).</summary>
     void Resize(Vector2D<int> newSize);
 

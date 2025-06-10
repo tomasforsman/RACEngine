@@ -39,7 +39,7 @@ public static class ShaderLoader
     /// </summary>
     /// <param name="filename">The name of the shader file.</param>
     /// <returns>The shader source code.</returns>
-    private static string LoadShaderFromFile(string filename)
+    public static string LoadShaderFromFile(string filename)
     {
         // Get the directory where this assembly is located
         var assemblyLocation = Assembly.GetExecutingAssembly().Location;
