@@ -34,12 +34,19 @@ out vec4 fragColor;
 uniform vec4 uColor;
 void main()
 {
-    // For triangle-based rendering, create a simple glow effect
-    // by modulating alpha based on fragment position
-    vec2 coord = gl_FragCoord.xy;
+    // Soft glow effect with moderate brightness boost and slight desaturation
+    vec3 baseColor = uColor.rgb;
     
-    // Simple soft edge effect - brighten the color for glow appearance
-    vec3 glowColor = uColor.rgb * 1.5; // Boost brightness
+    // Boost brightness moderately
+    vec3 glowColor = baseColor * 1.3;
+    
+    // Slight desaturation for softer appearance
+    float luminance = dot(glowColor, vec3(0.299, 0.587, 0.114));
+    glowColor = mix(glowColor, vec3(luminance), 0.1);
+    
+    // Clamp to prevent overflow
+    glowColor = min(glowColor, vec3(1.0));
+    
     fragColor = vec4(glowColor, uColor.a);
 }";
 
@@ -49,11 +56,23 @@ out vec4 fragColor;
 uniform vec4 uColor;
 void main()
 {
-    // Enhanced bloom effect with brighter, more saturated colors
-    vec3 bloomColor = uColor.rgb * 2.0; // Strong boost for bloom
-    bloomColor = min(bloomColor, vec3(1.0)); // Clamp to prevent overflow
+    // Enhanced bloom effect with strong brightness boost and color saturation
+    vec3 baseColor = uColor.rgb;
     
-    fragColor = vec4(bloomColor, uColor.a);
+    // Strong brightness boost for bloom
+    vec3 bloomColor = baseColor * 2.2;
+    
+    // Increase color saturation for more vibrant bloom
+    float luminance = dot(bloomColor, vec3(0.299, 0.587, 0.114));
+    bloomColor = mix(vec3(luminance), bloomColor, 1.4);
+    
+    // Slight shift towards white for authentic bloom look
+    bloomColor = mix(bloomColor, vec3(1.0), 0.1);
+    
+    // Clamp to prevent overflow
+    bloomColor = min(bloomColor, vec3(1.0));
+    
+    fragColor = vec4(bloomColor, uColor.a * 1.1);
 }";
 
     private int _aspectLocation;
@@ -129,6 +148,12 @@ void main()
     public void Clear()
     {
         _gl.Clear(ClearBufferMask.ColorBufferBit);
+        
+        // Reset to normal shader mode at the start of each frame
+        if (_currentShaderMode != ShaderMode.Normal)
+        {
+            SetShaderMode(ShaderMode.Normal);
+        }
     }
 
     public void SetColor(Vector4D<float> rgba)
@@ -148,6 +173,18 @@ void main()
     public void SetShaderMode(ShaderMode mode)
     {
         _currentShaderMode = mode;
+        
+        // Configure blending based on shader mode
+        if (mode == ShaderMode.Normal)
+        {
+            _gl.Disable(EnableCap.Blend);
+        }
+        else
+        {
+            // Enable additive blending for glow effects
+            _gl.Enable(EnableCap.Blend);
+            _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
+        }
         
         // Update current shader and program handle
         _shader = mode switch
