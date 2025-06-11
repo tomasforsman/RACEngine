@@ -97,76 +97,114 @@ public class ShaderProgram : IDisposable
         _gl = gl;
 
         // ───────────────────────────────────────────────────────────────────────
-        // INDIVIDUAL SHADER COMPILATION
+        // EXCEPTION-SAFE RESOURCE MANAGEMENT
         // ───────────────────────────────────────────────────────────────────────
         //
-        // VERTEX SHADER RESPONSIBILITIES:
-        // - Transform vertex positions from model space to screen space
-        // - Calculate per-vertex lighting (if using Gouraud shading)
-        // - Pass texture coordinates and other data to fragment shader
-        // - Set gl_Position built-in variable (required output)
-        //
-        // FRAGMENT SHADER RESPONSIBILITIES:
-        // - Calculate final pixel color based on interpolated vertex data
-        // - Apply textures, lighting, and visual effects
-        // - Handle transparency and blending operations
-        // - Set gl_FragColor or custom output variables
+        // RESOURCE CLEANUP STRATEGY:
+        // - Track shader objects that have been successfully created
+        // - On any exception, clean up allocated resources before rethrowing
+        // - Prevents GPU memory leaks during shader hot-reload failures
+        // - Ensures deterministic resource cleanup in all failure scenarios
 
-        uint vs = Compile(ShaderType.VertexShader, vertSrc);
-        uint fs = Compile(ShaderType.FragmentShader, fragSrc);
+        uint vs = 0;
+        uint fs = 0;
 
-        // ───────────────────────────────────────────────────────────────────────
-        // PROGRAM OBJECT CREATION AND LINKING
-        // ───────────────────────────────────────────────────────────────────────
-        //
-        // PROGRAM OBJECT PURPOSE:
-        // - Container for multiple shader stages
-        // - Manages inter-stage variable connections
-        // - Provides interface for uniform variable access
-        // - Can be activated for rendering via glUseProgram()
+        try
+        {
+            // ───────────────────────────────────────────────────────────────────────
+            // INDIVIDUAL SHADER COMPILATION
+            // ───────────────────────────────────────────────────────────────────────
+            //
+            // VERTEX SHADER RESPONSIBILITIES:
+            // - Transform vertex positions from model space to screen space
+            // - Calculate per-vertex lighting (if using Gouraud shading)
+            // - Pass texture coordinates and other data to fragment shader
+            // - Set gl_Position built-in variable (required output)
+            //
+            // FRAGMENT SHADER RESPONSIBILITIES:
+            // - Calculate final pixel color based on interpolated vertex data
+            // - Apply textures, lighting, and visual effects
+            // - Handle transparency and blending operations
+            // - Set gl_FragColor or custom output variables
 
-        Handle = _gl.CreateProgram();
+            vs = Compile(ShaderType.VertexShader, vertSrc);
+            fs = Compile(ShaderType.FragmentShader, fragSrc);
 
-        // Attach compiled shaders to program
-        _gl.AttachShader(Handle, vs);
-        _gl.AttachShader(Handle, fs);
+            // ───────────────────────────────────────────────────────────────────────
+            // PROGRAM OBJECT CREATION AND LINKING
+            // ───────────────────────────────────────────────────────────────────────
+            //
+            // PROGRAM OBJECT PURPOSE:
+            // - Container for multiple shader stages
+            // - Manages inter-stage variable connections
+            // - Provides interface for uniform variable access
+            // - Can be activated for rendering via glUseProgram()
 
-        // ───────────────────────────────────────────────────────────────────────
-        // LINKING PHASE
-        // ───────────────────────────────────────────────────────────────────────
-        //
-        // LINKING PROCESS:
-        // 1. Resolve vertex shader outputs → fragment shader inputs
-        // 2. Optimize shader code for target GPU architecture
-        // 3. Generate final GPU machine code
-        // 4. Validate program meets OpenGL requirements
-        // 5. Create symbol table for uniform/attribute access
-        //
-        // COMMON LINK ERRORS:
-        // - Vertex output variable has no matching fragment input
-        // - Fragment shader doesn't write to required output
-        // - Too many uniform variables for GPU limits
-        // - Incompatible variable types between stages
+            Handle = _gl.CreateProgram();
 
-        _gl.LinkProgram(Handle);
+            // Attach compiled shaders to program
+            _gl.AttachShader(Handle, vs);
+            _gl.AttachShader(Handle, fs);
 
-        // ───────────────────────────────────────────────────────────────────────
-        // RESOURCE CLEANUP
-        // ───────────────────────────────────────────────────────────────────────
-        //
-        // SHADER OBJECT LIFECYCLE:
-        // After linking, individual shader objects are no longer needed.
-        // Program object contains all necessary compiled code.
-        // Deleting shader objects frees GPU memory and driver resources.
-        //
-        // IMPORTANT: This doesn't affect the linked program.
-        // Similar to deleting .obj files after linking an executable.
+            // ───────────────────────────────────────────────────────────────────────
+            // LINKING PHASE
+            // ───────────────────────────────────────────────────────────────────────
+            //
+            // LINKING PROCESS:
+            // 1. Resolve vertex shader outputs → fragment shader inputs
+            // 2. Optimize shader code for target GPU architecture
+            // 3. Generate final GPU machine code
+            // 4. Validate program meets OpenGL requirements
+            // 5. Create symbol table for uniform/attribute access
+            //
+            // COMMON LINK ERRORS:
+            // - Vertex output variable has no matching fragment input
+            // - Fragment shader doesn't write to required output
+            // - Too many uniform variables for GPU limits
+            // - Incompatible variable types between stages
 
-        _gl.DeleteShader(vs);
-        _gl.DeleteShader(fs);
+            _gl.LinkProgram(Handle);
 
-        // Note: Link error checking could be added here for robustness.
-        // Production code should verify _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus)
+            // ───────────────────────────────────────────────────────────────────────
+            // RESOURCE CLEANUP
+            // ───────────────────────────────────────────────────────────────────────
+            //
+            // SHADER OBJECT LIFECYCLE:
+            // After linking, individual shader objects are no longer needed.
+            // Program object contains all necessary compiled code.
+            // Deleting shader objects frees GPU memory and driver resources.
+            //
+            // IMPORTANT: This doesn't affect the linked program.
+            // Similar to deleting .obj files after linking an executable.
+
+            _gl.DeleteShader(vs);
+            _gl.DeleteShader(fs);
+
+            // Note: Link error checking could be added here for robustness.
+            // Production code should verify _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus)
+        }
+        catch (Exception)
+        {
+            // ───────────────────────────────────────────────────────────────────────
+            // EMERGENCY RESOURCE CLEANUP
+            // ───────────────────────────────────────────────────────────────────────
+            //
+            // CLEANUP SCENARIOS:
+            // - Vertex shader compiled, fragment shader compilation failed
+            // - Both shaders compiled, program creation/linking failed
+            // - Any OpenGL operation threw an exception
+            //
+            // SAFE CLEANUP APPROACH:
+            // OpenGL DeleteShader/DeleteProgram ignore invalid handles (0)
+            // Safe to call without checking handle validity
+
+            if (vs != 0) _gl.DeleteShader(vs);
+            if (fs != 0) _gl.DeleteShader(fs);
+            if (Handle != 0) _gl.DeleteProgram(Handle);
+
+            // Rethrow original exception after cleanup
+            throw;
+        }
     }
 
     /// <summary>
