@@ -26,6 +26,12 @@ public interface IRenderer
     /// <summary>Upload vertex positions (2D) into the VBO.</summary>
     void UpdateVertices(float[] vertices);
 
+    /// <summary>Upload vertex data with automatic layout detection and type safety.</summary>
+    void UpdateVertices<T>(T[] vertices) where T : unmanaged;
+
+    /// <summary>Upload raw float array with explicit layout specification.</summary>
+    void UpdateVertices(float[] vertices, VertexLayout layout);
+
     /// <summary>Issue DrawArrays on the currently bound VAO/VBO.</summary>
     void Draw();
 
