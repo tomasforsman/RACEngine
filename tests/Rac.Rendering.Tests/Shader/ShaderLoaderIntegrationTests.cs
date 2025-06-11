@@ -84,4 +84,29 @@ public class ShaderLoaderIntegrationTests
         Assert.True(report[ShaderMode.SoftGlow].IsAvailable);
         Assert.True(report[ShaderMode.Bloom].IsAvailable);
     }
+
+    [Theory]
+    [InlineData("fullscreen_quad.vert")]
+    [InlineData("brightness_extract.frag")]
+    [InlineData("gaussian_blur.frag")]
+    [InlineData("bloom_composite.frag")]
+    public void ShaderLoader_CanLoadPostProcessingShaders(string filename)
+    {
+        // Test that all post-processing shaders can be loaded
+        var shaderSource = ShaderLoader.LoadShaderFromFile(filename);
+        
+        Assert.NotNull(shaderSource);
+        Assert.NotEmpty(shaderSource);
+        Assert.Contains("#version 330 core", shaderSource);
+        
+        // Verify shader type-specific content
+        if (filename.EndsWith(".vert"))
+        {
+            Assert.Contains("gl_Position", shaderSource);
+        }
+        else if (filename.EndsWith(".frag"))
+        {
+            Assert.Contains("fragColor", shaderSource);
+        }
+    }
 }
