@@ -70,6 +70,7 @@ namespace Rac.Rendering.Shader;
 public class ShaderProgram : IDisposable
 {
     private readonly GL _gl;
+    private bool _disposed = false;
 
     /// <summary>
     /// Creates and links a complete shader program from vertex and fragment source.
@@ -236,6 +237,19 @@ public class ShaderProgram : IDisposable
     public void Dispose()
     {
         // ───────────────────────────────────────────────────────────────────────
+        // STANDARD IDISPOSABLE PATTERN IMPLEMENTATION
+        // ───────────────────────────────────────────────────────────────────────
+        //
+        // IDEMPOTENCY PROTECTION:
+        // - Ensures Dispose() can be called multiple times safely
+        // - Prevents duplicate resource deallocation attempts
+        // - Follows .NET disposal pattern best practices
+        // - Guards against OpenGL errors from invalid handle usage
+
+        if (_disposed)
+            return;
+
+        // ───────────────────────────────────────────────────────────────────────
         // GPU RESOURCE DEALLOCATION
         // ───────────────────────────────────────────────────────────────────────
         //
@@ -246,11 +260,14 @@ public class ShaderProgram : IDisposable
         // - May trigger GPU cache reorganization
         //
         // SAFETY NOTES:
-        // - Safe to call multiple times (OpenGL ignores invalid handles)
         // - Program must not be currently active when deleted
         // - Any uniform locations become invalid after deletion
 
         _gl.DeleteProgram(Handle);
+        _disposed = true;
+
+        // Suppress finalizer since we've cleaned up resources explicitly
+        GC.SuppressFinalize(this);
 
         // Note: Consider implementing finalizer for safety:
         // ~ShaderProgram() { Dispose(); }
