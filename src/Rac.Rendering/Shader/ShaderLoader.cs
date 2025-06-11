@@ -42,6 +42,7 @@
 //
 // ════════════════════════════════════════════════════════════════════════════════
 
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace Rac.Rendering.Shader;
@@ -78,9 +79,10 @@ public static class ShaderLoader
     // Cache discovered paths and loaded content to avoid repeated I/O.
     // Lazy evaluation defers work until actually needed.
 
-    private static readonly Dictionary<string, string> _shaderCache = new();
-    private static readonly Dictionary<ShaderMode, bool> _availabilityCache = new();
+    private static readonly ConcurrentDictionary<string, string> _shaderCache = new();
+    private static readonly ConcurrentDictionary<ShaderMode, bool> _availabilityCache = new();
     private static string? _cachedShaderDirectory;
+    private static readonly object _directoryLock = new();
 
     /// <summary>
     /// Loads vertex shader source with caching for performance.
@@ -300,7 +302,12 @@ public static class ShaderLoader
     {
         _shaderCache.Clear();
         _availabilityCache.Clear();
-        _cachedShaderDirectory = null;
+        
+        // Thread-safe clearing of cached directory
+        lock (_directoryLock)
+        {
+            _cachedShaderDirectory = null;
+        }
     }
 
     /// <summary>
@@ -442,43 +449,53 @@ public static class ShaderLoader
     /// </summary>
     private static string GetShaderDirectory()
     {
-        // Return cached result if available
+        // Return cached result if available (first check without lock for performance)
         if (_cachedShaderDirectory != null)
         {
             return _cachedShaderDirectory;
         }
 
-        var assemblyLocation = Assembly.GetExecutingAssembly().Location;
-        var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
-
-        // Primary path: relative to assembly location
-        var primaryPath = Path.Combine(assemblyDirectory!, "Shader", "Files");
-
-        if (Directory.Exists(primaryPath))
+        // Double-checked locking pattern for thread safety
+        lock (_directoryLock)
         {
+            // Check again inside the lock in case another thread set it
+            if (_cachedShaderDirectory != null)
+            {
+                return _cachedShaderDirectory;
+            }
+
+            var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+            var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+
+            // Primary path: relative to assembly location
+            var primaryPath = Path.Combine(assemblyDirectory!, "Shader", "Files");
+
+            if (Directory.Exists(primaryPath))
+            {
+                _cachedShaderDirectory = primaryPath;
+                return primaryPath;
+            }
+
+            // Development fallback: navigate source tree
+            var currentDir = assemblyDirectory!;
+            for (int i = 0; i < 5; i++)
+            {
+                var testPath = Path.Combine(currentDir, "Shader", "Files");
+                if (Directory.Exists(testPath))
+                {
+                    _cachedShaderDirectory = testPath;
+                    return testPath;
+                }
+
+                var parentDir = Path.GetDirectoryName(currentDir);
+                if (parentDir == null) break;
+                currentDir = parentDir;
+            }
+
+            // If no directory found, return primary path for error reporting
             _cachedShaderDirectory = primaryPath;
             return primaryPath;
         }
-
-        // Development fallback: navigate source tree
-        var currentDir = assemblyDirectory!;
-        for (int i = 0; i < 5; i++)
-        {
-            var testPath = Path.Combine(currentDir, "Shader", "Files");
-            if (Directory.Exists(testPath))
-            {
-                _cachedShaderDirectory = testPath;
-                return testPath;
-            }
-
-            var parentDir = Path.GetDirectoryName(currentDir);
-            if (parentDir == null) break;
-            currentDir = parentDir;
-        }
-
-        // If no directory found, return primary path for error reporting
-        _cachedShaderDirectory = primaryPath;
-        return primaryPath;
     }
 
     /// <summary>
