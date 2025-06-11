@@ -18,7 +18,4 @@
     </PackageReference>
     <PackageReference Include="NSubstitute" Version="5.1.0" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Rac.ProjectTools\Rac.ProjectTools.csproj" />
-  </ItemGroup>
 </Project>

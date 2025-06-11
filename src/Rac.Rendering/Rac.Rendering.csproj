@@ -16,4 +16,8 @@
     <Content Include="Shader/Files/*.frag" CopyToOutputDirectory="Always" />
     <Content Include="Shader/Files/*.vert" CopyToOutputDirectory="Always" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Shader\Files\" />
+  </ItemGroup>
 </Project>
