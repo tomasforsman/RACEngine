@@ -151,11 +151,49 @@ public class ShaderProgram : IDisposable
         _gl.LinkProgram(Handle);
 
         // ───────────────────────────────────────────────────────────────────────
+        // LINKING STATUS VERIFICATION
+        // ───────────────────────────────────────────────────────────────────────
+        //
+        // ERROR DETECTION:
+        // OpenGL uses query-based error reporting for asynchronous operations.
+        // Linking may succeed/fail independently of API call success.
+        // Must explicitly check link status to detect errors.
+
+        _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus, out int success);
+        if (success == 0)
+        {
+            // ───────────────────────────────────────────────────────────────────
+            // ERROR INFORMATION RETRIEVAL
+            // ───────────────────────────────────────────────────────────────────
+            //
+            // LINKING ERROR LOG:
+            // - Variable interface mismatches between stages
+            // - Resource limit violations (uniforms, attributes)
+            // - Platform-specific linking constraints
+            // - GPU/driver-specific diagnostic information
+            //
+            // COMMON LINKING ERRORS:
+            // - Vertex output variable has no matching fragment input
+            // - Fragment shader doesn't write to required output
+            // - Too many uniform variables for GPU limits
+            // - Incompatible variable types between stages
+
+            string infoLog = _gl.GetProgramInfoLog(Handle);
+
+            // Clean up failed program and shader objects before throwing
+            _gl.DeleteShader(vs);
+            _gl.DeleteShader(fs);
+            _gl.DeleteProgram(Handle);
+
+            throw new InvalidOperationException($"Shader linking failed: {infoLog}");
+        }
+
+        // ───────────────────────────────────────────────────────────────────────
         // RESOURCE CLEANUP
         // ───────────────────────────────────────────────────────────────────────
         //
         // SHADER OBJECT LIFECYCLE:
-        // After linking, individual shader objects are no longer needed.
+        // After successful linking, individual shader objects are no longer needed.
         // Program object contains all necessary compiled code.
         // Deleting shader objects frees GPU memory and driver resources.
         //
@@ -164,9 +202,6 @@ public class ShaderProgram : IDisposable
 
         _gl.DeleteShader(vs);
         _gl.DeleteShader(fs);
-
-        // Note: Link error checking could be added here for robustness.
-        // Production code should verify _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus)
     }
 
     /// <summary>
