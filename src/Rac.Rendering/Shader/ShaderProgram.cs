@@ -183,44 +183,6 @@ public class ShaderProgram : IDisposable
         }
 
             // ───────────────────────────────────────────────────────────────────────
-            // LINKING STATUS VERIFICATION
-            // ───────────────────────────────────────────────────────────────────────
-            //
-            // ERROR DETECTION:
-            // OpenGL uses query-based error reporting for asynchronous operations.
-            // Linking may succeed/fail independently of API call success.
-            // Must explicitly check link status to detect errors.
-
-            _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus, out int success);
-            if (success == 0)
-            {
-                // ───────────────────────────────────────────────────────────────────
-                // ERROR INFORMATION RETRIEVAL
-                // ───────────────────────────────────────────────────────────────────
-                //
-                // LINKING ERROR LOG:
-                // - Variable interface mismatches between stages
-                // - Resource limit violations (uniforms, attributes)
-                // - Platform-specific linking constraints
-                // - GPU/driver-specific diagnostic information
-                //
-                // COMMON LINKING ERRORS:
-                // - Vertex output variable has no matching fragment input
-                // - Fragment shader doesn't write to required output
-                // - Too many uniform variables for GPU limits
-                // - Incompatible variable types between stages
-
-                string infoLog = _gl.GetProgramInfoLog(Handle);
-
-                // Clean up resources before throwing
-                _gl.DeleteShader(vs);
-                _gl.DeleteShader(fs);
-                _gl.DeleteProgram(Handle);
-
-                throw new InvalidOperationException($"Shader linking failed: {infoLog}");
-            }
-
-            // ───────────────────────────────────────────────────────────────────────
             // RESOURCE CLEANUP
             // ───────────────────────────────────────────────────────────────────────
             //
