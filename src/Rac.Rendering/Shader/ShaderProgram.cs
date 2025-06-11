@@ -147,15 +147,40 @@ public class ShaderProgram : IDisposable
             _gl.AttachShader(Handle, vs);
             _gl.AttachShader(Handle, fs);
 
-            // ───────────────────────────────────────────────────────────────────────
-            // PROGRAM LINKING
-            // ───────────────────────────────────────────────────────────────────────
+
+        // ───────────────────────────────────────────────────────────────────────
+        // LINKING STATUS VERIFICATION
+        // ───────────────────────────────────────────────────────────────────────
+        //
+        // ERROR DETECTION:
+        // OpenGL uses query-based error reporting for asynchronous operations.
+        // Linking may succeed/fail independently of API call success.
+        // Must explicitly check link status to detect errors.
+
+        // Link the shaders into final program
+        _gl.LinkProgram(Handle);
+
+        _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus, out int success);
+        if (success == 0)
+        {
+            // ───────────────────────────────────────────────────────────────────
+            // ERROR INFORMATION RETRIEVAL
+            // ───────────────────────────────────────────────────────────────────
+            //
+            // LINKING ERROR LOG:
+            // - Variable interface mismatches between stages
+            // - Resource limit violations (uniforms, attributes)
+            // - Platform-specific linking constraints
+            // - GPU/driver-specific diagnostic information
+
             //
             // LINKING PROCESS:
             // Links attached shaders together, resolving inter-stage connections
             // and optimizing the final program for the target GPU.
 
-            _gl.LinkProgram(Handle);
+            string infoLog = _gl.GetProgramInfoLog(Handle);
+            throw new InvalidOperationException($"Shader linking failed: {infoLog}");
+        }
 
             // ───────────────────────────────────────────────────────────────────────
             // LINKING STATUS VERIFICATION
