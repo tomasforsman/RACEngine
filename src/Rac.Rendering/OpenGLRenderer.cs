@@ -60,7 +60,7 @@ namespace Rac.Rendering;
 /// - Automatic GPU state management
 /// - Comprehensive error handling and fallbacks
 /// </summary>
-public class OpenGLRenderer : IRenderer
+public class OpenGLRenderer : IRenderer, IDisposable
 {
     // ═══════════════════════════════════════════════════════════════════════════
     // CORE RENDERING INFRASTRUCTURE
@@ -105,6 +105,7 @@ public class OpenGLRenderer : IRenderer
     // ═══════════════════════════════════════════════════════════════════════════
 
     private Vector4D<float> _currentColor = new(1f, 1f, 1f, 1f);
+    private bool _disposed;
 
     /// <summary>
     /// Encapsulates uniform variable locations for performance optimization
@@ -447,22 +448,62 @@ public class OpenGLRenderer : IRenderer
         _postProcessing?.Resize(newSize.X, newSize.Y);
     }
 
-    public void Shutdown()
+    /// <summary>
+    /// Releases all resources used by the OpenGLRenderer.
+    /// </summary>
+    public void Dispose()
     {
-        // Dispose all loaded shader programs
-        foreach (var shader in _shaders.Values)
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Finalizer to ensure resources are cleaned up if Dispose() is not called.
+    /// </summary>
+    ~OpenGLRenderer()
+    {
+        Dispose(false);
+    }
+
+    /// <summary>
+    /// Protected implementation of Dispose pattern.
+    /// </summary>
+    /// <param name="disposing">True if called from Dispose(), false if called from finalizer</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
         {
-            shader.Dispose();
+            // Dispose managed resources
+            foreach (var shader in _shaders.Values)
+            {
+                shader.Dispose();
+            }
+            _shaders.Clear();
+            _uniforms.Clear();
+
+            _postProcessing?.Dispose();
         }
-        _shaders.Clear();
-        _uniforms.Clear();
 
-        // Cleanup post-processing resources
-        _postProcessing?.Shutdown();
-
-        // Delete OpenGL buffer objects
+        // Free unmanaged resources
         _gl.DeleteBuffer(_vbo);
         _gl.DeleteBuffer(_ebo);
         _gl.DeleteVertexArray(_vao);
+
+        _disposed = true;
+    }
+
+    /// <summary>
+    /// Shuts down the renderer and releases all resources.
+    /// 
+    /// LEGACY METHOD - Use Dispose() instead.
+    /// Maintained for backwards compatibility.
+    /// </summary>
+    [Obsolete("Use Dispose() instead. This method will be removed in a future version.")]
+    public void Shutdown()
+    {
+        Dispose();
     }
 }

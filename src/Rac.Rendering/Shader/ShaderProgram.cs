@@ -147,36 +147,53 @@ public class ShaderProgram : IDisposable
             _gl.AttachShader(Handle, vs);
             _gl.AttachShader(Handle, fs);
 
-
-        // ───────────────────────────────────────────────────────────────────────
-        // LINKING STATUS VERIFICATION
-        // ───────────────────────────────────────────────────────────────────────
-        //
-        // ERROR DETECTION:
-        // OpenGL uses query-based error reporting for asynchronous operations.
-        // Linking may succeed/fail independently of API call success.
-        // Must explicitly check link status to detect errors.
-
-        _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus, out int success);
-        if (success == 0)
-        {
-            // ───────────────────────────────────────────────────────────────────
-            // ERROR INFORMATION RETRIEVAL
-            // ───────────────────────────────────────────────────────────────────
+            // ───────────────────────────────────────────────────────────────────────
+            // PROGRAM LINKING
+            // ───────────────────────────────────────────────────────────────────────
             //
-            // LINKING ERROR LOG:
-            // - Variable interface mismatches between stages
-            // - Resource limit violations (uniforms, attributes)
-            // - Platform-specific linking constraints
-            // - GPU/driver-specific diagnostic information
-            //
-            // COMMON LINKING ERRORS:
-            // - Vertex output variable has no matching fragment input
-            // - Fragment shader doesn't write to required output
-            // - Too many uniform variables for GPU limits
-            // - Incompatible variable types between stages
+            // LINKING PROCESS:
+            // Links attached shaders together, resolving inter-stage connections
+            // and optimizing the final program for the target GPU.
 
             _gl.LinkProgram(Handle);
+
+            // ───────────────────────────────────────────────────────────────────────
+            // LINKING STATUS VERIFICATION
+            // ───────────────────────────────────────────────────────────────────────
+            //
+            // ERROR DETECTION:
+            // OpenGL uses query-based error reporting for asynchronous operations.
+            // Linking may succeed/fail independently of API call success.
+            // Must explicitly check link status to detect errors.
+
+            _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus, out int success);
+            if (success == 0)
+            {
+                // ───────────────────────────────────────────────────────────────────
+                // ERROR INFORMATION RETRIEVAL
+                // ───────────────────────────────────────────────────────────────────
+                //
+                // LINKING ERROR LOG:
+                // - Variable interface mismatches between stages
+                // - Resource limit violations (uniforms, attributes)
+                // - Platform-specific linking constraints
+                // - GPU/driver-specific diagnostic information
+                //
+                // COMMON LINKING ERRORS:
+                // - Vertex output variable has no matching fragment input
+                // - Fragment shader doesn't write to required output
+                // - Too many uniform variables for GPU limits
+                // - Incompatible variable types between stages
+
+                string infoLog = _gl.GetProgramInfoLog(Handle);
+
+                // Clean up resources before throwing
+                _gl.DeleteShader(vs);
+                _gl.DeleteShader(fs);
+                _gl.DeleteProgram(Handle);
+
+                throw new InvalidOperationException($"Shader linking failed: {infoLog}");
+            }
 
             // ───────────────────────────────────────────────────────────────────────
             // RESOURCE CLEANUP
@@ -192,9 +209,6 @@ public class ShaderProgram : IDisposable
 
             _gl.DeleteShader(vs);
             _gl.DeleteShader(fs);
-
-            // Note: Link error checking could be added here for robustness.
-            // Production code should verify _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus)
         }
         catch (Exception)
         {
@@ -216,7 +230,7 @@ public class ShaderProgram : IDisposable
             if (Handle != 0) _gl.DeleteProgram(Handle);
 
             // Rethrow original exception after cleanup
-            throw new InvalidOperationException($"Shader linking failed: {infoLog}");
+            throw;
         }
     }
 
@@ -251,6 +265,24 @@ public class ShaderProgram : IDisposable
     /// </summary>
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Finalizer to ensure resources are cleaned up if Dispose() is not called.
+    /// </summary>
+    ~ShaderProgram()
+    {
+        Dispose(false);
+    }
+
+    /// <summary>
+    /// Protected implementation of Dispose pattern.
+    /// </summary>
+    /// <param name="disposing">True if called from Dispose(), false if called from finalizer</param>
+    protected virtual void Dispose(bool disposing)
+    {
         // ───────────────────────────────────────────────────────────────────────
         // STANDARD IDISPOSABLE PATTERN IMPLEMENTATION
         // ───────────────────────────────────────────────────────────────────────
@@ -263,6 +295,12 @@ public class ShaderProgram : IDisposable
 
         if (_disposed)
             return;
+
+        if (disposing)
+        {
+            // Dispose managed resources (none in this case)
+            // All resources are unmanaged OpenGL objects
+        }
 
         // ───────────────────────────────────────────────────────────────────────
         // GPU RESOURCE DEALLOCATION
@@ -280,13 +318,6 @@ public class ShaderProgram : IDisposable
 
         _gl.DeleteProgram(Handle);
         _disposed = true;
-
-        // Suppress finalizer since we've cleaned up resources explicitly
-        GC.SuppressFinalize(this);
-
-        // Note: Consider implementing finalizer for safety:
-        // ~ShaderProgram() { Dispose(); }
-        // However, finalizers have performance overhead and timing issues.
     }
 
     /// <summary>
