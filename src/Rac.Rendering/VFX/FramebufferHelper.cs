@@ -106,6 +106,9 @@ public class FramebufferHelper
         _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), new System.IntPtr(2 * sizeof(float)));
         _gl.EnableVertexAttribArray(1);
 
+        // Clean up EBO - it's now part of the VAO state
+        _gl.DeleteBuffer(ebo);
+
         _gl.BindVertexArray(0);
 
         return (vao, vbo);
