@@ -40,6 +40,7 @@
 
 using Rac.Rendering.Shader;
 using Silk.NET.OpenGL;
+using System;
 
 namespace Rac.Rendering.VFX;
 
@@ -55,10 +56,11 @@ namespace Rac.Rendering.VFX;
 /// This creates the characteristic "glow" effect seen in photography
 /// when bright light sources cause lens aberrations.
 /// </summary>
-public class PostProcessing
+public class PostProcessing : IDisposable
 {
     private readonly GL _gl;
     private readonly FramebufferHelper _framebufferHelper;
+    private bool _disposed;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // FRAMEBUFFER OBJECTS AND RENDER TARGETS
@@ -556,24 +558,55 @@ public class PostProcessing
     }
 
     /// <summary>
-    /// Cleans up all resources.
-    ///
-    /// PROPER RESOURCE CLEANUP:
-    /// Essential for preventing memory leaks in graphics applications.
-    /// Should be called during application shutdown or when switching contexts.
+    /// Releases all resources used by the PostProcessing system.
     /// </summary>
-    public void Shutdown()
+    public void Dispose()
     {
-        // ───────────────────────────────────────────────────────────────────────
-        // COMPLETE RESOURCE DEALLOCATION
-        // ───────────────────────────────────────────────────────────────────────
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
+    /// <summary>
+    /// Finalizer to ensure resources are cleaned up if Dispose() is not called.
+    /// </summary>
+    ~PostProcessing()
+    {
+        Dispose(false);
+    }
+
+    /// <summary>
+    /// Protected implementation of Dispose pattern.
+    /// </summary>
+    /// <param name="disposing">True if called from Dispose(), false if called from finalizer</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
+        {
+            // Dispose managed resources
+            _brightExtractShader?.Dispose();
+            _blurShader?.Dispose();
+            _compositeShader?.Dispose();
+        }
+
+        // Free unmanaged resources
         CleanupFramebuffers();
         _framebufferHelper.DeleteQuad(_quadVao, _quadVbo);
 
-        // Shader programs contain compiled GPU code and must be explicitly freed
-        _brightExtractShader?.Dispose();
-        _blurShader?.Dispose();
-        _compositeShader?.Dispose();
+        _disposed = true;
+    }
+
+    /// <summary>
+    /// Cleans up all resources.
+    /// 
+    /// LEGACY METHOD - Use Dispose() instead.
+    /// Maintained for backwards compatibility.
+    /// </summary>
+    [Obsolete("Use Dispose() instead. This method will be removed in a future version.")]
+    public void Shutdown()
+    {
+        Dispose();
     }
 }
