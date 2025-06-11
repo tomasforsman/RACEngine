@@ -157,6 +157,9 @@ public class ShaderProgram : IDisposable
         // Linking may succeed/fail independently of API call success.
         // Must explicitly check link status to detect errors.
 
+        // Link the shaders into final program
+        _gl.LinkProgram(Handle);
+
         _gl.GetProgram(Handle, ProgramPropertyARB.LinkStatus, out int success);
         if (success == 0)
         {
@@ -176,7 +179,9 @@ public class ShaderProgram : IDisposable
             // - Too many uniform variables for GPU limits
             // - Incompatible variable types between stages
 
-            _gl.LinkProgram(Handle);
+            string infoLog = _gl.GetProgramInfoLog(Handle);
+            throw new InvalidOperationException($"Shader linking failed: {infoLog}");
+        }
 
             // ───────────────────────────────────────────────────────────────────────
             // RESOURCE CLEANUP
@@ -216,7 +221,7 @@ public class ShaderProgram : IDisposable
             if (Handle != 0) _gl.DeleteProgram(Handle);
 
             // Rethrow original exception after cleanup
-            throw new InvalidOperationException($"Shader linking failed: {infoLog}");
+            throw;
         }
     }
 
