@@ -36,15 +36,28 @@ using Rac.ECS.Component;
 using Rac.ECS.System;
 using Rac.Engine;
 using Rac.Input.Service;
+using Rac.Input.State;
 using Rac.Rendering;
 using Rac.Rendering.Shader;
 using Rac.Rendering.VFX;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 
 namespace SampleGame;
 
 public static class BoidSample
 {
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SHADER MODE DEMONSTRATION STATE
+    // ═══════════════════════════════════════════════════════════════════════════
+    //
+    // This sample demonstrates the engine's different visual effects through
+    // interactive shader mode switching, showcasing the rendering capabilities.
+    
+    private static ShaderMode _currentShaderMode = ShaderMode.Normal;
+    private static readonly ShaderMode[] _availableShaderModes = { ShaderMode.Normal, ShaderMode.SoftGlow, ShaderMode.Bloom };
+    private static int _shaderModeIndex = 0;
+
     public static void Run(string[] args)
     {
         // ═══════════════════════════════════════════════════════════════════════════
@@ -125,6 +138,22 @@ public static class BoidSample
         SpawnObstacles();
 
         // ═══════════════════════════════════════════════════════════════════════════
+        // INPUT HANDLING FOR SHADER MODE SWITCHING
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // Interactive demonstration of different rendering modes.
+        // Press 'S' to cycle through Normal → SoftGlow → Bloom → Normal...
+
+        engine.KeyEvent += (key, keyEvent) =>
+        {
+            if (key == Key.S && keyEvent == KeyboardKeyState.KeyEvent.Pressed)
+            {
+                CycleShaderMode();
+                Console.WriteLine($"Shader Mode: {_currentShaderMode}");
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════════════
         // MAIN GAME LOOP HOOKS
         // ═══════════════════════════════════════════════════════════════════════════
         //
@@ -151,13 +180,28 @@ public static class BoidSample
         //
         // Starts the main game loop: Input → Update → Render → Present → Repeat
 
-        engine.Run();
+        // ═══════════════════════════════════════════════════════════════════════════
+        // STARTUP MESSAGE
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        Console.WriteLine("=== BOID SAMPLE - SHADER MODE DEMONSTRATION ===");
+        Console.WriteLine("Press 'S' to cycle through shader modes:");
+        Console.WriteLine("  Normal -> SoftGlow -> Bloom -> Normal...");
+        Console.WriteLine($"Current Mode: {_currentShaderMode}");
+        Console.WriteLine("Watch how different species show different effects!");
 
+        engine.Run();
 
 
         // ═══════════════════════════════════════════════════════════════════════════
         // LOCAL HELPER FUNCTIONS
         // ═══════════════════════════════════════════════════════════════════════════
+
+        void CycleShaderMode()
+        {
+            _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Length;
+            _currentShaderMode = _availableShaderModes[_shaderModeIndex];
+        }
 
         void UpdateBoidSettings(Vector2D<int> windowSize)
         {
@@ -372,20 +416,21 @@ public static class BoidSample
             // SHADER EFFECTS AND RENDERING
             // ───────────────────────────────────────────────────────────────────────
             //
-            // Different species can use different visual effects:
-            // - Normal shader: Standard rendering
-            // - Bloom shader: Glow effect for dramatic visual impact
+            // Each species demonstrates different shader capabilities based on current mode:
+            // - White boids: Always use current selected shader mode (primary demonstration)
+            // - Blue boids: Show SoftGlow when available (secondary effect)
+            // - Red boids: Show advanced effects (Bloom when available, SoftGlow otherwise)
 
-            if (filterId == "Red")
+            ShaderMode shaderToUse = filterId switch
             {
-                // Red boids get bloom effect (glowing predator appearance)
-                engine.Renderer.SetShaderMode(ShaderMode.Normal);
-            }
-            else
-            {
-                // Standard rendering for other species
-                engine.Renderer.SetShaderMode(ShaderMode.Normal);
-            }
+                "White" => _currentShaderMode, // Always follows current mode for primary demo
+                "Blue" => _currentShaderMode == ShaderMode.Normal ? ShaderMode.Normal : ShaderMode.SoftGlow,
+                "Red" => _currentShaderMode == ShaderMode.Bloom ? ShaderMode.Bloom : 
+                         _currentShaderMode == ShaderMode.SoftGlow ? ShaderMode.SoftGlow : ShaderMode.Normal,
+                _ => ShaderMode.Normal
+            };
+
+            engine.Renderer.SetShaderMode(shaderToUse);
 
             // Set species color and upload vertex data to GPU
             engine.Renderer.SetColor(speciesColors[filterId]);

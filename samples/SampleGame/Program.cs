@@ -30,8 +30,8 @@ public static class Program
     private static string PromptForSample()
     {
         Console.WriteLine("Available samples:");
-        Console.WriteLine("  shootersample   - Stand‐in‐middle shooter demo");
-        Console.WriteLine("  boidsample       - Fish/Boids swarm demo");
+        Console.WriteLine("  shootersample   - Interactive shooter with shader mode switching (Normal/SoftGlow/Bloom)");
+        Console.WriteLine("  boidsample      - Flocking simulation with visual effects demonstration");
         // … list additional samples here …
         Console.Write("Enter sample name: ");
         return Console.ReadLine()!.Trim().ToLowerInvariant();
@@ -44,7 +44,9 @@ public static class Program
         Console.WriteLine("  dotnet run -- <sampleName>");
         Console.WriteLine();
         Console.WriteLine("Examples:");
-        Console.WriteLine("  dotnet run -- shootersample1");
+        Console.WriteLine("  dotnet run -- shootersample");
         Console.WriteLine("  dotnet run -- boidsample");
+        Console.WriteLine();
+        Console.WriteLine("Both samples demonstrate shader mode switching and engine features.");
     }
 }
