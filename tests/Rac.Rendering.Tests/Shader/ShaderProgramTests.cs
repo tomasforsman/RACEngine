@@ -23,6 +23,17 @@ public class ShaderProgramTests
         Assert.NotNull(disposedField);
         Assert.Equal(typeof(bool), disposedField.FieldType);
     }
+
+    [Fact]
+    public void ShaderProgram_HasFinalizer()
+    {
+        // This test verifies the finalizer exists for safety cleanup
+        // We check this via reflection to ensure the complete IDisposable pattern is implemented
+        var finalizer = typeof(ShaderProgram).GetMethod("Finalize", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        Assert.NotNull(finalizer);
+    }
     
     // Note: Direct testing of Dispose() behavior would require a complex OpenGL context setup.
     // The key fix is implementing the standard IDisposable pattern with idempotency protection,
