@@ -62,7 +62,7 @@ vec3 reinhardToneMapping(vec3 hdrColor, float exposure)
 {
     // Apply exposure
     vec3 exposed = hdrColor * exposure;
-    
+
     // Reinhard formula: x / (1 + x)
     return exposed / (1.0 + exposed);
 }
@@ -73,41 +73,42 @@ vec3 acesToneMapping(vec3 hdrColor, float exposure)
 {
     // Apply exposure
     vec3 exposed = hdrColor * exposure;
-    
+
     // ACES constants
     const float a = 2.51;
     const float b = 0.03;
     const float c = 2.43;
     const float d = 0.59;
     const float e = 0.14;
-    
+
     // ACES formula
     return clamp((exposed * (a * exposed + b)) / (exposed * (c * exposed + d) + e), 0.0, 1.0);
+}
+
+// Helper function for Uncharted 2 tone mapping curve
+vec3 uncharted2Curve(vec3 x)
+{
+    const float A = 0.15; // Shoulder strength
+    const float B = 0.50; // Linear strength  
+    const float C = 0.10; // Linear angle
+    const float D = 0.20; // Toe strength
+    const float E = 0.02; // Toe numerator
+    const float F = 0.30; // Toe denominator
+
+    return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
 // Uncharted 2 tone mapping - popular in gaming
 // Good contrast and color preservation
 vec3 uncharted2ToneMapping(vec3 hdrColor, float exposure)
 {
-    // Uncharted 2 curve function
-    auto tonemap = [](vec3 x) -> vec3 {
-        const float A = 0.15; // Shoulder strength
-        const float B = 0.50; // Linear strength  
-        const float C = 0.10; // Linear angle
-        const float D = 0.20; // Toe strength
-        const float E = 0.02; // Toe numerator
-        const float F = 0.30; // Toe denominator
-        
-        return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
-    };
-    
     vec3 exposed = hdrColor * exposure;
-    vec3 mapped = tonemap(exposed);
-    
+    vec3 mapped = uncharted2Curve(exposed);
+
     // White point normalization
     const vec3 whitePoint = vec3(11.2);
-    vec3 whiteScale = vec3(1.0) / tonemap(whitePoint);
-    
+    vec3 whiteScale = vec3(1.0) / uncharted2Curve(whitePoint);
+
     return mapped * whiteScale;
 }
 
@@ -125,9 +126,9 @@ vec3 linearToneMapping(vec3 hdrColor, float exposure)
 vec3 linearToSRGB(vec3 linear)
 {
     return mix(
-        linear * 12.92,
-        pow(linear, vec3(1.0 / 2.4)) * 1.055 - 0.055,
-        step(0.0031308, linear)
+    linear * 12.92,
+    pow(linear, vec3(1.0 / 2.4)) * 1.055 - 0.055,
+    step(0.0031308, linear)
     );
 }
 
@@ -158,11 +159,11 @@ vec3 screenBlend(vec3 scene, vec3 bloom, float strength)
 vec3 softLightBlend(vec3 scene, vec3 bloom, float strength)
 {
     vec3 bloomContrib = bloom * strength;
-    return mix(scene, 
-               mix(2.0 * scene * bloomContrib, 
-                   1.0 - 2.0 * (1.0 - scene) * (1.0 - bloomContrib), 
-                   step(0.5, bloomContrib)), 
-               strength);
+    return mix(scene,
+    mix(2.0 * scene * bloomContrib,
+    1.0 - 2.0 * (1.0 - scene) * (1.0 - bloomContrib),
+    step(0.5, bloomContrib)),
+    strength);
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -176,7 +177,7 @@ vec3 colorGrade(vec3 color)
     color.r *= 1.02; // Slight red enhancement
     color.g *= 0.98; // Slight green reduction  
     color.b *= 1.01; // Slight blue enhancement
-    
+
     return color;
 }
 
@@ -208,7 +209,7 @@ void main()
     //
     vec3 sceneColor = texture(uSceneTexture, vTexCoord).rgb;
     vec3 bloomColor = texture(uBloomTexture, vTexCoord).rgb;
-    
+
     // ════════════════════════════════════════════════════════════════════════════
     // BLOOM BLENDING
     // ════════════════════════════════════════════════════════════════════════════
@@ -217,10 +218,10 @@ void main()
     // Screen blending prevents over-brightening while maintaining bloom effect.
     //
     vec3 blendedColor = screenBlend(sceneColor, bloomColor, uBloomStrength);
-    
+
     // Optional: Add subtle additive component for extra glow
     blendedColor += bloomColor * uBloomStrength * 0.1;
-    
+
     // ════════════════════════════════════════════════════════════════════════════
     // HDR TO LDR TONE MAPPING
     // ════════════════════════════════════════════════════════════════════════════
@@ -229,7 +230,7 @@ void main()
     // Using ACES tone mapping for cinematic quality.
     //
     vec3 toneMappedColor = acesToneMapping(blendedColor, uExposure);
-    
+
     // ════════════════════════════════════════════════════════════════════════════
     // ARTISTIC ENHANCEMENTS
     // ════════════════════════════════════════════════════════════════════════════
@@ -240,7 +241,7 @@ void main()
     toneMappedColor = colorGrade(toneMappedColor);
     toneMappedColor = enhanceContrast(toneMappedColor, 1.05); // 5% contrast boost
     toneMappedColor = adjustSaturation(toneMappedColor, 1.02); // 2% saturation boost
-    
+
     // ════════════════════════════════════════════════════════════════════════════
     // GAMMA CORRECTION
     // ════════════════════════════════════════════════════════════════════════════
@@ -249,7 +250,7 @@ void main()
     // This ensures colors appear correctly on standard monitors.
     //
     vec3 finalColor = linearToSRGB(toneMappedColor);
-    
+
     // ════════════════════════════════════════════════════════════════════════════
     // FINAL CLAMPING AND OUTPUT
     // ════════════════════════════════════════════════════════════════════════════
@@ -258,6 +259,6 @@ void main()
     // Alpha = 1.0 since this is the final opaque result.
     //
     finalColor = clamp(finalColor, 0.0, 1.0);
-    
+
     fragColor = vec4(finalColor, 1.0);
 }
