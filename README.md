@@ -1,6 +1,6 @@
 # RACEngine
 
-**RACEngine** is a modular, modern game engine built with .NET 9 and C#. It serves as a learning platform and a foundation for developing custom games without relying on existing game engines. The project emphasizes clarity, separation of concerns, and practical elegance.
+**RACEngine** is a modular, modern game engine built with .NET 8 and C#. It serves as a learning platform and a foundation for developing custom games without relying on existing game engines. The project emphasizes clarity, separation of concerns, and practical elegance.
 
 ---
 
@@ -33,7 +33,7 @@ RACEngine/
 
 ### Prerequisites
 
-* [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+* [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 ### Building the Engine
 
