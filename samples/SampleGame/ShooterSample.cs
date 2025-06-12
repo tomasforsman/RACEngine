@@ -1,9 +1,43 @@
 ﻿// File: samples/SampleGame/ShooterSample.cs
+//
+// ════════════════════════════════════════════════════════════════════════════════
+// ENHANCED SHOOTER SAMPLE - ENGINE FEATURE DEMONSTRATION
+// ════════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates several key engine features through an interactive shooter:
+//
+// 1. CORE ENGINE INTEGRATION:
+//    - EngineFacade usage for simplified engine access
+//    - Event-driven architecture (KeyEvent, UpdateEvent, RenderEvent)
+//    - Proper resource and lifecycle management
+//
+// 2. VISUAL EFFECTS SHOWCASE:
+//    - Multiple shader modes (Normal, SoftGlow, Bloom)
+//    - Separate rendering paths for different object types
+//    - Real-time visual effect switching
+//
+// 3. INPUT AND GAME MECHANICS:
+//    - Responsive keyboard input handling
+//    - Continuous movement and shooting mechanics
+//    - Time-based game logic and physics
+//
+// 4. RENDERING TECHNIQUES:
+//    - Dynamic vertex buffer construction
+//    - 2D rotation mathematics
+//    - Batched rendering for performance
+//
+// CONTROLS:
+// - WASD/Arrow Keys: Rotate ship direction
+// - Space: Toggle auto-fire mode
+// - V: Cycle through visual effect modes
+//
+// ════════════════════════════════════════════════════════════════════════════════
 
 using Rac.Core.Manager;
 using Rac.Engine;
 using Rac.Input.Service;
 using Rac.Input.State;
+using Rac.Rendering.Shader;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 
@@ -11,9 +45,25 @@ namespace SampleGame;
 
 public static class ShooterSample
 {
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GAME CONFIGURATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    
     private const float BulletSpeed = 0.75f;
-
     private const float FireInterval = 0.2f;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // VISUAL EFFECTS DEMONSTRATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    private static ShaderMode _shipShaderMode = ShaderMode.Normal;
+    private static ShaderMode _bulletShaderMode = ShaderMode.SoftGlow;
+    private static readonly ShaderMode[] _availableShaderModes = { ShaderMode.Normal, ShaderMode.SoftGlow, ShaderMode.Bloom };
+    private static int _effectModeIndex = 0;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ENGINE AND GAME STATE
+    // ═══════════════════════════════════════════════════════════════════════════
 
     // Facade providing World, Update/Render callbacks, KeyEvent, Renderer
     private static EngineFacade? engineFacade;
@@ -43,14 +93,31 @@ public static class ShooterSample
 
     public static void Run(string[] args)
     {
-        // ─── Setup Engine & Services ────────────────────────────
+        // ═══════════════════════════════════════════════════════════════════════════
+        // ENGINE INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════════════════
         var windowManager = new WindowManager();
         var inputService = new SilkInputService();
         var configurationManager = new ConfigManager();
 
         engineFacade = new EngineFacade(windowManager, inputService, configurationManager);
 
-        // ─── Initial Draw when Renderer is ready ────────────────
+        // ═══════════════════════════════════════════════════════════════════════════
+        // STARTUP INFORMATION
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        Console.WriteLine("=== SHOOTER SAMPLE - ENGINE FEATURE SHOWCASE ===");
+        Console.WriteLine("Controls:");
+        Console.WriteLine("  WASD/Arrows: Rotate ship");
+        Console.WriteLine("  Space: Toggle auto-fire");
+        Console.WriteLine("  V: Cycle visual effects");
+        Console.WriteLine($"Ship Mode: {_shipShaderMode}, Bullet Mode: {_bulletShaderMode}");
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // EVENT REGISTRATION
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        // Initial Draw when Renderer is ready
         engineFacade.LoadEvent += () => RedrawScene();
 
         // ─── Hook Input through the facade’s KeyEvent ───────────
@@ -96,6 +163,12 @@ public static class ShooterSample
             isAutoFireEnabled = !isAutoFireEnabled;
             SpawnBulletInCurrentDirection();
         }
+
+        // Cycle through visual effect modes
+        if (key == Key.V)
+        {
+            CycleVisualEffects();
+        }
     }
 
     private static void OnUpdate(float deltaTime)
@@ -138,9 +211,24 @@ public static class ShooterSample
         if (engineFacade == null)
             return;
 
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SHIP RENDERING WITH DEDICATED SHADER MODE
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        DrawShip();
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // BULLET RENDERING WITH SEPARATE SHADER MODE
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        DrawBullets();
+    }
+
+    private static void DrawShip()
+    {
         var vertexBuffer = new List<float>();
 
-        // Draw the ship model, rotated by shipRotation
+        // Build ship triangle with rotation applied
         foreach (var vertex in shipModel)
         {
             float x = vertex.X * MathF.Cos(shipRotation) - vertex.Y * MathF.Sin(shipRotation);
@@ -149,7 +237,24 @@ public static class ShooterSample
             vertexBuffer.Add(y);
         }
 
-        // Draw each bullet as two triangles
+        if (vertexBuffer.Count == 0)
+            return;
+
+        // Apply ship-specific shader mode and color
+        engineFacade!.Renderer.SetShaderMode(_shipShaderMode);
+        engineFacade.Renderer.SetColor(new Vector4D<float>(0.8f, 0.8f, 1.0f, 1f)); // Light blue ship
+        engineFacade.Renderer.UpdateVertices(vertexBuffer.ToArray());
+        engineFacade.Renderer.Draw();
+    }
+
+    private static void DrawBullets()
+    {
+        if (activeBullets.Count == 0)
+            return;
+
+        var vertexBuffer = new List<float>();
+
+        // Build all bullet quads (two triangles each)
         foreach (var bullet in activeBullets)
         {
             const float halfSize = 0.02f;
@@ -172,12 +277,42 @@ public static class ShooterSample
             );
         }
 
-        if (vertexBuffer.Count == 0)
-            return;
-
-        engineFacade.Renderer.SetColor(new Vector4D<float>(1f, 1f, 1f, 1f));
+        // Apply bullet-specific shader mode and color
+        engineFacade!.Renderer.SetShaderMode(_bulletShaderMode);
+        engineFacade.Renderer.SetColor(new Vector4D<float>(1f, 1f, 0.5f, 1f)); // Yellow bullets
         engineFacade.Renderer.UpdateVertices(vertexBuffer.ToArray());
         engineFacade.Renderer.Draw();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // VISUAL EFFECTS MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private static void CycleVisualEffects()
+    {
+        _effectModeIndex = (_effectModeIndex + 1) % _availableShaderModes.Length;
+        
+        // Cycle through different effect combinations to showcase various modes
+        switch (_effectModeIndex)
+        {
+            case 0: // Basic mode: Normal for both
+                _shipShaderMode = ShaderMode.Normal;
+                _bulletShaderMode = ShaderMode.Normal;
+                Console.WriteLine("Effect Mode: Normal (ship + bullets)");
+                break;
+                
+            case 1: // Mixed mode: Normal ship, SoftGlow bullets
+                _shipShaderMode = ShaderMode.Normal;
+                _bulletShaderMode = ShaderMode.SoftGlow;
+                Console.WriteLine("Effect Mode: Normal ship, SoftGlow bullets");
+                break;
+                
+            case 2: // Advanced mode: SoftGlow ship, Bloom bullets
+                _shipShaderMode = ShaderMode.SoftGlow;
+                _bulletShaderMode = ShaderMode.Bloom;
+                Console.WriteLine("Effect Mode: SoftGlow ship, Bloom bullets");
+                break;
+        }
     }
 
     // Represents a bullet in flight
