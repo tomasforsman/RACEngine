@@ -114,4 +114,41 @@ public class EngineFacadeTests
         Assert.NotNull(interfaceType.GetMethod("LogWarning"));
         Assert.NotNull(interfaceType.GetMethod("LogError"));
     }
+
+    /// <summary>
+    /// Demonstrates that both implementations can be used interchangeably through the interface.
+    /// This test ensures backward compatibility and API consistency.
+    /// </summary>
+    [Fact]
+    public void BothImplementations_CanBeUsedInterchangeably()
+    {
+        // Arrange - Create array of IEngineFacade implementations
+        var interfaceType = typeof(IEngineFacade);
+        var originalType = typeof(EngineFacade);
+        var modularType = typeof(ModularEngineFacade);
+
+        // Act & Assert - Both should have identical public interface signatures
+        
+        // Check that both implement the same interface
+        Assert.True(originalType.IsAssignableTo(interfaceType));
+        Assert.True(modularType.IsAssignableTo(interfaceType));
+
+        // Check that all interface members are present in both implementations
+        var interfaceMembers = interfaceType.GetMembers();
+        
+        foreach (var member in interfaceMembers)
+        {
+            // Skip inherited object members
+            if (member.DeclaringType == typeof(object)) continue;
+            
+            var originalMember = originalType.GetMember(member.Name).FirstOrDefault();
+            var modularMember = modularType.GetMember(member.Name).FirstOrDefault();
+            
+            Assert.NotNull(originalMember);
+            Assert.NotNull(modularMember);
+            
+            // Both should have the same member type (property, method, event)
+            Assert.Equal(originalMember.MemberType, modularMember.MemberType);
+        }
+    }
 }
