@@ -412,7 +412,8 @@ public static class ShaderLoader
     /// </summary>
     public static string LoadShaderFromFile(string filename)
     {
-        var fullPath = Path.Combine(GetShaderDirectory(), filename);
+        var shaderDirectory = GetShaderDirectory();
+        var fullPath = Path.Combine(shaderDirectory, filename);
 
         // Check cache first for performance
         if (_shaderCache.TryGetValue(fullPath, out var cachedContent))
@@ -428,6 +429,13 @@ public static class ShaderLoader
         try
         {
             var content = File.ReadAllText(fullPath);
+            
+            // Validate that shader content is not empty
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                throw new InvalidOperationException($"Shader file {filename} is empty or contains only whitespace");
+            }
+            
             _shaderCache[fullPath] = content;  // Cache for future use
             return content;
         }
@@ -467,6 +475,12 @@ public static class ShaderLoader
             var assemblyLocation = Assembly.GetExecutingAssembly().Location;
             var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
 
+            // Handle case where assembly location is empty or null (single-file deployments, etc.)
+            if (string.IsNullOrEmpty(assemblyLocation) || string.IsNullOrEmpty(assemblyDirectory))
+            {
+                assemblyDirectory = Directory.GetCurrentDirectory();
+            }
+
             // Primary path: relative to assembly location
             var primaryPath = Path.Combine(assemblyDirectory!, "Shader", "Files");
 
@@ -490,6 +504,33 @@ public static class ShaderLoader
                 var parentDir = Path.GetDirectoryName(currentDir);
                 if (parentDir == null) break;
                 currentDir = parentDir;
+            }
+            
+            // Additional fallback: check current working directory
+            var currentWorkingDir = Directory.GetCurrentDirectory();
+            var workingDirPath = Path.Combine(currentWorkingDir, "Shader", "Files");
+            if (Directory.Exists(workingDirPath))
+            {
+                _cachedShaderDirectory = workingDirPath;
+                return workingDirPath;
+            }
+            
+            // Final fallback: look for shader files in well-known locations
+            var commonPaths = new[]
+            {
+                Path.Combine(assemblyDirectory!, "Assets", "Shaders"),
+                Path.Combine(assemblyDirectory!, "Shaders"),
+                Path.Combine(assemblyDirectory!, "Data", "Shaders"),
+                Path.Combine(assemblyDirectory!, "Content", "Shaders")
+            };
+            
+            foreach (var commonPath in commonPaths)
+            {
+                if (Directory.Exists(commonPath))
+                {
+                    _cachedShaderDirectory = commonPath;
+                    return commonPath;
+                }
             }
 
             // If no directory found, return primary path for error reporting
