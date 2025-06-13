@@ -10,7 +10,7 @@ using Silk.NET.Input;
 
 namespace Rac.Engine;
 
-public class EngineFacade
+public class EngineFacade : IEngineFacade
 {
     private readonly GameEngine.Engine _inner;
 
