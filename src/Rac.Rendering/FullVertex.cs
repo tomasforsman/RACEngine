@@ -6,7 +6,14 @@ using Silk.NET.OpenGL;
 namespace Rac.Rendering;
 
 /// <summary>
-/// Full-featured vertex for advanced effects with per-vertex colors
+/// Full-featured vertex for advanced effects with per-vertex colors.
+/// This is the standard internal format - all other vertex types are converted to this format
+/// with default color (1,1,1,1) to ensure consistent, explicit color handling.
+/// 
+/// Use FullVertex directly when you need:
+/// - Explicit per-vertex colors
+/// - Transparency effects (alpha < 1.0)
+/// - Advanced visual effects requiring color variation
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public struct FullVertex

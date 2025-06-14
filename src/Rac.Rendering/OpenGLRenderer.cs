@@ -41,6 +41,9 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
+using System;
+using System.Linq;
+
 namespace Rac.Rendering;
 
 /// <summary>
@@ -226,27 +229,83 @@ public class OpenGLRenderer : IRenderer, IDisposable
     }
 
     /// <summary>
-    /// Upload vertex data with automatic layout detection and type safety
+    /// Convert BasicVertex array to FullVertex array with default color (1,1,1,1)
     /// </summary>
-    public void UpdateVertices<T>(T[] vertices) where T : unmanaged
+    private FullVertex[] ConvertBasicToFull(BasicVertex[] vertices)
     {
-        var layout = typeof(T).Name switch
-        {
-            nameof(BasicVertex) => BasicVertex.GetLayout(),
-            nameof(TexturedVertex) => TexturedVertex.GetLayout(),
-            nameof(FullVertex) => FullVertex.GetLayout(),
-            _ => throw new ArgumentException($"Unsupported vertex type: {typeof(T).Name}")
-        };
-
-        SetVertexLayout(layout);
-
-        _vertexCount = (uint)vertices.Length;
-        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
-        _gl.BufferData<T>(BufferTargetARB.ArrayBuffer, vertices, BufferUsageARB.DynamicDraw);
+        var defaultColor = new Vector4D<float>(1f, 1f, 1f, 1f);
+        var defaultTexCoord = new Vector2D<float>(0f, 0f);
+        
+        return vertices.Select(v => new FullVertex(v.Position, defaultTexCoord, defaultColor)).ToArray();
     }
 
     /// <summary>
-    /// Upload raw float array with automatic basic layout (legacy compatibility)
+    /// Convert TexturedVertex array to FullVertex array with default color (1,1,1,1)
+    /// </summary>
+    private FullVertex[] ConvertTexturedToFull(TexturedVertex[] vertices)
+    {
+        var defaultColor = new Vector4D<float>(1f, 1f, 1f, 1f);
+        
+        return vertices.Select(v => new FullVertex(v.Position, v.TexCoord, defaultColor)).ToArray();
+    }
+
+    /// <summary>
+    /// Convert float array to FullVertex array with default color (1,1,1,1) based on layout
+    /// </summary>
+    private FullVertex[] ConvertFloatArrayToFull(float[] vertices, VertexLayout layout)
+    {
+        var defaultColor = new Vector4D<float>(1f, 1f, 1f, 1f);
+        var defaultTexCoord = new Vector2D<float>(0f, 0f);
+        
+        var floatsPerVertex = layout.Stride / sizeof(float);
+        var vertexCount = vertices.Length / floatsPerVertex;
+        var result = new FullVertex[vertexCount];
+
+        for (int i = 0; i < vertexCount; i++)
+        {
+            var offset = i * floatsPerVertex;
+            
+            // Position is always first (2 floats)
+            var position = new Vector2D<float>(vertices[offset], vertices[offset + 1]);
+            
+            // TexCoord depends on layout
+            var texCoord = floatsPerVertex >= 4 
+                ? new Vector2D<float>(vertices[offset + 2], vertices[offset + 3])
+                : defaultTexCoord;
+            
+            // Color always defaults to (1,1,1,1) for float arrays
+            result[i] = new FullVertex(position, texCoord, defaultColor);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Upload vertex data with automatic layout detection and type safety.
+    /// Always converts to FullVertex format with default color (1,1,1,1) if not provided.
+    /// </summary>
+    public void UpdateVertices<T>(T[] vertices) where T : unmanaged
+    {
+        // Always use FullVertex layout to ensure color data is present
+        SetVertexLayout(FullVertex.GetLayout());
+
+        // Convert all vertex types to FullVertex format with default color
+        var fullVertices = typeof(T).Name switch
+        {
+            nameof(BasicVertex) => ConvertBasicToFull(vertices.Cast<BasicVertex>().ToArray()),
+            nameof(TexturedVertex) => ConvertTexturedToFull(vertices.Cast<TexturedVertex>().ToArray()),
+            nameof(FullVertex) => vertices.Cast<FullVertex>().ToArray(),
+            _ => throw new ArgumentException($"Unsupported vertex type: {typeof(T).Name}")
+        };
+
+        _vertexCount = (uint)fullVertices.Length;
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+        _gl.BufferData<FullVertex>(BufferTargetARB.ArrayBuffer, fullVertices, BufferUsageARB.DynamicDraw);
+    }
+
+    /// <summary>
+    /// Upload raw float array with automatic basic layout (legacy compatibility).
+    /// Automatically converts to FullVertex format with default color (1,1,1,1).
     /// </summary>
     public unsafe void UpdateVertices(float[] vertices)
     {
@@ -254,24 +313,20 @@ public class OpenGLRenderer : IRenderer, IDisposable
     }
 
     /// <summary>
-    /// Upload raw float array with explicit layout specification
+    /// Upload raw float array with explicit layout specification.
+    /// Automatically converts to FullVertex format with default color (1,1,1,1).
     /// </summary>
     public unsafe void UpdateVertices(float[] vertices, VertexLayout layout)
     {
-        SetVertexLayout(layout);
+        // Always use FullVertex layout to ensure color data is present
+        SetVertexLayout(FullVertex.GetLayout());
 
-        _vertexCount = (uint)(vertices.Length / (layout.Stride / sizeof(float)));
+        // Convert float array to FullVertex format based on the provided layout
+        var fullVertices = ConvertFloatArrayToFull(vertices, layout);
+
+        _vertexCount = (uint)fullVertices.Length;
         _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
-
-        fixed (float* ptr = vertices)
-        {
-            _gl.BufferData(
-                BufferTargetARB.ArrayBuffer,
-                (nuint)(vertices.Length * sizeof(float)),
-                ptr,
-                BufferUsageARB.DynamicDraw
-            );
-        }
+        _gl.BufferData<FullVertex>(BufferTargetARB.ArrayBuffer, fullVertices, BufferUsageARB.DynamicDraw);
     }
 
     public void Clear()

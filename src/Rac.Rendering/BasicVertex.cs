@@ -36,13 +36,19 @@ public struct BasicVertex
 // ════════════════════════════════════════════════════════════════════════════════
 
 /*
-// Example 1: Basic triangle with position-only vertices
+// VERTEX COLOR BEHAVIOR:
+// All vertex types now provide consistent color handling:
+// - BasicVertex and TexturedVertex automatically get default color (1,1,1,1) - fully opaque white
+// - FullVertex preserves explicit colors, including transparency (alpha < 1.0)
+// - No more fragile alpha checks - transparency is explicit and intentional
+
+// Example 1: Basic triangle with position-only vertices (automatically gets default color)
 float[] basicTriangle = { -0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f };
 renderer.SetShaderMode(ShaderMode.Normal);
-renderer.UpdateVertices(basicTriangle);
+renderer.UpdateVertices(basicTriangle);  // Internally converted to include color (1,1,1,1)
 renderer.Draw();
 
-// Example 2: Type-safe basic vertices
+// Example 2: Type-safe basic vertices (automatically gets default color)
 var basicVertices = new BasicVertex[]
 {
     new(new Vector2D<float>(-0.5f, -0.5f)),
@@ -50,10 +56,10 @@ var basicVertices = new BasicVertex[]
     new(new Vector2D<float>( 0.0f,  0.5f))
 };
 renderer.SetShaderMode(ShaderMode.Normal);
-renderer.UpdateVertices(basicVertices);
+renderer.UpdateVertices(basicVertices);  // Internally converted to include color (1,1,1,1)
 renderer.Draw();
 
-// Example 3: Textured vertices for gradient effects
+// Example 3: Textured vertices for gradient effects (automatically gets default color)
 var texturedVertices = new TexturedVertex[]
 {
     new(new Vector2D<float>(-0.5f, -0.5f), new Vector2D<float>(-1f, -1f)),
@@ -61,27 +67,27 @@ var texturedVertices = new TexturedVertex[]
     new(new Vector2D<float>( 0.0f,  0.5f), new Vector2D<float>( 0f,  1f))
 };
 renderer.SetShaderMode(ShaderMode.SoftGlow);
-renderer.UpdateVertices(texturedVertices);
+renderer.UpdateVertices(texturedVertices);  // Internally converted to include color (1,1,1,1)
 renderer.Draw();
 
-// Example 4: Raw float array with explicit layout for textured rendering
+// Example 4: Raw float array with explicit layout (automatically gets default color)
 float[] texturedFloats = {
     -0.5f, -0.5f, -1f, -1f,   // position + texcoord
      0.5f, -0.5f,  1f, -1f,
      0.0f,  0.5f,  0f,  1f
 };
 renderer.SetShaderMode(ShaderMode.SoftGlow);
-renderer.UpdateVertices(texturedFloats, TexturedVertex.GetLayout());
+renderer.UpdateVertices(texturedFloats, TexturedVertex.GetLayout());  // Internally converted to include color (1,1,1,1)
 renderer.Draw();
 
-// Example 5: Full vertices with per-vertex colors
+// Example 5: Full vertices with explicit per-vertex colors (including transparency)
 var fullVertices = new FullVertex[]
 {
-    new(new Vector2D<float>(-0.5f, -0.5f), new Vector2D<float>(-1f, -1f), new Vector4D<float>(1f, 0f, 0f, 1f)),
-    new(new Vector2D<float>( 0.5f, -0.5f), new Vector2D<float>( 1f, -1f), new Vector4D<float>(0f, 1f, 0f, 1f)),
-    new(new Vector2D<float>( 0.0f,  0.5f), new Vector2D<float>( 0f,  1f), new Vector4D<float>(0f, 0f, 1f, 1f))
+    new(new Vector2D<float>(-0.5f, -0.5f), new Vector2D<float>(-1f, -1f), new Vector4D<float>(1f, 0f, 0f, 1f)),    // Red, fully opaque
+    new(new Vector2D<float>( 0.5f, -0.5f), new Vector2D<float>( 1f, -1f), new Vector4D<float>(0f, 1f, 0f, 0.5f)),  // Green, 50% transparent
+    new(new Vector2D<float>( 0.0f,  0.5f), new Vector2D<float>( 0f,  1f), new Vector4D<float>(0f, 0f, 1f, 0.8f))   // Blue, 80% opaque
 };
-renderer.UpdateVertices(fullVertices);
+renderer.UpdateVertices(fullVertices);  // Colors preserved exactly as specified
 renderer.Draw();
 
 // Example 6: Post-processing with bloom effects
