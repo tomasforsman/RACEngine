@@ -20,11 +20,7 @@ void main()
     
     vTexCoord = aTexCoord;
     
-    if (aColor.a > 0.0) {
-        vColor = aColor;
-    } else {
-        vColor = uColor;
-    }
+    vColor = aColor;
     
     vDistance = length(aTexCoord);
 }
