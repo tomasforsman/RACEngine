@@ -9,6 +9,12 @@
     <ProjectReference Include="..\..\src\Rac.Engine\Rac.Engine.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\..\src\Rac.Rendering\Shader\Files\**\*">
+      <Link>Shader\Files\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="bin\Debug\net8.0\config.ini" />
     <None Update="config.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
