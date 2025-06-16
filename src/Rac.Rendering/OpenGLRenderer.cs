@@ -460,22 +460,126 @@ public class OpenGLRenderer : IRenderer, IDisposable
     }
 
     /// <summary>
+    /// Validates that all required post-processing shader files exist and are readable
+    /// </summary>
+    /// <returns>True if all required shaders are available, false otherwise</returns>
+    private bool ValidatePostProcessingShaders()
+    {
+        var requiredShaders = new[]
+        {
+            "fullscreen_quad.vert",
+            "brightness_extract.frag", 
+            "gaussian_blur.frag",
+            "bloom_composite.frag"
+        };
+
+        Console.WriteLine("Validating post-processing shader files...");
+        
+        foreach (var shaderFile in requiredShaders)
+        {
+            try
+            {
+                var shaderSource = Shader.ShaderLoader.LoadShaderFromFile(shaderFile);
+                if (string.IsNullOrEmpty(shaderSource))
+                {
+                    Console.WriteLine($"Error: Shader file '{shaderFile}' is empty or invalid");
+                    return false;
+                }
+                Console.WriteLine($"✓ Shader file '{shaderFile}' validated");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: Failed to load shader file '{shaderFile}': {ex.Message}");
+                return false;
+            }
+        }
+
+        Console.WriteLine("✓ All post-processing shaders validated successfully");
+        return true;
+    }
+
+    /// <summary>
+    /// Initializes the post-processing system with comprehensive error handling and diagnostics
+    /// </summary>
+    /// <returns>True if initialization succeeded, false otherwise</returns>
+    private bool InitializePostProcessing()
+    {
+        Console.WriteLine("Initializing post-processing system...");
+
+        // Step 1: Validate OpenGL context state
+        Console.WriteLine("Validating OpenGL context state...");
+        try
+        {
+            var error = _gl.GetError();
+            if (error != GLEnum.NoError)
+            {
+                Console.WriteLine($"Error: OpenGL context has existing error state: {error}");
+                return false;
+            }
+            Console.WriteLine("✓ OpenGL context state is clean");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: Failed to check OpenGL context state: {ex.Message}");
+            return false;
+        }
+
+        // Step 2: Validate required shader files
+        if (!ValidatePostProcessingShaders())
+        {
+            Console.WriteLine("Error: Post-processing shader validation failed");
+            return false;
+        }
+
+        // Step 3: Create and initialize PostProcessing instance
+        Console.WriteLine("Creating PostProcessing instance...");
+        try
+        {
+            _postProcessing = new PostProcessing(_gl);
+            Console.WriteLine("✓ PostProcessing instance created");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: Failed to create PostProcessing instance: {ex.Message}");
+            _postProcessing = null;
+            return false;
+        }
+
+        // Step 4: Initialize the post-processing pipeline
+        Console.WriteLine($"Initializing post-processing pipeline (resolution: {_windowSize.X}x{_windowSize.Y})...");
+        try
+        {
+            _postProcessing.Initialize(_windowSize.X, _windowSize.Y);
+            Console.WriteLine("✓ Post-processing pipeline initialized successfully");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: Failed to initialize post-processing pipeline: {ex.Message}");
+            _postProcessing?.Dispose();
+            _postProcessing = null;
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Ensures post-processing system is initialized when bloom effects are needed
     /// </summary>
     private void EnsurePostProcessingInitialized()
     {
         if (_postProcessing == null)
         {
-            try
+            Console.WriteLine("Post-processing system not initialized, attempting initialization...");
+            
+            if (!InitializePostProcessing())
             {
-                _postProcessing = new PostProcessing(_gl);
-                _postProcessing.Initialize(_windowSize.X, _windowSize.Y);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Warning: Failed to initialize bloom post-processing: {ex.Message}");
+                Console.WriteLine("Warning: Post-processing initialization failed - falling back to non-bloom rendering");
                 _isBloomActive = false;
                 _postProcessing = null;
+            }
+            else
+            {
+                Console.WriteLine("✓ Post-processing system ready for bloom effects");
             }
         }
     }
