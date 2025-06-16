@@ -17,6 +17,10 @@ public static class Program
                 BoidSample.Run(args); // assume you add BoidSample.Run
                 break;
 
+            case "bloomtest":
+                BloomTest.Run(args); // HDR bloom demonstration test
+                break;
+
             // ─── add more samples here ────────────────────
             // case "othersample": OtherSample.Run(args); break;
 
@@ -32,6 +36,7 @@ public static class Program
         Console.WriteLine("Available samples:");
         Console.WriteLine("  shootersample   - Interactive shooter with shader mode switching (Normal/SoftGlow/Bloom)");
         Console.WriteLine("  boidsample      - Flocking simulation with visual effects demonstration");
+        Console.WriteLine("  bloomtest       - HDR bloom effect demonstration (Issue #51)");
         // … list additional samples here …
         Console.Write("Enter sample name: ");
         return Console.ReadLine()!.Trim().ToLowerInvariant();
@@ -46,7 +51,9 @@ public static class Program
         Console.WriteLine("Examples:");
         Console.WriteLine("  dotnet run -- shootersample");
         Console.WriteLine("  dotnet run -- boidsample");
+        Console.WriteLine("  dotnet run -- bloomtest");
         Console.WriteLine();
-        Console.WriteLine("Both samples demonstrate shader mode switching and engine features.");
+        Console.WriteLine("All samples demonstrate shader mode switching and engine features.");
+        Console.WriteLine("The bloomtest specifically demonstrates HDR color bloom effects.");
     }
 }

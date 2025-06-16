@@ -349,9 +349,30 @@ public class OpenGLRenderer : IRenderer, IDisposable
         }
     }
 
+    /// <summary>
+    /// Sets the current rendering color with full HDR (High Dynamic Range) support.
+    /// 
+    /// HDR COLOR USAGE:
+    /// - Standard colors: 0.0-1.0 range for normal rendering modes
+    /// - HDR colors: Values > 1.0 for dramatic bloom effects when bloom mode is active
+    /// - Example HDR colors for bloom:
+    ///   * Red bloom: (2.5f, 0.3f, 0.3f, 1.0f) - Creates intense red glow
+    ///   * White bloom: (2.0f, 2.0f, 2.0f, 1.0f) - Creates bright white glow
+    ///   * Blue bloom: (0.3f, 0.3f, 2.5f, 1.0f) - Creates intense blue glow
+    /// 
+    /// BACKWARD COMPATIBILITY:
+    /// - Non-bloom shaders automatically handle HDR colors through tone mapping
+    /// - Standard LDR colors (0.0-1.0) work identically in all shader modes
+    /// - Alpha channel should typically remain 1.0 for bloom effects
+    /// </summary>
+    /// <param name="rgba">RGBA color vector. RGB components can exceed 1.0 for HDR bloom effects.</param>
     public void SetColor(Vector4D<float> rgba)
     {
         _currentColor = rgba;
+        
+        // HDR colors (values > 1.0) are preserved and passed directly to shaders
+        // The bloom shader will process these through enhanceHDRColor() and dynamic range scaling
+        // Non-bloom shaders handle HDR values through their respective tone mapping functions
         if (_currentUniforms != null && _currentUniforms.ColorLocation >= 0)
         {
             _gl.Uniform4(_currentUniforms.ColorLocation, rgba.X, rgba.Y, rgba.Z, rgba.W);
