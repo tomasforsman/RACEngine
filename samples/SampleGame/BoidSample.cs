@@ -137,7 +137,6 @@ public static class BoidSample
         engine.LoadEvent += () =>
         {
             UpdateBoidSettings(windowManager.Size);
-            TestBloomModeSupport();
         };
         windowManager.OnResize += newSize => UpdateBoidSettings(newSize);
 
@@ -232,7 +231,7 @@ public static class BoidSample
             Console.WriteLine("🌈 SHADER MODES & VISUAL EFFECTS:");
             Console.WriteLine("   • Normal:   Standard rendering, no glow effects");
             Console.WriteLine("   • SoftGlow: Gentle halos around all boids");
-            Console.WriteLine("   • Bloom:    HDR bloom effects with dramatic glowing!");
+            Console.WriteLine("   • Bloom:    HDR bloom effects with dramatic glowing! (tested when accessed)");
             Console.WriteLine();
             
             Console.WriteLine("🦋 BOID SPECIES & EFFECTS:");
@@ -280,15 +279,15 @@ public static class BoidSample
             _tipIndex++;
         }
 
-        void TestBloomModeSupport()
+        bool TestBloomModeSupport()
         {
             try
             {
                 // Test Bloom mode support
                 engine.Renderer.SetShaderMode(ShaderMode.Bloom);
-                _availableShaderModes.Add(ShaderMode.Bloom);
                 Console.WriteLine("✅ Bloom mode is supported and available");
                 engine.Renderer.SetShaderMode(ShaderMode.Normal);
+                return true;
             }
             catch (Exception ex)
             {
@@ -302,10 +301,8 @@ public static class BoidSample
                 {
                     Console.WriteLine($"⚠️ Warning: Could not set Normal mode: {fallbackEx.Message}");
                 }
+                return false;
             }
-            
-            // Report available modes
-            Console.WriteLine($"📊 Available shader modes: {string.Join(", ", _availableShaderModes)}");
         }
 
         void CycleShaderMode()
@@ -315,7 +312,23 @@ public static class BoidSample
             try
             {
                 _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Count;
-                _currentShaderMode = _availableShaderModes[_shaderModeIndex];
+                var targetMode = _availableShaderModes[_shaderModeIndex];
+                
+                // If we've cycled through all basic modes, try to add bloom mode if not tested yet
+                if (_shaderModeIndex == 0 && !_availableShaderModes.Contains(ShaderMode.Bloom))
+                {
+                    // Test bloom support on-demand
+                    if (TestBloomModeSupport())
+                    {
+                        _availableShaderModes.Add(ShaderMode.Bloom);
+                        // Switch directly to bloom mode since user is cycling
+                        _shaderModeIndex = _availableShaderModes.Count - 1;
+                        targetMode = ShaderMode.Bloom;
+                        Console.WriteLine("📊 Bloom mode added to available modes");
+                    }
+                }
+                
+                _currentShaderMode = targetMode;
                 
                 // Reset tip timer when changing modes
                 _timeSinceLastTip = 0f;
@@ -350,6 +363,12 @@ public static class BoidSample
                 
                 Console.WriteLine($"• Species behavior: {GetSpeciesBehaviorDescription()}");
                 Console.WriteLine();
+                
+                // Report available modes on first cycle
+                if (_shaderModeIndex == 0)
+                {
+                    Console.WriteLine($"📊 Available shader modes: {string.Join(", ", _availableShaderModes)}");
+                }
             }
             catch (Exception ex)
             {
