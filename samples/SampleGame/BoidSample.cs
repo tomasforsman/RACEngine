@@ -281,25 +281,34 @@ public static class BoidSample
 
         bool TestBloomModeSupport()
         {
+            Console.WriteLine("🧪 TestBloomModeSupport: Testing bloom mode availability...");
             try
             {
                 // Test Bloom mode support
+                Console.WriteLine("🧪 TestBloomModeSupport: Attempting to set bloom mode...");
                 engine.Renderer.SetShaderMode(ShaderMode.Bloom);
-                Console.WriteLine("✅ Bloom mode is supported and available");
+                Console.WriteLine("✅ TestBloomModeSupport: Bloom mode set successfully");
+                
+                Console.WriteLine("🧪 TestBloomModeSupport: Reverting to normal mode...");
                 engine.Renderer.SetShaderMode(ShaderMode.Normal);
+                Console.WriteLine("✅ TestBloomModeSupport: Reverted to normal mode successfully");
+                
+                Console.WriteLine("✅ TestBloomModeSupport: Bloom mode is supported and available");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Bloom mode not supported: {ex.Message}");
+                Console.WriteLine($"❌ TestBloomModeSupport: Bloom mode not supported: {ex.Message}");
                 // Ensure we fall back to Normal mode safely
                 try
                 {
+                    Console.WriteLine("🧪 TestBloomModeSupport: Attempting fallback to normal mode...");
                     engine.Renderer.SetShaderMode(ShaderMode.Normal);
+                    Console.WriteLine("✅ TestBloomModeSupport: Fallback to normal mode successful");
                 }
                 catch (Exception fallbackEx)
                 {
-                    Console.WriteLine($"⚠️ Warning: Could not set Normal mode: {fallbackEx.Message}");
+                    Console.WriteLine($"⚠️ TestBloomModeSupport: Warning: Could not set Normal mode: {fallbackEx.Message}");
                 }
                 return false;
             }
