@@ -42,6 +42,7 @@ using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Rac.Rendering;
@@ -481,11 +482,30 @@ public class OpenGLRenderer : IRenderer, IDisposable
     }
 
     /// <summary>
-    /// Validates that all required post-processing shader files exist and are readable
+    /// Validates that all required post-processing shader files exist and are readable,
+    /// and that the OpenGL context supports the required version and extensions
     /// </summary>
-    /// <returns>True if all required shaders are available, false otherwise</returns>
+    /// <returns>True if all required shaders and OpenGL capabilities are available, false otherwise</returns>
     private bool ValidatePostProcessingShaders()
     {
+        // Step 1: Validate OpenGL version and extensions
+        Console.WriteLine("Validating OpenGL capabilities for post-processing...");
+        
+        if (!ValidateOpenGLVersion())
+        {
+            Console.WriteLine("Error: OpenGL version validation failed");
+            return false;
+        }
+        
+        if (!ValidateOpenGLExtensions())
+        {
+            Console.WriteLine("Error: Required OpenGL extensions not available");
+            return false;
+        }
+        
+        Console.WriteLine("✓ OpenGL capabilities validated successfully");
+
+        // Step 2: Validate shader files
         var requiredShaders = new[]
         {
             "fullscreen_quad.vert",
@@ -515,8 +535,128 @@ public class OpenGLRenderer : IRenderer, IDisposable
             }
         }
 
-        Console.WriteLine("✓ All post-processing shaders validated successfully");
+        Console.WriteLine("✓ All post-processing requirements validated successfully");
         return true;
+    }
+
+    /// <summary>
+    /// Validates that the OpenGL version is 3.3 or higher, which is required for post-processing
+    /// </summary>
+    /// <returns>True if OpenGL version is supported, false otherwise</returns>
+    private bool ValidateOpenGLVersion()
+    {
+        try
+        {
+            string versionString;
+            unsafe
+            {
+                var versionPtr = _gl.GetString(StringName.Version);
+                versionString = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((IntPtr)versionPtr) ?? "";
+            }
+            
+            if (string.IsNullOrEmpty(versionString))
+            {
+                Console.WriteLine("Error: Unable to query OpenGL version");
+                return false;
+            }
+
+            Console.WriteLine($"OpenGL Version: {versionString}");
+
+            // Parse version string - format is typically "MAJOR.MINOR.PATCH ..."
+            var parts = versionString.Split(' ')[0].Split('.');
+            if (parts.Length < 2)
+            {
+                Console.WriteLine("Error: Invalid OpenGL version format");
+                return false;
+            }
+
+            if (!int.TryParse(parts[0], out var major) || !int.TryParse(parts[1], out var minor))
+            {
+                Console.WriteLine("Error: Unable to parse OpenGL version numbers");
+                return false;
+            }
+
+            // Check for OpenGL 3.3 or higher
+            var version = new Version(major, minor);
+            var requiredVersion = new Version(3, 3);
+
+            if (version < requiredVersion)
+            {
+                Console.WriteLine($"Error: Post-processing requires OpenGL {requiredVersion} or higher, but only {version} is available");
+                Console.WriteLine("Please update your graphics drivers or use a newer graphics card that supports OpenGL 3.3+");
+                return false;
+            }
+
+            Console.WriteLine($"✓ OpenGL version {version} meets minimum requirement ({requiredVersion})");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: Failed to validate OpenGL version: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Validates that the required OpenGL extensions are available for post-processing
+    /// </summary>
+    /// <returns>True if all required extensions are supported, false otherwise</returns>
+    private bool ValidateOpenGLExtensions()
+    {
+        var requiredExtensions = new[]
+        {
+            "GL_ARB_framebuffer_object",
+            "GL_ARB_texture_float"
+        };
+
+        try
+        {
+            // Get number of extensions
+            _gl.GetInteger(GetPName.NumExtensions, out var numExtensions);
+            var availableExtensions = new HashSet<string>();
+
+            // Collect all available extensions
+            for (var i = 0; i < numExtensions; i++)
+            {
+                string extension;
+                unsafe
+                {
+                    var extensionPtr = _gl.GetString(StringName.Extensions, (uint)i);
+                    extension = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((IntPtr)extensionPtr) ?? "";
+                }
+                
+                if (!string.IsNullOrEmpty(extension))
+                {
+                    availableExtensions.Add(extension);
+                }
+            }
+
+            Console.WriteLine($"Found {availableExtensions.Count} OpenGL extensions");
+
+            // Check each required extension
+            foreach (var requiredExtension in requiredExtensions)
+            {
+                if (availableExtensions.Contains(requiredExtension))
+                {
+                    Console.WriteLine($"✓ Extension {requiredExtension} is available");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: Required extension {requiredExtension} is not available");
+                    Console.WriteLine("This extension is needed for framebuffer objects and floating-point textures in post-processing");
+                    Console.WriteLine("Please update your graphics drivers or use a newer graphics card");
+                    return false;
+                }
+            }
+
+            Console.WriteLine("✓ All required OpenGL extensions are available");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: Failed to validate OpenGL extensions: {ex.Message}");
+            return false;
+        }
     }
 
     /// <summary>

@@ -35,6 +35,17 @@ RACEngine/
 
 * [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
+### System Requirements
+
+For optimal performance and full visual effects support:
+
+* **Graphics:** OpenGL 3.3 or higher
+* **Required OpenGL Extensions:**
+  - GL_ARB_framebuffer_object (for post-processing effects)
+  - GL_ARB_texture_float (for HDR rendering)
+
+**Note:** The engine will automatically detect your graphics capabilities and gracefully fall back to basic rendering if post-processing requirements aren't met. Update your graphics drivers or use a newer graphics card for full visual effects support.
+
 ### Building the Engine
 
 1. **Clone the repository:**

@@ -47,6 +47,30 @@ public class OpenGLRendererTests
         Assert.Equal(typeof(bool), method.ReturnType);
         Assert.Empty(method.GetParameters()); // Should have no parameters
     }
+
+    [Fact]
+    public void OpenGLRenderer_HasValidateOpenGLVersionMethod()
+    {
+        // Verify that ValidateOpenGLVersion method exists for version checking
+        var method = typeof(OpenGLRenderer).GetMethod("ValidateOpenGLVersion", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        Assert.NotNull(method);
+        Assert.Equal(typeof(bool), method.ReturnType);
+        Assert.Empty(method.GetParameters()); // Should have no parameters
+    }
+
+    [Fact]
+    public void OpenGLRenderer_HasValidateOpenGLExtensionsMethod()
+    {
+        // Verify that ValidateOpenGLExtensions method exists for extension checking
+        var method = typeof(OpenGLRenderer).GetMethod("ValidateOpenGLExtensions", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        Assert.NotNull(method);
+        Assert.Equal(typeof(bool), method.ReturnType);
+        Assert.Empty(method.GetParameters()); // Should have no parameters
+    }
     
     // Note: Direct testing of Dispose() behavior would require a complex OpenGL context setup.
     // The key fix is implementing the standard IDisposable pattern with idempotency protection,
