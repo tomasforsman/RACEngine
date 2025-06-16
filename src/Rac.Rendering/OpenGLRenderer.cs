@@ -334,8 +334,6 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         if (_isBloomActive)
         {
-            Console.WriteLine("🎬 OpenGLRenderer.Clear: Bloom is active, ensuring post-processing is initialized...");
-            EnsurePostProcessingInitialized();
             if (_postProcessing != null)
             {
                 Console.WriteLine("🎬 OpenGLRenderer.Clear: Beginning scene pass for bloom rendering...");
@@ -442,6 +440,24 @@ public class OpenGLRenderer : IRenderer, IDisposable
 
         _isBloomActive = (mode == ShaderMode.Bloom);
         Console.WriteLine($"🎨 OpenGLRenderer.SetShaderMode: Bloom active: {_isBloomActive}");
+        
+        // Initialize PostProcessing immediately when Bloom mode is requested
+        // This prevents initialization during the render loop which can cause hangs
+        if (_isBloomActive && _postProcessing == null)
+        {
+            Console.WriteLine("🎨 OpenGLRenderer.SetShaderMode: Bloom mode requested, initializing post-processing immediately...");
+            EnsurePostProcessingInitialized();
+            
+            // If PostProcessing initialization failed, fall back to Normal mode
+            if (_postProcessing == null)
+            {
+                Console.WriteLine("❌ OpenGLRenderer.SetShaderMode: PostProcessing initialization failed, falling back to Normal mode");
+                _isBloomActive = false;
+                _currentShaderMode = ShaderMode.Normal;
+                _currentShader = _shaders[ShaderMode.Normal];
+                _currentUniforms = _uniforms[ShaderMode.Normal];
+            }
+        }
         
         ConfigureBlendingForMode(mode);
 
