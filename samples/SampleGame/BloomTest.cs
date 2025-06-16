@@ -90,7 +90,8 @@ public static class BloomTest
             {
                 switch (key)
                 {
-                    case Key.B: // Toggle bloom mode
+                    case Key.S: // Toggle bloom mode (primary as per issue #52)
+                    case Key.B: // Toggle bloom mode (legacy support)
                         currentShaderMode = currentShaderMode == ShaderMode.Bloom ? ShaderMode.Normal : ShaderMode.Bloom;
                         Console.WriteLine($"Shader Mode: {currentShaderMode}");
                         break;
@@ -118,7 +119,8 @@ public static class BloomTest
         
         Console.WriteLine("=== BLOOM HDR COLOR TEST - ISSUE #51 DEMONSTRATION ===");
         Console.WriteLine("Controls:");
-        Console.WriteLine("  'B' - Toggle Bloom mode ON/OFF");
+        Console.WriteLine("  'S' - Toggle Bloom mode ON/OFF");
+        Console.WriteLine("  'B' - Toggle Bloom mode ON/OFF (legacy)");
         Console.WriteLine("  'H' - Toggle HDR colors ON/OFF");
         Console.WriteLine();
         Console.WriteLine("Expected behavior:");
@@ -150,30 +152,28 @@ public static class BloomTest
 
             foreach (var (colorName, position) in positions)
             {
-                DrawTestCircle(position, currentColors[colorName], colorName);
+                DrawTestSquare(position, currentColors[colorName], colorName);
             }
         }
 
-        void DrawTestCircle(Vector2D<float> center, Vector4D<float> color, string label)
+        void DrawTestSquare(Vector2D<float> center, Vector4D<float> color, string label)
         {
-            const int segments = 32;
-            const float radius = 0.15f;
-            var verts = new List<float>();
-
-            // Generate circle geometry
-            for (int i = 0; i < segments; i++)
+            const float size = 0.3f; // Square size
+            var halfSize = size * 0.5f;
+            
+            // Generate square geometry as two triangles
+            var verts = new List<float>
             {
-                float a0 = 2 * MathF.PI * i / segments;
-                float a1 = 2 * MathF.PI * (i + 1) / segments;
-
-                var p0 = center + new Vector2D<float>(radius * MathF.Cos(a0), radius * MathF.Sin(a0));
-                var p1 = center + new Vector2D<float>(radius * MathF.Cos(a1), radius * MathF.Sin(a1));
-
-                // Triangle fan: center + two edge points
-                verts.Add(center.X); verts.Add(center.Y);
-                verts.Add(p0.X); verts.Add(p0.Y);
-                verts.Add(p1.X); verts.Add(p1.Y);
-            }
+                // First triangle (top-left, top-right, bottom-left)
+                center.X - halfSize, center.Y + halfSize,  // Top-left
+                center.X + halfSize, center.Y + halfSize,  // Top-right
+                center.X - halfSize, center.Y - halfSize,  // Bottom-left
+                
+                // Second triangle (top-right, bottom-right, bottom-left)
+                center.X + halfSize, center.Y + halfSize,  // Top-right
+                center.X + halfSize, center.Y - halfSize,  // Bottom-right
+                center.X - halfSize, center.Y - halfSize,  // Bottom-left
+            };
 
             // Render with current shader mode and color
             engine.Renderer.SetShaderMode(currentShaderMode);
