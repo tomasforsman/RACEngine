@@ -42,6 +42,7 @@ using Rac.Rendering.Shader;
 using Rac.Rendering.VFX;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using System.Linq;
 
 namespace SampleGame;
 
@@ -55,7 +56,7 @@ public static class BoidSample
     // interactive shader mode switching, showcasing the rendering capabilities.
     
     private static ShaderMode _currentShaderMode = ShaderMode.Normal;
-    private static readonly ShaderMode[] _availableShaderModes = { ShaderMode.Normal, ShaderMode.SoftGlow, ShaderMode.Bloom };
+    private static List<ShaderMode> _availableShaderModes = new() { ShaderMode.Normal, ShaderMode.SoftGlow };
     private static int _shaderModeIndex = 0;
     private static float _timeSinceLastTip = 0f;
     private static int _tipIndex = 0;
@@ -136,6 +137,7 @@ public static class BoidSample
         engine.LoadEvent += () =>
         {
             UpdateBoidSettings(windowManager.Size);
+            TestBloomModeSupport();
         };
         windowManager.OnResize += newSize => UpdateBoidSettings(newSize);
 
@@ -275,9 +277,26 @@ public static class BoidSample
             _tipIndex++;
         }
 
+        void TestBloomModeSupport()
+        {
+            try
+            {
+                engine.Renderer.SetShaderMode(ShaderMode.Bloom);
+                _availableShaderModes.Add(ShaderMode.Bloom);
+                Console.WriteLine("✅ Bloom mode is supported and available");
+                engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Bloom mode not supported: {ex.Message}");
+                engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            }
+        }
+
         void CycleShaderMode()
         {
-            _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Length;
+            if (_availableShaderModes.Count == 0) return;
+            _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Count;
             _currentShaderMode = _availableShaderModes[_shaderModeIndex];
             
             // Reset tip timer when changing modes
@@ -470,16 +489,76 @@ public static class BoidSample
             // Each boid is rendered as a triangle pointing in its movement direction.
             // Triangle vertices are defined in local space, then transformed to world space.
 
-            // Triangle shape in local coordinates (pointing up in local space)
-            var triangle = new[]
+            // ───────────────────────────────────────────────────────────────────────
+            // SHADER EFFECTS AND RENDERING
+            // ───────────────────────────────────────────────────────────────────────
+            //
+            // Each species demonstrates different shader capabilities based on current mode:
+            // - White boids: Always use current selected shader mode (primary demonstration)
+            // - Blue boids: Show SoftGlow when available (secondary effect)
+            // - Red boids: Show advanced effects (Bloom when available, SoftGlow otherwise)
+
+            ShaderMode shaderToUse = filterId switch
             {
-                new Vector2D<float>(-0.008f, -0.008f), // Bottom left
-                new Vector2D<float>(0.008f, -0.008f),  // Bottom right
-                new Vector2D<float>(0.000f, 0.03f),    // Top point (forward direction)
+                "White" => _currentShaderMode, // Always follows current mode for primary demo
+                "Blue" => _currentShaderMode == ShaderMode.Normal ? ShaderMode.Normal : ShaderMode.SoftGlow,
+                "Red" => _currentShaderMode == ShaderMode.Bloom ? ShaderMode.Bloom : 
+                         _currentShaderMode == ShaderMode.SoftGlow ? ShaderMode.SoftGlow : ShaderMode.Normal,
+                _ => ShaderMode.Normal
             };
 
+            // Choose color palette based on shader mode for optimal visual effects
+            // HDR colors (values > 1.0) create dramatic bloom effects when bloom shaders are active
+            var useHDRColors = (shaderToUse == ShaderMode.Bloom);
+            var currentColorPalette = useHDRColors ? hdrSpeciesColors : speciesColors;
+            var baseColor = currentColorPalette[filterId];
+
+            // Color enhancement logic for different shader modes
+            var enhancedColor = shaderToUse switch
+            {
+                ShaderMode.Normal => baseColor,
+                ShaderMode.SoftGlow => new Vector4D<float>(
+                    Math.Min(baseColor.X * 1.3f, 1.0f), 
+                    Math.Min(baseColor.Y * 1.3f, 1.0f), 
+                    Math.Min(baseColor.Z * 1.3f, 1.0f), 
+                    1f),
+                ShaderMode.Bloom => new Vector4D<float>(
+                    Math.Min(baseColor.X * 1.6f, 1.0f), 
+                    Math.Min(baseColor.Y * 1.6f, 1.0f), 
+                    Math.Min(baseColor.Z * 1.6f, 1.0f), 
+                    1f),
+                _ => baseColor
+            };
+
+            // Triangle definitions vary by shader mode for optimal visual effects
+            Vector2D<float>[] trianglePoints;
+            (Vector2D<float> pos, Vector2D<float> tex)[]? triangleWithTexCoords = null;
+
+            if (shaderToUse == ShaderMode.Normal)
+            {
+                // Simple triangle for normal mode
+                trianglePoints = new[]
+                {
+                    new Vector2D<float>(-0.02f, -0.015f),
+                    new Vector2D<float>(0.02f, -0.015f),
+                    new Vector2D<float>(0.0f, 0.04f),
+                };
+            }
+            else
+            {
+                // Larger triangle with texture coordinates for glow modes
+                triangleWithTexCoords = new[]
+                {
+                    (pos: new Vector2D<float>(-0.03f, -0.025f), tex: new Vector2D<float>(-1f, -1f)),
+                    (pos: new Vector2D<float>(0.03f, -0.025f), tex: new Vector2D<float>(1f, -1f)),
+                    (pos: new Vector2D<float>(0.0f, 0.06f), tex: new Vector2D<float>(0f, 1f)),
+                };
+                trianglePoints = triangleWithTexCoords.Select(t => t.pos).ToArray();
+            }
+
             // Vertex buffer for all triangles of this species
-            var verts = new List<float>();
+            var vertices = new List<FullVertex>();
+            var wireframeVertices = new List<FullVertex>();
 
             // ───────────────────────────────────────────────────────────────────────
             // ECS QUERY AND TRANSFORMATION PIPELINE
@@ -514,8 +593,10 @@ public static class BoidSample
                 float scale = spec.Scale;
 
                 // Transform each triangle vertex: Scale → Rotate → Translate
-                foreach (var off in triangle)
+                for (int i = 0; i < trianglePoints.Length; i++)
                 {
+                    var off = trianglePoints[i];
+                    
                     // 1. Scale the local vertex
                     var s = off * scale;
 
@@ -527,51 +608,72 @@ public static class BoidSample
                     // 3. Translate to world position
                     var p = wp + r;
 
-                    // Add to vertex buffer (x, y coordinates)
-                    verts.Add(p.X);
-                    verts.Add(p.Y);
+                    // Add to vertex buffer with appropriate texture coordinates
+                    var texCoord = shaderToUse == ShaderMode.Normal ? 
+                        new Vector2D<float>(0f, 0f) : 
+                        triangleWithTexCoords![i].tex;
+                    
+                    vertices.Add(new FullVertex(p, texCoord, enhancedColor));
+                }
+
+                // Generate wireframe for SoftGlow mode
+                if (shaderToUse == ShaderMode.SoftGlow)
+                {
+                    GenerateWireframeQuads(trianglePoints, scale, cosA, sinA, wp, enhancedColor, wireframeVertices);
                 }
             }
 
             // Skip rendering if no boids of this species exist
-            if (verts.Count == 0)
+            if (vertices.Count == 0)
                 return;
 
-            // ───────────────────────────────────────────────────────────────────────
-            // SHADER EFFECTS AND RENDERING
-            // ───────────────────────────────────────────────────────────────────────
-            //
-            // Each species demonstrates different shader capabilities based on current mode:
-            // - White boids: Always use current selected shader mode (primary demonstration)
-            // - Blue boids: Show SoftGlow when available (secondary effect)
-            // - Red boids: Show advanced effects (Bloom when available, SoftGlow otherwise)
-
-            ShaderMode shaderToUse = filterId switch
-            {
-                "White" => _currentShaderMode, // Always follows current mode for primary demo
-                "Blue" => _currentShaderMode == ShaderMode.Normal ? ShaderMode.Normal : ShaderMode.SoftGlow,
-                "Red" => _currentShaderMode == ShaderMode.Bloom ? ShaderMode.Bloom : 
-                         _currentShaderMode == ShaderMode.SoftGlow ? ShaderMode.SoftGlow : ShaderMode.Normal,
-                _ => ShaderMode.Normal
-            };
-
             engine.Renderer.SetShaderMode(shaderToUse);
-
-            // Choose color palette based on shader mode for optimal visual effects
-            // HDR colors (values > 1.0) create dramatic bloom effects when bloom shaders are active
-            var useHDRColors = (shaderToUse == ShaderMode.Bloom);
-            var currentColorPalette = useHDRColors ? hdrSpeciesColors : speciesColors;
-            
-            // Set species color and upload vertex data to GPU
-            engine.Renderer.SetColor(currentColorPalette[filterId]);
-            engine.Renderer.UpdateVertices(verts.ToArray());
+            engine.Renderer.UpdateVertices(vertices.ToArray());
             engine.Renderer.Draw();
+
+            // Render wireframe for SoftGlow if present
+            if (shaderToUse == ShaderMode.SoftGlow && wireframeVertices.Count > 0)
+            {
+                engine.Renderer.SetShaderMode(ShaderMode.Normal);
+                engine.Renderer.UpdateVertices(wireframeVertices.ToArray());
+                engine.Renderer.Draw();
+            }
+        }
+
+        static void GenerateWireframeQuads(Vector2D<float>[] trianglePoints, float scale, float cosA, float sinA, Vector2D<float> wp, Vector4D<float> color, List<FullVertex> wireframeVertices)
+        {
+            float lineWidth = 0.003f;
+            for (int i = 0; i < trianglePoints.Length; i++)
+            {
+                var p1 = trianglePoints[i];
+                var p2 = trianglePoints[(i + 1) % trianglePoints.Length];
+                var edge = p2 - p1;
+                var edgeDir = edge.Normalize();
+                var perpDir = new Vector2D<float>(-edgeDir.Y, edgeDir.X) * lineWidth;
+                
+                var corners = new[] { p1 - perpDir, p1 + perpDir, p2 + perpDir, p1 - perpDir, p2 + perpDir, p2 - perpDir };
+                
+                foreach (var corner in corners)
+                {
+                    var s = corner * scale;
+                    var r = new Vector2D<float>(s.X * cosA - s.Y * sinA, s.X * sinA + s.Y * cosA);
+                    var p = wp + r;
+                    wireframeVertices.Add(new FullVertex(p, new Vector2D<float>(0f, 0f), color));
+                }
+            }
         }
 
         void DrawObstacles(Vector4D<float> color)
         {
             const int segments = 16;
-            var verts = new List<float>();
+            var vertices = new List<FullVertex>();
+
+            // Color enhancement for SoftGlow shader mode  
+            var enhancedColor = new Vector4D<float>(
+                Math.Min(color.X * 1.3f, 1.0f), 
+                Math.Min(color.Y * 1.3f, 1.0f), 
+                Math.Min(color.Z * 1.3f, 1.0f), 
+                1f);
 
             foreach (var (_, pos, obs) in world.Query<PositionComponent, ObstacleComponent>())
             {
@@ -586,25 +688,17 @@ public static class BoidSample
                     var p0 = center + new Vector2D<float>(r * MathF.Cos(a0), r * MathF.Sin(a0));
                     var p1 = center + new Vector2D<float>(r * MathF.Cos(a1), r * MathF.Sin(a1));
 
-                    // CENTER VERTEX - Position + TexCoord
-                    verts.Add(center.X); verts.Add(center.Y);    // Position
-                    verts.Add(0.0f); verts.Add(0.0f);            // TexCoord (0,0) = center
-
-                    // FIRST EDGE VERTEX - Position + TexCoord
-                    verts.Add(p0.X); verts.Add(p0.Y);            // Position
-                    verts.Add(MathF.Cos(a0)); verts.Add(MathF.Sin(a0)); // TexCoord (-1 to +1)
-
-                    // SECOND EDGE VERTEX - Position + TexCoord
-                    verts.Add(p1.X); verts.Add(p1.Y);            // Position
-                    verts.Add(MathF.Cos(a1)); verts.Add(MathF.Sin(a1)); // TexCoord (-1 to +1)
+                    // Generate triangle with appropriate texture coordinates for glow effect
+                    vertices.Add(new FullVertex(center, new Vector2D<float>(0f, 0f), enhancedColor));
+                    vertices.Add(new FullVertex(p0, new Vector2D<float>(MathF.Cos(a0), MathF.Sin(a0)), enhancedColor));
+                    vertices.Add(new FullVertex(p1, new Vector2D<float>(MathF.Cos(a1), MathF.Sin(a1)), enhancedColor));
                 }
             }
 
-            if (verts.Count == 0) return;
+            if (vertices.Count == 0) return;
 
             engine.Renderer.SetShaderMode(ShaderMode.SoftGlow);
-            engine.Renderer.SetColor(color);
-            engine.Renderer.UpdateVertices(verts.ToArray());
+            engine.Renderer.UpdateVertices(vertices.ToArray());
             engine.Renderer.Draw();
         }
     }
