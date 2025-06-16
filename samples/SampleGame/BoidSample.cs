@@ -57,6 +57,8 @@ public static class BoidSample
     private static ShaderMode _currentShaderMode = ShaderMode.Normal;
     private static readonly ShaderMode[] _availableShaderModes = { ShaderMode.Normal, ShaderMode.SoftGlow, ShaderMode.Bloom };
     private static int _shaderModeIndex = 0;
+    private static float _timeSinceLastTip = 0f;
+    private static int _tipIndex = 0;
 
     public static void Run(string[] args)
     {
@@ -172,6 +174,19 @@ public static class BoidSample
         {
             // ECS systems (including BoidSystem) already executed by the engine facade.
             // Any additional per-frame logic would go here (UI updates, audio, etc.)
+            
+            // Show periodic tips during bloom mode to help users understand effects
+            if (_currentShaderMode == ShaderMode.Bloom)
+            {
+                _timeSinceLastTip += deltaSeconds;
+                
+                // Show a tip every 15 seconds during bloom mode
+                if (_timeSinceLastTip >= 15f)
+                {
+                    ShowBloomTip();
+                    _timeSinceLastTip = 0f;
+                }
+            }
         };
 
         engine.RenderEvent += deltaSeconds =>
@@ -245,10 +260,28 @@ public static class BoidSample
             Console.WriteLine();
         }
 
+        void ShowBloomTip()
+        {
+            var bloomTips = new[]
+            {
+                "💡 TIP: Focus on Red boids - they have the most intense HDR bloom effects (2.5, 0.3, 0.3)!",
+                "💡 TIP: Notice how White boids glow brightly with HDR white (2.0, 2.0, 2.0) in Bloom mode!",
+                "💡 TIP: Blue boids use SoftGlow in Bloom mode to provide visual contrast!",
+                "💡 TIP: Watch for bloom 'bleeding' - bright halos extending beyond the boid boundaries!",
+                "💡 TIP: Try switching back to Normal mode (press 'S') to see the dramatic difference!",
+            };
+            
+            Console.WriteLine(bloomTips[_tipIndex % bloomTips.Length]);
+            _tipIndex++;
+        }
+
         void CycleShaderMode()
         {
             _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Length;
             _currentShaderMode = _availableShaderModes[_shaderModeIndex];
+            
+            // Reset tip timer when changing modes
+            _timeSinceLastTip = 0f;
             
             // Enhanced console output with detailed mode explanations
             Console.WriteLine();
