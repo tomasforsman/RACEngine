@@ -236,12 +236,11 @@ public static class BoidSample
             Console.WriteLine();
             
             Console.WriteLine("🦋 BOID SPECIES & EFFECTS:");
-            Console.WriteLine("   • White Boids (Small):  Follow current shader mode exactly");
-            Console.WriteLine("     - Bloom mode: Bright HDR white glow (2.0, 2.0, 2.0)");
-            Console.WriteLine("   • Blue Boids (Medium):  Show SoftGlow when available");
-            Console.WriteLine("     - Bloom mode: Uses SoftGlow instead of Bloom");
-            Console.WriteLine("   • Red Boids (Large):    Show advanced effects when available");
-            Console.WriteLine("     - Bloom mode: Intense HDR red glow (2.5, 0.3, 0.3) - MOST DRAMATIC!");
+            Console.WriteLine("   • All boids use the currently selected shader mode consistently");
+            Console.WriteLine("   • White Boids (Small):  Standard flocking, smallest size");
+            Console.WriteLine("   • Blue Boids (Medium):  Neutral species, medium size");
+            Console.WriteLine("   • Red Boids (Large):    Predator species, largest size");
+            Console.WriteLine("   • All species demonstrate the same shader effects for clear comparison");
             Console.WriteLine();
             
             Console.WriteLine("👀 WHAT TO LOOK FOR:");
@@ -251,10 +250,12 @@ public static class BoidSample
             Console.WriteLine("   • Red boids in Bloom mode show the most spectacular effects!");
             Console.WriteLine();
             
-            Console.WriteLine("💡 TIPS FOR OPTIMAL BLOOM VISIBILITY:");
-            Console.WriteLine("   • Focus on Red boids when in Bloom mode - they use the highest HDR values");
-            Console.WriteLine("   • Notice how White boids change dramatically between SoftGlow and Bloom");
-            Console.WriteLine("   • Blue boids provide consistent SoftGlow reference in all non-Normal modes");
+            Console.WriteLine("💡 TIPS FOR OPTIMAL SHADER VISIBILITY:");
+            Console.WriteLine("   • All boids use the same shader mode for consistent demonstration");
+            Console.WriteLine("   • Red boids show most dramatic effects due to intense HDR red values");
+            Console.WriteLine("   • White boids provide bright reference with HDR white values");
+            Console.WriteLine("   • Blue boids show cool-toned effects with HDR blue values");
+            Console.WriteLine("   • Obstacle participates in shader effects alongside the boids");
             Console.WriteLine("   • Watch flocking behavior - it remains the same across all shader modes");
             Console.WriteLine();
             
@@ -266,10 +267,12 @@ public static class BoidSample
         {
             var bloomTips = new[]
             {
-                "💡 TIP: Focus on Red boids - they have the most intense HDR bloom effects (2.5, 0.3, 0.3)!",
-                "💡 TIP: Notice how White boids glow brightly with HDR white (2.0, 2.0, 2.0) in Bloom mode!",
-                "💡 TIP: Blue boids use SoftGlow in Bloom mode to provide visual contrast!",
-                "💡 TIP: Watch for bloom 'bleeding' - bright halos extending beyond the boid boundaries!",
+                "💡 TIP: All boids now use HDR bloom consistently - notice the uniform dramatic glow effects!",
+                "💡 TIP: Red boids show the most intense effect due to HDR red colors (2.5, 0.3, 0.3)!",
+                "💡 TIP: White boids glow brightly with HDR white (2.0, 2.0, 2.0) in Bloom mode!",
+                "💡 TIP: Blue boids also use bloom mode now, showing HDR blue effects (0.3, 0.3, 2.5)!",
+                "💡 TIP: Watch for bloom 'bleeding' - bright halos extending beyond all entity boundaries!",
+                "💡 TIP: The obstacle also participates in bloom effects for complete demonstration!",
                 "💡 TIP: Try switching back to Normal mode (press 'S') to see the dramatic difference!",
             };
             
@@ -316,19 +319,17 @@ public static class BoidSample
                     
                 case ShaderMode.SoftGlow:
                     Console.WriteLine("• Subtle glow effects enabled");
-                    Console.WriteLine("• White boids: SoftGlow effect");
-                    Console.WriteLine("• Blue boids: SoftGlow effect");
-                    Console.WriteLine("• Red boids: SoftGlow effect");
-                    Console.WriteLine("• Look for: Soft halos around all boids");
+                    Console.WriteLine("• All boids: SoftGlow effect with gentle halos");
+                    Console.WriteLine("• Obstacle: SoftGlow effect");
+                    Console.WriteLine("• Look for: Soft halos around all entities");
                     break;
                     
                 case ShaderMode.Bloom:
                     Console.WriteLine("• HDR bloom effects enabled - DRAMATIC GLOW!");
-                    Console.WriteLine("• White boids: Bloom with HDR colors (bright white glow)");
-                    Console.WriteLine("• Blue boids: SoftGlow effect");
-                    Console.WriteLine("• Red boids: Bloom with HDR colors (intense red glow)");
+                    Console.WriteLine("• All boids: Bloom with HDR colors for intense glow");
+                    Console.WriteLine("• Obstacle: Bloom effect with enhanced brightness");
                     Console.WriteLine("• Look for: Bright halos that 'bleed' into surrounding areas");
-                    Console.WriteLine("• Tip: Red boids show the most dramatic bloom effects!");
+                    Console.WriteLine("• Tip: All species show dramatic bloom effects consistently!");
                     break;
             }
             
@@ -340,9 +341,9 @@ public static class BoidSample
         {
             return _currentShaderMode switch
             {
-                ShaderMode.Normal => "All species rendered equally",
-                ShaderMode.SoftGlow => "All species show gentle glow effects", 
-                ShaderMode.Bloom => "White & Red species use HDR bloom, Blue uses SoftGlow",
+                ShaderMode.Normal => "All entities rendered with standard colors",
+                ShaderMode.SoftGlow => "All entities show gentle glow effects", 
+                ShaderMode.Bloom => "All entities use HDR bloom for dramatic effects",
                 _ => "Standard rendering"
             };
         }
@@ -493,19 +494,10 @@ public static class BoidSample
             // SHADER EFFECTS AND RENDERING
             // ───────────────────────────────────────────────────────────────────────
             //
-            // Each species demonstrates different shader capabilities based on current mode:
-            // - White boids: Always use current selected shader mode (primary demonstration)
-            // - Blue boids: Show SoftGlow when available (secondary effect)
-            // - Red boids: Show advanced effects (Bloom when available, SoftGlow otherwise)
+            // All boids use the current shader mode to provide consistent demonstration
+            // of each visual effect. This allows users to clearly see what each mode does.
 
-            ShaderMode shaderToUse = filterId switch
-            {
-                "White" => _currentShaderMode, // Always follows current mode for primary demo
-                "Blue" => _currentShaderMode == ShaderMode.Normal ? ShaderMode.Normal : ShaderMode.SoftGlow,
-                "Red" => _currentShaderMode == ShaderMode.Bloom ? ShaderMode.Bloom : 
-                         _currentShaderMode == ShaderMode.SoftGlow ? ShaderMode.SoftGlow : ShaderMode.Normal,
-                _ => ShaderMode.Normal
-            };
+            ShaderMode shaderToUse = _currentShaderMode;
 
             // Choose color palette based on shader mode for optimal visual effects
             // HDR colors (values > 1.0) create dramatic bloom effects when bloom shaders are active
@@ -668,12 +660,25 @@ public static class BoidSample
             const int segments = 16;
             var vertices = new List<FullVertex>();
 
-            // Color enhancement for SoftGlow shader mode  
-            var enhancedColor = new Vector4D<float>(
-                Math.Min(color.X * 1.3f, 1.0f), 
-                Math.Min(color.Y * 1.3f, 1.0f), 
-                Math.Min(color.Z * 1.3f, 1.0f), 
-                1f);
+            // Use the current shader mode for obstacles to demonstrate effects consistently
+            var obstacleShaderMode = _currentShaderMode;
+            
+            // Color enhancement based on current shader mode for optimal visual effects
+            var enhancedColor = obstacleShaderMode switch
+            {
+                ShaderMode.Normal => color,
+                ShaderMode.SoftGlow => new Vector4D<float>(
+                    Math.Min(color.X * 1.3f, 1.0f), 
+                    Math.Min(color.Y * 1.3f, 1.0f), 
+                    Math.Min(color.Z * 1.3f, 1.0f), 
+                    1f),
+                ShaderMode.Bloom => new Vector4D<float>(
+                    Math.Min(color.X * 1.8f, 1.0f), 
+                    Math.Min(color.Y * 1.8f, 1.0f), 
+                    Math.Min(color.Z * 1.8f, 1.0f), 
+                    1f),
+                _ => color
+            };
 
             foreach (var (_, pos, obs) in world.Query<PositionComponent, ObstacleComponent>())
             {
@@ -697,7 +702,7 @@ public static class BoidSample
 
             if (vertices.Count == 0) return;
 
-            engine.Renderer.SetShaderMode(ShaderMode.SoftGlow);
+            engine.Renderer.SetShaderMode(obstacleShaderMode);
             engine.Renderer.UpdateVertices(vertices.ToArray());
             engine.Renderer.Draw();
         }
