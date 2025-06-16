@@ -110,9 +110,18 @@ public static class BoidSample
         // Alpha channel = 1.0 for full opacity
         var speciesColors = new Dictionary<string, Vector4D<float>>
         {
-            ["White"] = new(1f, 1f, 1f, 1f),  // Pure white
-            ["Blue"] = new(0f, 0f, 1f, 1f),   // Pure blue
-            ["Red"] = new(1f, 0f, 0f, 1f),    // Pure red
+            ["White"] = new(1f, 1f, 1f, 1f),  // Pure white (LDR)
+            ["Blue"] = new(0f, 0f, 1f, 1f),   // Pure blue (LDR)
+            ["Red"] = new(1f, 0f, 0f, 1f),    // Pure red (LDR)
+        };
+
+        // HDR color variants for dramatic bloom effects when bloom mode is active
+        // These colors exceed 1.0 in key channels to create intense glow effects
+        var hdrSpeciesColors = new Dictionary<string, Vector4D<float>>
+        {
+            ["White"] = new(2.0f, 2.0f, 2.0f, 1f),  // HDR white - uniform bright glow
+            ["Blue"] = new(0.3f, 0.3f, 2.5f, 1f),   // HDR blue - intense blue glow with subdued other channels
+            ["Red"] = new(2.5f, 0.3f, 0.3f, 1f),    // HDR red - dramatic red glow with subdued other channels
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -432,8 +441,13 @@ public static class BoidSample
 
             engine.Renderer.SetShaderMode(shaderToUse);
 
+            // Choose color palette based on shader mode for optimal visual effects
+            // HDR colors (values > 1.0) create dramatic bloom effects when bloom shaders are active
+            var useHDRColors = (shaderToUse == ShaderMode.Bloom);
+            var currentColorPalette = useHDRColors ? hdrSpeciesColors : speciesColors;
+            
             // Set species color and upload vertex data to GPU
-            engine.Renderer.SetColor(speciesColors[filterId]);
+            engine.Renderer.SetColor(currentColorPalette[filterId]);
             engine.Renderer.UpdateVertices(verts.ToArray());
             engine.Renderer.Draw();
         }
