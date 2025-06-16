@@ -57,6 +57,8 @@ public static class BoidSample
     private static ShaderMode _currentShaderMode = ShaderMode.Normal;
     private static readonly ShaderMode[] _availableShaderModes = { ShaderMode.Normal, ShaderMode.SoftGlow, ShaderMode.Bloom };
     private static int _shaderModeIndex = 0;
+    private static float _timeSinceLastTip = 0f;
+    private static int _tipIndex = 0;
 
     public static void Run(string[] args)
     {
@@ -158,7 +160,6 @@ public static class BoidSample
             if (key == Key.S && keyEvent == KeyboardKeyState.KeyEvent.Pressed)
             {
                 CycleShaderMode();
-                Console.WriteLine($"Shader Mode: {_currentShaderMode}");
             }
         };
 
@@ -173,6 +174,19 @@ public static class BoidSample
         {
             // ECS systems (including BoidSystem) already executed by the engine facade.
             // Any additional per-frame logic would go here (UI updates, audio, etc.)
+            
+            // Show periodic tips during bloom mode to help users understand effects
+            if (_currentShaderMode == ShaderMode.Bloom)
+            {
+                _timeSinceLastTip += deltaSeconds;
+                
+                // Show a tip every 15 seconds during bloom mode
+                if (_timeSinceLastTip >= 15f)
+                {
+                    ShowBloomTip();
+                    _timeSinceLastTip = 0f;
+                }
+            }
         };
 
         engine.RenderEvent += deltaSeconds =>
@@ -193,11 +207,7 @@ public static class BoidSample
         // STARTUP MESSAGE
         // ═══════════════════════════════════════════════════════════════════════════
         
-        Console.WriteLine("=== BOID SAMPLE - SHADER MODE DEMONSTRATION ===");
-        Console.WriteLine("Press 'S' to cycle through shader modes:");
-        Console.WriteLine("  Normal -> SoftGlow -> Bloom -> Normal...");
-        Console.WriteLine($"Current Mode: {_currentShaderMode}");
-        Console.WriteLine("Watch how different species show different effects!");
+        ShowStartupMessage();
 
         engine.Run();
 
@@ -206,10 +216,116 @@ public static class BoidSample
         // LOCAL HELPER FUNCTIONS
         // ═══════════════════════════════════════════════════════════════════════════
 
+        void ShowStartupMessage()
+        {
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                    BOID SAMPLE - BLOOM DEMONSTRATION                        ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            
+            Console.WriteLine("🎮 CONTROLS:");
+            Console.WriteLine("   'S' - Cycle through shader modes (Normal → SoftGlow → Bloom)");
+            Console.WriteLine();
+            
+            Console.WriteLine("🌈 SHADER MODES & VISUAL EFFECTS:");
+            Console.WriteLine("   • Normal:   Standard rendering, no glow effects");
+            Console.WriteLine("   • SoftGlow: Gentle halos around all boids");
+            Console.WriteLine("   • Bloom:    HDR bloom effects with dramatic glowing!");
+            Console.WriteLine();
+            
+            Console.WriteLine("🦋 BOID SPECIES & EFFECTS:");
+            Console.WriteLine("   • White Boids (Small):  Follow current shader mode exactly");
+            Console.WriteLine("     - Bloom mode: Bright HDR white glow (2.0, 2.0, 2.0)");
+            Console.WriteLine("   • Blue Boids (Medium):  Show SoftGlow when available");
+            Console.WriteLine("     - Bloom mode: Uses SoftGlow instead of Bloom");
+            Console.WriteLine("   • Red Boids (Large):    Show advanced effects when available");
+            Console.WriteLine("     - Bloom mode: Intense HDR red glow (2.5, 0.3, 0.3) - MOST DRAMATIC!");
+            Console.WriteLine();
+            
+            Console.WriteLine("👀 WHAT TO LOOK FOR:");
+            Console.WriteLine("   • SoftGlow: Soft, subtle halos around boids");
+            Console.WriteLine("   • Bloom: Bright halos that 'bleed' light into surrounding areas");
+            Console.WriteLine("   • HDR Effects: Colors that appear to glow intensely beyond normal brightness");
+            Console.WriteLine("   • Red boids in Bloom mode show the most spectacular effects!");
+            Console.WriteLine();
+            
+            Console.WriteLine("💡 TIPS FOR OPTIMAL BLOOM VISIBILITY:");
+            Console.WriteLine("   • Focus on Red boids when in Bloom mode - they use the highest HDR values");
+            Console.WriteLine("   • Notice how White boids change dramatically between SoftGlow and Bloom");
+            Console.WriteLine("   • Blue boids provide consistent SoftGlow reference in all non-Normal modes");
+            Console.WriteLine("   • Watch flocking behavior - it remains the same across all shader modes");
+            Console.WriteLine();
+            
+            Console.WriteLine($"🚀 Starting in {_currentShaderMode} mode. Press 'S' to cycle modes and see the effects!");
+            Console.WriteLine();
+        }
+
+        void ShowBloomTip()
+        {
+            var bloomTips = new[]
+            {
+                "💡 TIP: Focus on Red boids - they have the most intense HDR bloom effects (2.5, 0.3, 0.3)!",
+                "💡 TIP: Notice how White boids glow brightly with HDR white (2.0, 2.0, 2.0) in Bloom mode!",
+                "💡 TIP: Blue boids use SoftGlow in Bloom mode to provide visual contrast!",
+                "💡 TIP: Watch for bloom 'bleeding' - bright halos extending beyond the boid boundaries!",
+                "💡 TIP: Try switching back to Normal mode (press 'S') to see the dramatic difference!",
+            };
+            
+            Console.WriteLine(bloomTips[_tipIndex % bloomTips.Length]);
+            _tipIndex++;
+        }
+
         void CycleShaderMode()
         {
             _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Length;
             _currentShaderMode = _availableShaderModes[_shaderModeIndex];
+            
+            // Reset tip timer when changing modes
+            _timeSinceLastTip = 0f;
+            
+            // Enhanced console output with detailed mode explanations
+            Console.WriteLine();
+            Console.WriteLine($"=== SHADER MODE: {_currentShaderMode.ToString().ToUpper()} ===");
+            
+            switch (_currentShaderMode)
+            {
+                case ShaderMode.Normal:
+                    Console.WriteLine("• Standard rendering mode");
+                    Console.WriteLine("• All boids use regular colors (no glow effects)");
+                    Console.WriteLine("• Best for seeing basic flocking behavior clearly");
+                    break;
+                    
+                case ShaderMode.SoftGlow:
+                    Console.WriteLine("• Subtle glow effects enabled");
+                    Console.WriteLine("• White boids: SoftGlow effect");
+                    Console.WriteLine("• Blue boids: SoftGlow effect");
+                    Console.WriteLine("• Red boids: SoftGlow effect");
+                    Console.WriteLine("• Look for: Soft halos around all boids");
+                    break;
+                    
+                case ShaderMode.Bloom:
+                    Console.WriteLine("• HDR bloom effects enabled - DRAMATIC GLOW!");
+                    Console.WriteLine("• White boids: Bloom with HDR colors (bright white glow)");
+                    Console.WriteLine("• Blue boids: SoftGlow effect");
+                    Console.WriteLine("• Red boids: Bloom with HDR colors (intense red glow)");
+                    Console.WriteLine("• Look for: Bright halos that 'bleed' into surrounding areas");
+                    Console.WriteLine("• Tip: Red boids show the most dramatic bloom effects!");
+                    break;
+            }
+            
+            Console.WriteLine($"• Species behavior: {GetSpeciesBehaviorDescription()}");
+            Console.WriteLine();
+        }
+        
+        string GetSpeciesBehaviorDescription()
+        {
+            return _currentShaderMode switch
+            {
+                ShaderMode.Normal => "All species rendered equally",
+                ShaderMode.SoftGlow => "All species show gentle glow effects", 
+                ShaderMode.Bloom => "White & Red species use HDR bloom, Blue uses SoftGlow",
+                _ => "Standard rendering"
+            };
         }
 
         void UpdateBoidSettings(Vector2D<int> windowSize)
