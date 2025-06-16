@@ -284,6 +284,7 @@ public static class BoidSample
         {
             try
             {
+                // Test Bloom mode support
                 engine.Renderer.SetShaderMode(ShaderMode.Bloom);
                 _availableShaderModes.Add(ShaderMode.Bloom);
                 Console.WriteLine("✅ Bloom mode is supported and available");
@@ -292,49 +293,71 @@ public static class BoidSample
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Bloom mode not supported: {ex.Message}");
-                engine.Renderer.SetShaderMode(ShaderMode.Normal);
+                // Ensure we fall back to Normal mode safely
+                try
+                {
+                    engine.Renderer.SetShaderMode(ShaderMode.Normal);
+                }
+                catch (Exception fallbackEx)
+                {
+                    Console.WriteLine($"⚠️ Warning: Could not set Normal mode: {fallbackEx.Message}");
+                }
             }
+            
+            // Report available modes
+            Console.WriteLine($"📊 Available shader modes: {string.Join(", ", _availableShaderModes)}");
         }
 
         void CycleShaderMode()
         {
             if (_availableShaderModes.Count == 0) return;
-            _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Count;
-            _currentShaderMode = _availableShaderModes[_shaderModeIndex];
             
-            // Reset tip timer when changing modes
-            _timeSinceLastTip = 0f;
-            
-            // Enhanced console output with detailed mode explanations
-            Console.WriteLine();
-            Console.WriteLine($"=== SHADER MODE: {_currentShaderMode.ToString().ToUpper()} ===");
-            
-            switch (_currentShaderMode)
+            try
             {
-                case ShaderMode.Normal:
-                    Console.WriteLine("• Standard rendering mode");
-                    Console.WriteLine("• All boids use regular colors (no glow effects)");
-                    Console.WriteLine("• Best for seeing basic flocking behavior clearly");
-                    break;
-                    
-                case ShaderMode.SoftGlow:
-                    Console.WriteLine("• Subtle glow effects enabled");
-                    Console.WriteLine("• All boids: SoftGlow effect with gentle halos");
-                    Console.WriteLine("• Obstacle: SoftGlow effect");
-                    Console.WriteLine("• Look for: Soft halos around all entities");
-                    break;
-                    
-                case ShaderMode.Bloom:
-                    Console.WriteLine("• HDR bloom effects enabled - DRAMATIC GLOW!");
-                    Console.WriteLine("• All boids: Bloom with HDR colors for intense glow");
-                    Console.WriteLine("• Obstacle: Bloom effect with enhanced brightness");
-                    Console.WriteLine("• Look for: Bright halos that 'bleed' into surrounding areas");
-                    Console.WriteLine("• Tip: All species show dramatic bloom effects consistently!");
-                    break;
+                _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Count;
+                _currentShaderMode = _availableShaderModes[_shaderModeIndex];
+                
+                // Reset tip timer when changing modes
+                _timeSinceLastTip = 0f;
+                
+                // Enhanced console output with detailed mode explanations
+                Console.WriteLine();
+                Console.WriteLine($"=== SHADER MODE: {_currentShaderMode.ToString().ToUpper()} ===");
+                
+                switch (_currentShaderMode)
+                {
+                    case ShaderMode.Normal:
+                        Console.WriteLine("• Standard rendering mode");
+                        Console.WriteLine("• All boids use regular colors (no glow effects)");
+                        Console.WriteLine("• Best for seeing basic flocking behavior clearly");
+                        break;
+                        
+                    case ShaderMode.SoftGlow:
+                        Console.WriteLine("• Subtle glow effects enabled");
+                        Console.WriteLine("• All boids: SoftGlow effect with gentle halos");
+                        Console.WriteLine("• Obstacle: SoftGlow effect");
+                        Console.WriteLine("• Look for: Soft halos around all entities");
+                        break;
+                        
+                    case ShaderMode.Bloom:
+                        Console.WriteLine("• HDR bloom effects enabled - DRAMATIC GLOW!");
+                        Console.WriteLine("• All boids: Bloom with HDR colors for intense glow");
+                        Console.WriteLine("• Obstacle: Bloom effect with enhanced brightness");
+                        Console.WriteLine("• Look for: Bright halos that 'bleed' into surrounding areas");
+                        Console.WriteLine("• Tip: All species show dramatic bloom effects consistently!");
+                        break;
+                }
+                
+                Console.WriteLine($"• Species behavior: {GetSpeciesBehaviorDescription()}");
+                Console.WriteLine();
             }
-            
-            Console.WriteLine($"• Species behavior: {GetSpeciesBehaviorDescription()}");
-            Console.WriteLine();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Failed to switch to shader mode: {ex.Message}");
+                // Revert to previous mode index if the switch failed
+                _shaderModeIndex = (_shaderModeIndex - 1 + _availableShaderModes.Count) % _availableShaderModes.Count;
+                _currentShaderMode = _availableShaderModes[_shaderModeIndex];
+            }
         }
         
         string GetSpeciesBehaviorDescription()
@@ -538,19 +561,19 @@ public static class BoidSample
             }
             else
             {
-                // Larger triangle with texture coordinates for glow modes
+                // Optimized triangle with texture coordinates for glow modes
+                // Using smaller coordinates so vDistance stays within shader's expected range (0.0 - 1.2)
                 triangleWithTexCoords = new[]
                 {
-                    (pos: new Vector2D<float>(-0.03f, -0.025f), tex: new Vector2D<float>(-1f, -1f)),
-                    (pos: new Vector2D<float>(0.03f, -0.025f), tex: new Vector2D<float>(1f, -1f)),
-                    (pos: new Vector2D<float>(0.0f, 0.06f), tex: new Vector2D<float>(0f, 1f)),
+                    (pos: new Vector2D<float>(-0.03f, -0.025f), tex: new Vector2D<float>(-0.8f, -0.6f)),
+                    (pos: new Vector2D<float>(0.03f, -0.025f), tex: new Vector2D<float>(0.8f, -0.6f)),
+                    (pos: new Vector2D<float>(0.0f, 0.06f), tex: new Vector2D<float>(0f, 0.8f)),
                 };
                 trianglePoints = triangleWithTexCoords.Select(t => t.pos).ToArray();
             }
 
             // Vertex buffer for all triangles of this species
             var vertices = new List<FullVertex>();
-            var wireframeVertices = new List<FullVertex>();
 
             // ───────────────────────────────────────────────────────────────────────
             // ECS QUERY AND TRANSFORMATION PIPELINE
@@ -608,11 +631,8 @@ public static class BoidSample
                     vertices.Add(new FullVertex(p, texCoord, enhancedColor));
                 }
 
-                // Generate wireframe for SoftGlow mode
-                if (shaderToUse == ShaderMode.SoftGlow)
-                {
-                    GenerateWireframeQuads(trianglePoints, scale, cosA, sinA, wp, enhancedColor, wireframeVertices);
-                }
+                // SoftGlow mode: Use filled triangles only (no wireframe overlay)
+                // This ensures boids appear as filled entities with glow effects, not empty wireframes
             }
 
             // Skip rendering if no boids of this species exist
@@ -622,37 +642,6 @@ public static class BoidSample
             engine.Renderer.SetShaderMode(shaderToUse);
             engine.Renderer.UpdateVertices(vertices.ToArray());
             engine.Renderer.Draw();
-
-            // Render wireframe for SoftGlow if present
-            if (shaderToUse == ShaderMode.SoftGlow && wireframeVertices.Count > 0)
-            {
-                engine.Renderer.SetShaderMode(ShaderMode.Normal);
-                engine.Renderer.UpdateVertices(wireframeVertices.ToArray());
-                engine.Renderer.Draw();
-            }
-        }
-
-        static void GenerateWireframeQuads(Vector2D<float>[] trianglePoints, float scale, float cosA, float sinA, Vector2D<float> wp, Vector4D<float> color, List<FullVertex> wireframeVertices)
-        {
-            float lineWidth = 0.003f;
-            for (int i = 0; i < trianglePoints.Length; i++)
-            {
-                var p1 = trianglePoints[i];
-                var p2 = trianglePoints[(i + 1) % trianglePoints.Length];
-                var edge = p2 - p1;
-                var edgeDir = edge.Normalize();
-                var perpDir = new Vector2D<float>(-edgeDir.Y, edgeDir.X) * lineWidth;
-                
-                var corners = new[] { p1 - perpDir, p1 + perpDir, p2 + perpDir, p1 - perpDir, p2 + perpDir, p2 - perpDir };
-                
-                foreach (var corner in corners)
-                {
-                    var s = corner * scale;
-                    var r = new Vector2D<float>(s.X * cosA - s.Y * sinA, s.X * sinA + s.Y * cosA);
-                    var p = wp + r;
-                    wireframeVertices.Add(new FullVertex(p, new Vector2D<float>(0f, 0f), color));
-                }
-            }
         }
 
         void DrawObstacles(Vector4D<float> color)
