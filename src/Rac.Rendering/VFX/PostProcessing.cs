@@ -325,6 +325,14 @@ public class PostProcessing : IDisposable
         // This creates a mask of only the brightest scene areas.
 
         _gl.BindFramebuffer(FramebufferTarget.Framebuffer, _brightFramebuffer);
+        
+        // Check framebuffer completeness
+        var status = _gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+        if (status != GLEnum.FramebufferComplete)
+        {
+            throw new InvalidOperationException($"Bright framebuffer is not complete: {status}");
+        }
+        
         _gl.Viewport(0, 0, (uint)_screenWidth, (uint)_screenHeight);
         _gl.Clear(ClearBufferMask.ColorBufferBit);
 
@@ -339,11 +347,32 @@ public class PostProcessing : IDisposable
 
         _gl.ActiveTexture(TextureUnit.Texture0);
         _gl.BindTexture(TextureTarget.Texture2D, _sceneTexture);
+        
+        // Check that scene texture is valid
+        if (_sceneTexture == 0)
+        {
+            throw new InvalidOperationException("Scene texture handle is invalid (0) in ExtractBrightAreas");
+        }
+        
         _gl.Uniform1(_gl.GetUniformLocation(_brightExtractShader.Handle, "uSceneTexture"), 0);
         _gl.Uniform1(_gl.GetUniformLocation(_brightExtractShader.Handle, "uThreshold"), Threshold);
         _gl.Uniform1(_gl.GetUniformLocation(_brightExtractShader.Handle, "uIntensity"), Intensity);
 
+        // Check for errors before rendering
+        var error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            throw new InvalidOperationException($"OpenGL error in ExtractBrightAreas before rendering: {error}");
+        }
+
         RenderFullscreenQuad();
+        
+        // Check for errors after rendering
+        error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            throw new InvalidOperationException($"OpenGL error in ExtractBrightAreas after rendering: {error}");
+        }
     }
 
     private void BlurBrightAreas()
@@ -434,6 +463,13 @@ public class PostProcessing : IDisposable
         _gl.Viewport(0, 0, (uint)_screenWidth, (uint)_screenHeight);
         _gl.Clear(ClearBufferMask.ColorBufferBit);
 
+        // Check for errors after framebuffer setup
+        var error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            throw new InvalidOperationException($"OpenGL error in CompositeScene setup: {error}");
+        }
+
         _gl.UseProgram(_compositeShader!.Handle);
 
         // ───────────────────────────────────────────────────────────────────────
@@ -449,6 +485,12 @@ public class PostProcessing : IDisposable
         _gl.BindTexture(TextureTarget.Texture2D, _sceneTexture);
         _gl.Uniform1(_gl.GetUniformLocation(_compositeShader.Handle, "uSceneTexture"), 0);
 
+        // Check that scene texture is valid
+        if (_sceneTexture == 0)
+        {
+            throw new InvalidOperationException("Scene texture handle is invalid (0)");
+        }
+
         // ───────────────────────────────────────────────────────────────────────
         // FINAL BLOOM TEXTURE SELECTION
         // ───────────────────────────────────────────────────────────────────────
@@ -459,8 +501,22 @@ public class PostProcessing : IDisposable
 
         _gl.ActiveTexture(TextureUnit.Texture1);
         uint finalBloomTexture = (BlurPasses % 2 == 0) ? _blurTexture2 : _blurTexture1;
+        
+        // Check that bloom texture is valid
+        if (finalBloomTexture == 0)
+        {
+            throw new InvalidOperationException($"Final bloom texture handle is invalid (0). BlurPasses: {BlurPasses}, _blurTexture1: {_blurTexture1}, _blurTexture2: {_blurTexture2}");
+        }
+        
         _gl.BindTexture(TextureTarget.Texture2D, finalBloomTexture);
         _gl.Uniform1(_gl.GetUniformLocation(_compositeShader.Handle, "uBloomTexture"), 1);
+
+        // Check for errors after texture binding
+        error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            throw new InvalidOperationException($"OpenGL error after texture binding: {error}");
+        }
 
         // ───────────────────────────────────────────────────────────────────────
         // ARTISTIC PARAMETER SETUP
@@ -470,6 +526,13 @@ public class PostProcessing : IDisposable
         _gl.Uniform1(_gl.GetUniformLocation(_compositeShader.Handle, "uExposure"), Exposure);
 
         RenderFullscreenQuad();
+        
+        // Check for errors after rendering
+        error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            throw new InvalidOperationException($"OpenGL error after RenderFullscreenQuad: {error}");
+        }
     }
 
     private void RenderFullscreenQuad()
