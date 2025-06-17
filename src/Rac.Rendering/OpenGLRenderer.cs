@@ -799,12 +799,30 @@ public class OpenGLRenderer : IRenderer, IDisposable
         {
             Console.WriteLine($"❌ OpenGLRenderer.FinalizeFrame: Failed during frame finalization: {ex.Message}");
 
-            // Disable bloom to prevent further crashes
+            // Disable bloom to prevent further crashes and enable graceful fallback
             _isBloomActive = false;
             _postProcessing?.Dispose();
             _postProcessing = null;
 
-            throw;
+            // Instead of throwing, try to recover by clearing any OpenGL errors
+            // and ensuring the framebuffer is reset to screen (framebuffer 0)
+            try
+            {
+                // Clear any accumulated OpenGL errors
+                while (_gl.GetError() != GLEnum.NoError) { }
+                
+                // Ensure we're rendering to the default framebuffer (screen)
+                _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+                _gl.Viewport(0, 0, (uint)_windowSize.X, (uint)_windowSize.Y);
+                
+                Console.WriteLine("✓ Gracefully recovered from bloom failure - continuing with normal rendering");
+            }
+            catch (Exception recoveryEx)
+            {
+                Console.WriteLine($"❌ Failed to recover from bloom failure: {recoveryEx.Message}");
+                // Only throw if recovery also fails
+                throw;
+            }
         }
     }
 

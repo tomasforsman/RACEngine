@@ -160,8 +160,9 @@ public class FramebufferHelper
         _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), new System.IntPtr(2 * sizeof(float)));
         _gl.EnableVertexAttribArray(1);
 
-        // Clean up EBO - it's now part of the VAO state
-        _gl.DeleteBuffer(ebo);
+        // NOTE: Do NOT delete the EBO here as it's needed for DrawElements calls.
+        // The EBO is bound to the VAO and will be automatically cleaned up when the VAO is deleted.
+        // Deleting it here causes DrawElements to fail, resulting in a black screen.
 
         _gl.BindVertexArray(0);
 
