@@ -303,7 +303,7 @@ public class Engine
     private void OnWindowClosing()
     {
         _inputService.Shutdown();
-        _renderer.Shutdown();
+        _renderer.Dispose();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

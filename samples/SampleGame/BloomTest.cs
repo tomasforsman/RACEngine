@@ -1,25 +1,53 @@
-// ════════════════════════════════════════════════════════════════════════════════
-// BLOOM HDR TEST DEMONSTRATION
-// ════════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// EDUCATIONAL BLOOM HDR EFFECT DEMONSTRATION
+// ═══════════════════════════════════════════════════════════════════════════════
 //
-// This test demonstrates the HDR (High Dynamic Range) color capabilities of the bloom
-// effect system. It showcases how colors with values > 1.0 create dramatic glow effects
-// that are characteristic of true bloom rendering.
+// This educational demonstration showcases High Dynamic Range (HDR) bloom effects,
+// a fundamental post-processing technique in modern computer graphics and game engines.
 //
-// KEY FEATURES DEMONSTRATED:
-// - HDR color input (red: 2.5, white: 2.0+, blue: 2.5 in respective channels)
-// - Automatic bloom intensity calculation based on HDR values
-// - Color temperature shifting for enhanced visual appeal
-// - Energy distribution across bloom radius for realistic light scattering
+// CORE GRAPHICS CONCEPTS DEMONSTRATED:
 //
-// USAGE:
-// Run this test to see side-by-side comparison of:
-// 1. Standard LDR colors (subtle or no bloom)
-// 2. HDR colors (dramatic bloom effects with bright halos)
+// 1. HIGH DYNAMIC RANGE (HDR) COLOR THEORY:
+//    - LDR (Low Dynamic Range): Color values clamped to [0.0, 1.0]
+//    - HDR (High Dynamic Range): Color values can exceed 1.0 (real-world luminance)
+//    - Tone mapping: HDR → LDR conversion for display devices
+//    - Perceptual accuracy: HDR better represents human vision and real lighting
 //
-// This validates that the issue #51 requirements are met:
-// "Red objects with HDR colors (e.g., 2.5, 0.3, 0.3, 1.0) should bloom dramatically"
-// ════════════════════════════════════════════════════════════════════════════════
+// 2. BLOOM EFFECT ALGORITHM (Multi-pass rendering):
+//    - Bright extraction: Isolate pixels above luminance threshold
+//    - Gaussian blur: Create smooth light scattering effect
+//    - Additive blending: Composite bloom over original scene
+//    - Result: Realistic camera lens glow and light bleeding
+//
+// 3. COLOR SPACE MATHEMATICS:
+//    - Luminance calculation: Y = 0.299*R + 0.587*G + 0.114*B (ITU-R BT.601)
+//    - RGB → HSV conversions for brightness analysis
+//    - Gamma correction: Linear → sRGB color space conversion
+//    - Energy conservation: Maintaining color relationships during processing
+//
+// 4. REAL-TIME GRAPHICS PIPELINE:
+//    - Framebuffer objects: Render-to-texture for multi-pass effects
+//    - Ping-pong rendering: Alternating textures for iterative processing
+//    - Shader uniform management: Dynamic parameter passing to GPU
+//    - Texture filtering: Bilinear/trilinear sampling for smooth results
+//
+// 5. COMPARATIVE VISUAL ANALYSIS:
+//    - Side-by-side LDR vs HDR comparison
+//    - Interactive mode switching for educational comparison
+//    - Color intensity progression: Dim → Bright → Bloom threshold
+//    - Scientific validation of graphics algorithms in real-time
+//
+// CONTROLS & INTERACTION:
+// - 'S' or 'B': Toggle bloom effect ON/OFF
+// - 'H': Toggle HDR color mode (demonstrates dramatic vs subtle effects)
+//
+// EXPECTED LEARNING OUTCOMES:
+// - Understanding HDR color spaces and their visual impact
+// - Recognizing bloom threshold behavior and intensity scaling
+// - Appreciating the mathematical foundation of modern graphics effects
+// - Connecting theory to practical implementation in game engines
+//
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using Rac.Core.Extension;
 using Rac.Core.Manager;
@@ -35,8 +63,25 @@ using Silk.NET.Maths;
 namespace SampleGame;
 
 /// <summary>
-/// Dedicated bloom test showcasing HDR color effects for optimal visual results.
-/// Demonstrates the requirements from issue #51 for HDR bloom color support.
+/// Educational bloom effect demonstration showcasing HDR color theory and post-processing.
+/// 
+/// EDUCATIONAL OBJECTIVES:
+/// - Demonstrate HDR vs LDR color space differences through interactive comparison
+/// - Illustrate bloom algorithm stages (bright extraction, blur, composite)
+/// - Provide hands-on experience with real-time graphics programming concepts
+/// - Connect mathematical theory to practical visual results
+/// 
+/// TECHNICAL VALIDATION:
+/// - Validates HDR bloom requirements from issue #51
+/// - Tests color values exceeding 1.0 for dramatic bloom effects
+/// - Demonstrates proper tone mapping and color space handling
+/// - Ensures consistent behavior across different shader modes
+/// 
+/// GRAPHICS TECHNIQUES SHOWCASED:
+/// - Multi-pass rendering pipeline
+/// - Framebuffer object usage for render-to-texture
+/// - Gaussian blur implementation through separable filters
+/// - Additive blending for light accumulation effects
 /// </summary>
 public static class BloomTest
 {
@@ -56,28 +101,38 @@ public static class BloomTest
         var showHDRColors = true;
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // HDR COLOR EXAMPLES FOR BLOOM EFFECTS
+        // COMPARATIVE COLOR SCIENCE EXAMPLES
         // ═══════════════════════════════════════════════════════════════════════════
         //
-        // These examples demonstrate the exact requirements from issue #51:
-        // - Red objects with HDR colors should bloom dramatically
-        // - White objects with HDR colors should show strong bloom effects  
-        // - Dim objects should show no bloom effect
+        // These color specifications demonstrate the fundamental difference between
+        // LDR and HDR color spaces through carefully chosen values that highlight
+        // bloom threshold behavior and luminance response curves.
+        //
+        // LDR Color Analysis:
+        // - All values ≤ 1.0 (standard display range)
+        // - Limited dynamic range for bright light representation
+        // - Bloom effects minimal due to low luminance values
+        // - Represents traditional (legacy) graphics rendering
 
         var ldrColors = new Dictionary<string, Vector4D<float>>
         {
-            ["Red"] = new(1.0f, 0.0f, 0.0f, 1.0f),       // Standard red (subtle bloom)
-            ["White"] = new(1.0f, 1.0f, 1.0f, 1.0f),     // Standard white (moderate bloom)
-            ["Blue"] = new(0.0f, 0.0f, 1.0f, 1.0f),      // Standard blue (subtle bloom)
-            ["Dim"] = new(0.3f, 0.3f, 0.3f, 1.0f),       // Dim gray (no bloom expected)
+            ["Red"] = new(1.0f, 0.0f, 0.0f, 1.0f),       // Peak red in LDR space
+            ["White"] = new(1.0f, 1.0f, 1.0f, 1.0f),     // Peak white in LDR space
+            ["Blue"] = new(0.0f, 0.0f, 1.0f, 1.0f),      // Peak blue in LDR space
+            ["Dim"] = new(0.3f, 0.3f, 0.3f, 1.0f),       // Below bloom threshold
         };
 
+        // HDR Color Analysis:
+        // - Values > 1.0 represent super-bright light sources
+        // - Extended dynamic range for realistic lighting simulation
+        // - Dramatic bloom effects due to high luminance values
+        // - Represents modern (physically-based) graphics rendering
         var hdrColors = new Dictionary<string, Vector4D<float>>
         {
-            ["Red"] = new(2.5f, 0.3f, 0.3f, 1.0f),       // HDR red - dramatic red bloom
-            ["White"] = new(2.0f, 2.0f, 2.0f, 1.0f),     // HDR white - strong bright bloom
-            ["Blue"] = new(0.3f, 0.3f, 2.5f, 1.0f),      // HDR blue - dramatic blue bloom
-            ["Dim"] = new(0.3f, 0.3f, 0.3f, 1.0f),       // Still dim (no bloom expected)
+            ["Red"] = new(2.5f, 0.3f, 0.3f, 1.0f),       // HDR red: Intense red with subdued other channels
+            ["White"] = new(2.0f, 2.0f, 2.0f, 1.0f),     // HDR white: Uniform high intensity across all channels
+            ["Blue"] = new(0.3f, 0.3f, 2.5f, 1.0f),      // HDR blue: Intense blue with subdued other channels
+            ["Dim"] = new(0.3f, 0.3f, 0.3f, 1.0f),       // Still below bloom threshold (control case)
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -114,22 +169,41 @@ public static class BloomTest
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // STARTUP INSTRUCTIONS
+        // STARTUP EDUCATIONAL GUIDANCE
         // ═══════════════════════════════════════════════════════════════════════════
         
-        Console.WriteLine("=== BLOOM HDR COLOR TEST - ISSUE #51 DEMONSTRATION ===");
-        Console.WriteLine("Controls:");
-        Console.WriteLine("  'S' - Toggle Bloom mode ON/OFF");
-        Console.WriteLine("  'B' - Toggle Bloom mode ON/OFF (legacy)");
-        Console.WriteLine("  'H' - Toggle HDR colors ON/OFF");
+        Console.WriteLine("╔══════════════════════════════════════════════════════════════════════════════╗");
+        Console.WriteLine("║               BLOOM HDR DEMONSTRATION - GRAPHICS EDUCATION                  ║");
+        Console.WriteLine("╚══════════════════════════════════════════════════════════════════════════════╝");
         Console.WriteLine();
-        Console.WriteLine("Expected behavior:");
-        Console.WriteLine("- HDR ON + Bloom ON = Dramatic bloom effects with bright halos");
-        Console.WriteLine("- HDR OFF + Bloom ON = Subtle bloom effects");
-        Console.WriteLine("- Any mode + Bloom OFF = No bloom effects");
+        Console.WriteLine("🎯 EDUCATIONAL OBJECTIVES:");
+        Console.WriteLine("   • Understand HDR vs LDR color space differences");
+        Console.WriteLine("   • Observe bloom algorithm effects in real-time");
+        Console.WriteLine("   • Connect mathematical theory to visual results");
+        Console.WriteLine("   • Experience interactive graphics programming");
         Console.WriteLine();
-        Console.WriteLine($"Current Mode: {currentShaderMode}");
-        Console.WriteLine($"HDR Colors: {(showHDRColors ? "ON" : "OFF")}");
+        Console.WriteLine("🎮 INTERACTIVE CONTROLS:");
+        Console.WriteLine("   'S' - Toggle Bloom mode ON/OFF (primary control)");
+        Console.WriteLine("   'B' - Toggle Bloom mode ON/OFF (legacy support)");
+        Console.WriteLine("   'H' - Toggle HDR colors ON/OFF (dramatic vs subtle)");
+        Console.WriteLine();
+        Console.WriteLine("🔬 SCIENTIFIC OBSERVATION GUIDE:");
+        Console.WriteLine("   • HDR ON + Bloom ON = Dramatic bloom with bright halos exceeding object boundaries");
+        Console.WriteLine("   • HDR OFF + Bloom ON = Subtle bloom effects within LDR constraints");
+        Console.WriteLine("   • Any mode + Bloom OFF = No post-processing, standard rasterization only");
+        Console.WriteLine("   • Notice luminance thresholds: Dim objects remain unaffected regardless of mode");
+        Console.WriteLine();
+        Console.WriteLine("📊 COLOR ANALYSIS:");
+        Console.WriteLine("   • Red HDR (2.5, 0.3, 0.3): Demonstrates channel-specific intensity");
+        Console.WriteLine("   • White HDR (2.0, 2.0, 2.0): Shows uniform high-intensity across all channels");
+        Console.WriteLine("   • Blue HDR (0.3, 0.3, 2.5): Illustrates cool-tone HDR effects");
+        Console.WriteLine("   • Dim LDR (0.3, 0.3, 0.3): Control case remaining below bloom threshold");
+        Console.WriteLine();
+        Console.WriteLine($"🚀 Current Configuration: Bloom={currentShaderMode}, HDR={showHDRColors}");
+        Console.WriteLine();
+        Console.WriteLine("💡 Watch for: Light bleeding, halo expansion, color saturation changes, and");
+        Console.WriteLine("   intensity falloff patterns that demonstrate real-world optical phenomena!");
+        Console.WriteLine();
 
         engine.Run();
 
@@ -158,24 +232,33 @@ public static class BloomTest
 
         void DrawTestSquare(Vector2D<float> center, Vector4D<float> color, string label)
         {
-            const float size = 0.3f; // Square size
+            // ───────────────────────────────────────────────────────────────────────
+            // GEOMETRIC PRIMITIVE CONSTRUCTION
+            // ───────────────────────────────────────────────────────────────────────
+            //
+            // Constructs a square using two triangles in counter-clockwise winding order.
+            // This demonstrates basic 2D geometry tessellation for GPU rendering.
+            
+            const float size = 0.3f; // Square size in NDC coordinates
             var halfSize = size * 0.5f;
             
-            // Generate square geometry as two triangles
+            // Triangle strip approach: Reuses vertices for efficiency
+            // Triangle 1: Top-left → Top-right → Bottom-left
+            // Triangle 2: Top-right → Bottom-right → Bottom-left
             var verts = new List<float>
             {
-                // First triangle (top-left, top-right, bottom-left)
-                center.X - halfSize, center.Y + halfSize,  // Top-left
-                center.X + halfSize, center.Y + halfSize,  // Top-right
-                center.X - halfSize, center.Y - halfSize,  // Bottom-left
+                // First triangle vertices (CCW winding)
+                center.X - halfSize, center.Y + halfSize,  // Top-left vertex
+                center.X + halfSize, center.Y + halfSize,  // Top-right vertex
+                center.X - halfSize, center.Y - halfSize,  // Bottom-left vertex
                 
-                // Second triangle (top-right, bottom-right, bottom-left)
-                center.X + halfSize, center.Y + halfSize,  // Top-right
-                center.X + halfSize, center.Y - halfSize,  // Bottom-right
-                center.X - halfSize, center.Y - halfSize,  // Bottom-left
+                // Second triangle vertices (CCW winding) 
+                center.X + halfSize, center.Y + halfSize,  // Top-right vertex (shared)
+                center.X + halfSize, center.Y - halfSize,  // Bottom-right vertex
+                center.X - halfSize, center.Y - halfSize,  // Bottom-left vertex (shared)
             };
 
-            // Render with current shader mode and color
+            // Apply current shader mode and color for demonstration
             engine.Renderer.SetShaderMode(currentShaderMode);
             engine.Renderer.SetColor(color);
             engine.Renderer.UpdateVertices(verts.ToArray());

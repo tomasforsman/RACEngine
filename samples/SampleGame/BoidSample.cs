@@ -1,34 +1,44 @@
 ﻿// File: samples/SampleGame/BoidSample.cs
 //
-// ════════════════════════════════════════════════════════════════════════════════
-// EDUCATIONAL BOIDS SIMULATION
-// ════════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// EDUCATIONAL BOIDS SIMULATION - COMPREHENSIVE GRAPHICS & AI DEMONSTRATION
+// ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates several key computer graphics and game development concepts:
 //
 // 1. BOIDS ALGORITHM (Craig Reynolds, 1986):
-//    - Separation: Avoid crowding neighbors
-//    - Alignment: Steer towards average heading of neighbors
-//    - Cohesion: Steer towards average position of neighbors
-//    - Result: Emergent flocking behavior from simple rules
+//    - Separation: Avoid crowding neighbors (personal space maintenance)
+//    - Alignment: Steer towards average heading of neighbors (directional consensus)
+//    - Cohesion: Steer towards average position of neighbors (group formation)
+//    - Result: Emergent flocking behavior from simple local rules
+//    - Applications: Animal behavior simulation, crowd dynamics, particle systems
 //
 // 2. ENTITY COMPONENT SYSTEM (ECS) ARCHITECTURE:
-//    - Entities: Unique IDs representing game objects
-//    - Components: Pure data (Position, Velocity, Species)
-//    - Systems: Logic that operates on components
-//    - Benefits: Performance, modularity, data-oriented design
+//    - Entities: Lightweight identifiers (just ID + alive status)
+//    - Components: Pure data containers (Position, Velocity, Species)
+//    - Systems: Stateless logic processors operating on component data
+//    - Benefits: Performance through data locality, modularity, composition over inheritance
+//    - Query Performance: O(n) iteration over packed component arrays
 //
 // 3. REAL-TIME RENDERING PIPELINE:
-//    - Vertex data generation (CPU-side geometry creation)
-//    - Shader mode switching (Normal vs Bloom effects)
-//    - Batched rendering for performance
+//    - Vertex generation: CPU-side triangle construction with rotation transforms
+//    - Shader mode switching: Normal/SoftGlow/Bloom effects demonstration
+//    - Batched rendering: Multiple entities rendered in single draw call
+//    - HDR/LDR color management: Automatic color space handling per shader mode
 //
-// 4. COORDINATE SYSTEMS:
-//    - Normalized Device Coordinates (NDC): -1 to +1 range
-//    - Aspect ratio handling for proper scaling
-//    - 2D transformations (rotation, translation, scaling)
+// 4. COORDINATE SYSTEMS & MATHEMATICS:
+//    - Normalized Device Coordinates (NDC): -1 to +1 range for resolution independence
+//    - Aspect ratio preservation: Prevents distortion on different screen ratios
+//    - 2D transformations: Scale → Rotate → Translate matrix pipeline
+//    - Trigonometric functions: atan2 for direction, sin/cos for rotation matrices
 //
-// ════════════════════════════════════════════════════════════════════════════════
+// 5. MULTI-SPECIES ECOSYSTEM SIMULATION:
+//    - Predator-prey relationships: Red hunts Blue/White, Blue hunts White
+//    - Population dynamics: Realistic ecosystem distribution (30:20:10 ratio)
+//    - Species interaction matrix: Configurable behavior rules per species pair
+//    - Visual differentiation: Size scaling and color coding for species identification
+//
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using Rac.Core.Extension;
 using Rac.Core.Manager;
@@ -49,15 +59,27 @@ namespace SampleGame;
 public static class BoidSample
 {
     // ═══════════════════════════════════════════════════════════════════════════
-    // SHADER MODE DEMONSTRATION STATE
+    // ADAPTIVE RENDERING MODE DEMONSTRATION
     // ═══════════════════════════════════════════════════════════════════════════
     //
-    // This sample demonstrates the engine's different visual effects through
-    // interactive shader mode switching, showcasing the rendering capabilities.
+    // This sample showcases the engine's visual effects system through progressive
+    // shader mode enhancement. Users can interactively cycle through rendering modes
+    // to understand the visual impact of different graphics techniques:
+    // - Normal: Standard rasterization (baseline)
+    // - SoftGlow: Subtle luminance enhancement 
+    // - Bloom: HDR post-processing with dramatic light bleeding effects
 
     private static ShaderMode _currentShaderMode = ShaderMode.Normal;
     private static List<ShaderMode> _availableShaderModes = new() { ShaderMode.Normal, ShaderMode.SoftGlow };
     private static int _shaderModeIndex = 0;
+    
+    // ───────────────────────────────────────────────────────────────────────────
+    // EDUCATIONAL TIP SYSTEM
+    // ───────────────────────────────────────────────────────────────────────────
+    //
+    // Provides contextual learning hints during bloom mode to help users understand
+    // advanced graphics concepts and HDR rendering techniques.
+    
     private static float _timeSinceLastTip = 0f;
     private static int _tipIndex = 0;
 
@@ -421,19 +443,25 @@ public static class BoidSample
                             _ => new SpeciesInteraction(0f, 0f, 0f),
                         };
 
-            // ───────────────────────────────────────────────────────────────────────
-            // BOID PHYSICS PARAMETERS
-            // ───────────────────────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════════════════
+        // BOID PHYSICS & INTERACTION PARAMETERS
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // These parameters control the core flocking algorithm behavior:
+        // - Neighbor radius: Spatial awareness distance for interaction calculations
+        // - Max force: Steering constraint preventing unrealistic sharp turns
+        // - Max speed: Velocity cap maintaining realistic movement speeds
+        // - Boundary strength: Repulsion force from world edges (invisible walls)
 
-            var boidSettings = new MultiSpeciesBoidSettingsComponent(
-                0.4f,             // Neighbor detection radius
-                0.02f,            // Maximum turning force (steering strength)
-                0.2f,             // Maximum speed
-                boundaryMin,      // World bounds minimum
-                boundaryMax,      // World bounds maximum
-                interactionMap,   // Species interaction rules
-                1.5f              // Boundary avoidance strength
-            );
+        var boidSettings = new MultiSpeciesBoidSettingsComponent(
+            0.4f,             // Neighbor detection radius (NDC units)
+            0.02f,            // Maximum steering force per frame
+            0.2f,             // Maximum movement speed (NDC units/second)
+            boundaryMin,      // World boundary minimum (-X, -Y)
+            boundaryMax,      // World boundary maximum (+X, +Y)
+            interactionMap,   // Species interaction behavior matrix
+            1.5f              // Boundary avoidance strength multiplier
+        );
 
             // Apply settings to the global settings entity
             world.SetComponent(settingsEntity, boidSettings);
