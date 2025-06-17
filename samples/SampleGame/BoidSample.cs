@@ -208,6 +208,8 @@ public static class BoidSample
         // STARTUP MESSAGE
         // ═══════════════════════════════════════════════════════════════════════════
 
+        Console.OutputEncoding = System.Text.Encoding.Unicode;
+
         ShowStartupMessage();
 
         engine.Run();
@@ -222,17 +224,17 @@ public static class BoidSample
             Console.WriteLine("╔══════════════════════════════════════════════════════════════════════════════╗");
             Console.WriteLine("║                    BOID SAMPLE - BLOOM DEMONSTRATION                        ║");
             Console.WriteLine("╚══════════════════════════════════════════════════════════════════════════════╝");
-            Console.WriteLine();
+            Console.WriteLine("");
 
             Console.WriteLine("🎮 CONTROLS:");
             Console.WriteLine("   'S' - Cycle through shader modes (Normal → SoftGlow → Bloom)");
-            Console.WriteLine();
+            Console.WriteLine("");
 
             Console.WriteLine("🌈 SHADER MODES & VISUAL EFFECTS:");
             Console.WriteLine("   • Normal:   Standard rendering, no glow effects");
             Console.WriteLine("   • SoftGlow: Gentle halos around all boids");
             Console.WriteLine("   • Bloom:    HDR bloom effects with dramatic glowing! (tested when accessed)");
-            Console.WriteLine();
+            Console.WriteLine("");
 
             Console.WriteLine("🦋 BOID SPECIES & EFFECTS:");
             Console.WriteLine("   • All boids use the currently selected shader mode consistently");
@@ -240,7 +242,7 @@ public static class BoidSample
             Console.WriteLine("   • Blue Boids (Medium):  Neutral species, medium size");
             Console.WriteLine("   • Red Boids (Large):    Predator species, largest size");
             Console.WriteLine("   • All species demonstrate the same shader effects for clear comparison");
-            Console.WriteLine();
+            Console.WriteLine("");
 
             Console.WriteLine("👀 WHAT TO LOOK FOR:");
             Console.WriteLine("   • SoftGlow: Soft, subtle halos around boids");
@@ -256,10 +258,10 @@ public static class BoidSample
             Console.WriteLine("   • Blue boids show cool-toned effects with HDR blue values");
             Console.WriteLine("   • Obstacle participates in shader effects alongside the boids");
             Console.WriteLine("   • Watch flocking behavior - it remains the same across all shader modes");
-            Console.WriteLine();
+            Console.WriteLine("");
 
             Console.WriteLine($"🚀 Starting in {_currentShaderMode} mode. Press 'S' to cycle modes and see the effects!");
-            Console.WriteLine();
+            Console.WriteLine("");
         }
 
         void ShowBloomTip()
