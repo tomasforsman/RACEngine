@@ -32,13 +32,30 @@ public class FramebufferHelper
         _gl.BindTexture(TextureTarget.Texture2D, texture);
         
         // Setup texture parameters
-        // NOTE: Using unsafe (void*)null instead of "in System.IntPtr.Zero" to avoid
-        // Silk.NET marshaling bug where it tries to take the address of IntPtr.Zero,
-        // leading to null pointer dereference. See issue #69.
+        // NOTE: The original code used "in System.IntPtr.Zero" which caused Silk.NET
+        // to try taking the address of IntPtr.Zero, leading to crashes. See issue #69.
+        // 
+        // ALTERNATIVE SOLUTION: Instead of using null data, allocate and initialize
+        // the texture with zero data to ensure it's properly initialized.
+        // This prevents potential undefined behavior with uninitialized texture memory.
+        
+        int pixelCount = width * height * 3; // RGB = 3 components per pixel
+        float[] zeroData = new float[pixelCount]; // Initialize to all zeros
+        
         unsafe
         {
-            _gl.TexImage2D(TextureTarget.Texture2D, 0, format, (uint)width, (uint)height, 0, 
-                          PixelFormat.Rgb, PixelType.Float, (void*)null);
+            fixed (float* dataPtr = zeroData)
+            {
+                _gl.TexImage2D(TextureTarget.Texture2D, 0, format, (uint)width, (uint)height, 0, 
+                              PixelFormat.Rgb, PixelType.Float, dataPtr);
+            }
+        }
+        
+        // Check for OpenGL errors immediately after texture creation
+        var error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            throw new InvalidOperationException($"OpenGL error after TexImage2D with format {format}: {error}");
         }
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
