@@ -334,18 +334,21 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         if (_isBloomActive)
         {
-            EnsurePostProcessingInitialized();
             if (_postProcessing != null)
             {
+                Console.WriteLine("🎬 OpenGLRenderer.Clear: Beginning scene pass for bloom rendering...");
                 _postProcessing.BeginScenePass();
+                Console.WriteLine("✅ OpenGLRenderer.Clear: Scene pass started for bloom rendering");
             }
             else
             {
+                Console.WriteLine("⚠️ OpenGLRenderer.Clear: PostProcessing is null, falling back to normal clear");
                 _gl.Clear(ClearBufferMask.ColorBufferBit);
             }
         }
         else
         {
+            Console.WriteLine("📋 OpenGLRenderer.Clear: Normal rendering mode, clearing screen buffer");
             _gl.Clear(ClearBufferMask.ColorBufferBit);
         }
     }
@@ -415,17 +418,47 @@ public class OpenGLRenderer : IRenderer, IDisposable
     /// </summary>
     public void SetShaderMode(ShaderMode mode)
     {
+        Console.WriteLine($"🎨 OpenGLRenderer.SetShaderMode: Attempting to switch to {mode}");
+        
+        // Safety check: Don't allow bloom mode if window size is not set (renderer not fully initialized)
+        if (mode == ShaderMode.Bloom && (_windowSize.X <= 0 || _windowSize.Y <= 0))
+        {
+            Console.WriteLine($"⚠️ OpenGLRenderer.SetShaderMode: Bloom mode requested but renderer not fully initialized (window size: {_windowSize.X}x{_windowSize.Y}), falling back to Normal");
+            mode = ShaderMode.Normal;
+        }
+        
         if (!_shaders.ContainsKey(mode))
         {
-            Console.WriteLine($"❌ Shader mode {mode} not available, falling back to Normal");
+            Console.WriteLine($"❌ OpenGLRenderer.SetShaderMode: Shader mode {mode} not available, falling back to Normal");
             mode = ShaderMode.Normal;
         }
 
+        Console.WriteLine($"🎨 OpenGLRenderer.SetShaderMode: Setting shader mode to {mode}");
         _currentShaderMode = mode;
         _currentShader = _shaders[mode];
         _currentUniforms = _uniforms[mode];
 
         _isBloomActive = (mode == ShaderMode.Bloom);
+        Console.WriteLine($"🎨 OpenGLRenderer.SetShaderMode: Bloom active: {_isBloomActive}");
+        
+        // Initialize PostProcessing immediately when Bloom mode is requested
+        // This prevents initialization during the render loop which can cause hangs
+        if (_isBloomActive && _postProcessing == null)
+        {
+            Console.WriteLine("🎨 OpenGLRenderer.SetShaderMode: Bloom mode requested, initializing post-processing immediately...");
+            EnsurePostProcessingInitialized();
+            
+            // If PostProcessing initialization failed, fall back to Normal mode
+            if (_postProcessing == null)
+            {
+                Console.WriteLine("❌ OpenGLRenderer.SetShaderMode: PostProcessing initialization failed, falling back to Normal mode");
+                _isBloomActive = false;
+                _currentShaderMode = ShaderMode.Normal;
+                _currentShader = _shaders[ShaderMode.Normal];
+                _currentUniforms = _uniforms[ShaderMode.Normal];
+            }
+        }
+        
         ConfigureBlendingForMode(mode);
 
         // Activate shader and set uniforms with validation
@@ -439,6 +472,8 @@ public class OpenGLRenderer : IRenderer, IDisposable
             if (_currentUniforms.ColorLocation >= 0)
                 _gl.Uniform4(_currentUniforms.ColorLocation, _currentColor.X, _currentColor.Y, _currentColor.Z, _currentColor.W);
         }
+        
+        Console.WriteLine($"✅ OpenGLRenderer.SetShaderMode: Successfully switched to {_currentShaderMode}");
     }
 
     /// <summary>
@@ -747,9 +782,35 @@ public class OpenGLRenderer : IRenderer, IDisposable
 
     public void FinalizeFrame()
     {
-        if (_isBloomActive && _postProcessing != null)
+        try
         {
-            _postProcessing.EndScenePassAndApplyBloom();
+            if (_isBloomActive && _postProcessing != null)
+            {
+                Console.WriteLine("🎬 OpenGLRenderer.FinalizeFrame: Bloom is active, applying bloom effects...");
+                _postProcessing.EndScenePassAndApplyBloom();
+                Console.WriteLine("✅ OpenGLRenderer.FinalizeFrame: Bloom effects applied successfully");
+            }
+            else if (_isBloomActive && _postProcessing == null)
+            {
+                Console.WriteLine("⚠️ OpenGLRenderer.FinalizeFrame: Bloom is active but PostProcessing is null - skipping bloom");
+            }
+            else
+            {
+                Console.WriteLine("📋 OpenGLRenderer.FinalizeFrame: Bloom not active, skipping post-processing");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ OpenGLRenderer.FinalizeFrame: Failed during frame finalization: {ex.Message}");
+            Console.WriteLine($"❌ OpenGLRenderer.FinalizeFrame: Stack trace: {ex.StackTrace}");
+            
+            // Disable bloom to prevent further crashes
+            Console.WriteLine("🛡️ OpenGLRenderer.FinalizeFrame: Disabling bloom to prevent further crashes");
+            _isBloomActive = false;
+            _postProcessing?.Dispose();
+            _postProcessing = null;
+            
+            throw;
         }
     }
 
