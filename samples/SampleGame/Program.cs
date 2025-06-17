@@ -5,7 +5,7 @@ public static class Program
     public static void Main(string[] args)
     {
         // Determine which sample to run
-        string sample = args.Length > 0 ? args[0].ToLowerInvariant() : PromptForSample();
+        string sample = args.Length > 0 ? args[0].ToLowerInvariant() : GetDefaultSample();
 
         switch (sample)
         {
@@ -31,6 +31,30 @@ public static class Program
         }
     }
 
+    private static string GetDefaultSample()
+    {
+        // Check if we're in an interactive console environment
+        try
+        {
+            // Test if console input is available without actually reading
+            if (Console.IsInputRedirected || !Environment.UserInteractive)
+            {
+                // Non-interactive environment, use default
+                Console.WriteLine("Non-interactive environment detected, using default sample: boidsample");
+                return "boidsample";
+            }
+            
+            // Interactive environment, show prompt
+            return PromptForSample();
+        }
+        catch (Exception ex)
+        {
+            // If any console detection fails, use default to avoid Windows bell sounds
+            Console.WriteLine($"Console detection failed ({ex.Message}), using default sample: boidsample");
+            return "boidsample";
+        }
+    }
+
     private static string PromptForSample()
     {
         Console.WriteLine("Available samples:");
@@ -38,8 +62,28 @@ public static class Program
         Console.WriteLine("  boidsample      - Flocking simulation with visual effects demonstration");
         Console.WriteLine("  bloomtest       - HDR bloom effect demonstration (Issue #51)");
         // … list additional samples here …
-        Console.Write("Enter sample name: ");
-        return Console.ReadLine()!.Trim().ToLowerInvariant();
+        Console.Write("Enter sample name (or press Enter for default 'boidsample'): ");
+        
+        try
+        {
+            string? input = Console.ReadLine();
+            
+            // Handle null input or empty input gracefully
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                Console.WriteLine("No input detected, defaulting to 'boidsample'");
+                return "boidsample";
+            }
+            
+            return input.Trim().ToLowerInvariant();
+        }
+        catch (Exception ex)
+        {
+            // Handle console input errors that might cause Windows bell sounds
+            Console.WriteLine($"Console input error: {ex.Message}");
+            Console.WriteLine("Defaulting to 'boidsample'");
+            return "boidsample";
+        }
     }
 
     private static void ShowUsage()

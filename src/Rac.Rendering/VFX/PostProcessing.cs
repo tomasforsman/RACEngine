@@ -550,7 +550,13 @@ public class PostProcessing : IDisposable
         // and computing post-processing effects (blur, composition, tone mapping).
 
         _gl.BindVertexArray(_quadVao);
-        _gl.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, in System.IntPtr.Zero);
+        
+        // CRITICAL FIX: Use null pointer instead of "in System.IntPtr.Zero" to prevent crashes.
+        // Taking the address of IntPtr.Zero can cause undefined behavior similar to issue #69.
+        unsafe
+        {
+            _gl.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, null);
+        }
     }
 
     /// <summary>
