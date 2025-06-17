@@ -169,86 +169,28 @@ public class PostProcessing : IDisposable
     /// </summary>
     public void Initialize(int screenWidth, int screenHeight)
     {
-        Console.WriteLine($"📋 PostProcessing.Initialize: Starting initialization (resolution: {screenWidth}x{screenHeight})");
-        
         try
         {
-            // ───────────────────────────────────────────────────────────────────────
-            // OPENGL CONTEXT VALIDATION
-            // ───────────────────────────────────────────────────────────────────────
-            //
-            // Ensure OpenGL context is valid and supports required features.
-            // Post-processing requires: FBO extension, floating-point textures,
-            // multiple render targets, GLSL shaders.
-
-            Console.WriteLine("📋 PostProcessing.Initialize: Validating OpenGL context...");
             ValidateOpenGLContext();
-            Console.WriteLine("✅ PostProcessing.Initialize: OpenGL context validation passed");
 
             _screenWidth = screenWidth;
             _screenHeight = screenHeight;
 
-            // ───────────────────────────────────────────────────────────────────────
-            // PERFORMANCE OPTIMIZATION: MULTI-RESOLUTION RENDERING
-            // ───────────────────────────────────────────────────────────────────────
-            //
-            // Blur operations are bandwidth-intensive and naturally low-frequency.
-            // Rendering blur at half-resolution provides significant performance gains
-            // with minimal visual quality loss (blur hides aliasing artifacts).
-
             _blurWidth = screenWidth / 2;
             _blurHeight = screenHeight / 2;
-            Console.WriteLine($"📋 PostProcessing.Initialize: Calculated blur resolution: {_blurWidth}x{_blurHeight}");
 
-            // ───────────────────────────────────────────────────────────────────────
-            // FRAMEBUFFER CREATION WITH HDR SUPPORT
-            // ───────────────────────────────────────────────────────────────────────
-            //
-            // RGB16F format provides:
-            // - 16-bit floating point per channel (vs 8-bit integer in RGB8)
-            // - Values beyond [0,1] range (essential for HDR bloom)
-            // - Linear color space (correct for lighting calculations)
-            // - Hardware filtering support on modern GPUs
-
-            Console.WriteLine("📋 PostProcessing.Initialize: Creating framebuffers...");
             (_sceneFramebuffer, _sceneTexture) = _framebufferHelper.CreateFramebuffer(_screenWidth, _screenHeight, InternalFormat.Rgb16f);
-            Console.WriteLine($"✅ PostProcessing.Initialize: Scene framebuffer created (ID: {_sceneFramebuffer})");
-            
             (_brightFramebuffer, _brightTexture) = _framebufferHelper.CreateFramebuffer(_screenWidth, _screenHeight, InternalFormat.Rgb16f);
-            Console.WriteLine($"✅ PostProcessing.Initialize: Bright framebuffer created (ID: {_brightFramebuffer})");
-            
             (_blurFramebuffer1, _blurTexture1) = _framebufferHelper.CreateFramebuffer(_blurWidth, _blurHeight, InternalFormat.Rgb16f);
-            Console.WriteLine($"✅ PostProcessing.Initialize: Blur framebuffer 1 created (ID: {_blurFramebuffer1})");
-            
             (_blurFramebuffer2, _blurTexture2) = _framebufferHelper.CreateFramebuffer(_blurWidth, _blurHeight, InternalFormat.Rgb16f);
-            Console.WriteLine($"✅ PostProcessing.Initialize: Blur framebuffer 2 created (ID: {_blurFramebuffer2})");
 
-            // ───────────────────────────────────────────────────────────────────────
-            // FULLSCREEN QUAD SETUP
-            // ───────────────────────────────────────────────────────────────────────
-            //
-            // Post-processing renders to screen-aligned quads rather than 3D geometry.
-            // Quad covers entire screen in normalized device coordinates [-1,+1].
-            // Fragment shader processes each screen pixel independently.
-
-            Console.WriteLine("📋 PostProcessing.Initialize: Creating fullscreen quad...");
             (_quadVao, _quadVbo) = _framebufferHelper.CreateFullscreenQuad();
-            Console.WriteLine($"✅ PostProcessing.Initialize: Fullscreen quad created (VAO: {_quadVao}, VBO: {_quadVbo})");
 
-            // ───────────────────────────────────────────────────────────────────────
-            // SHADER COMPILATION AND LINKING
-            // ───────────────────────────────────────────────────────────────────────
-
-            Console.WriteLine("📋 PostProcessing.Initialize: Loading shaders...");
             LoadShaders();
-            Console.WriteLine("✅ PostProcessing.Initialize: All shaders loaded successfully");
-            
-            Console.WriteLine("🎉 PostProcessing.Initialize: Initialization completed successfully!");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ PostProcessing.Initialize: Failed during initialization: {ex.Message}");
-            Console.WriteLine($"❌ PostProcessing.Initialize: Stack trace: {ex.StackTrace}");
             throw;
         }
     }
@@ -318,45 +260,26 @@ public class PostProcessing : IDisposable
     {
         try
         {
-            Console.WriteLine("🎬 PostProcessing.BeginScenePass: Starting scene pass...");
-            
-            // ───────────────────────────────────────────────────────────────────────
-            // FRAMEBUFFER BINDING AND SETUP
-            // ───────────────────────────────────────────────────────────────────────
-            //
-            // Bind framebuffer: redirects all rendering to offscreen texture
-            // Viewport: maps normalized device coordinates to pixel coordinates
-            // Clear: initializes frame with background color and far depth value
-
-            Console.WriteLine($"🎬 PostProcessing.BeginScenePass: Binding scene framebuffer (ID: {_sceneFramebuffer})");
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, _sceneFramebuffer);
-            
-            // Check framebuffer status
+
             var status = _gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
             if (status != GLEnum.FramebufferComplete)
             {
                 throw new InvalidOperationException($"Scene framebuffer is not complete: {status}");
             }
-            
-            Console.WriteLine($"🎬 PostProcessing.BeginScenePass: Setting viewport ({_screenWidth}x{_screenHeight})");
+
             _gl.Viewport(0, 0, (uint)_screenWidth, (uint)_screenHeight);
-            
-            Console.WriteLine("🎬 PostProcessing.BeginScenePass: Clearing buffers");
             _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            
-            // Check for OpenGL errors
+
             var error = _gl.GetError();
             if (error != GLEnum.NoError)
             {
                 throw new InvalidOperationException($"OpenGL error during BeginScenePass: {error}");
             }
-            
-            Console.WriteLine("✅ PostProcessing.BeginScenePass: Scene pass started successfully");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ PostProcessing.BeginScenePass: Failed: {ex.Message}");
-            Console.WriteLine($"❌ PostProcessing.BeginScenePass: Stack trace: {ex.StackTrace}");
             throw;
         }
     }
@@ -374,36 +297,13 @@ public class PostProcessing : IDisposable
     {
         try
         {
-            Console.WriteLine("🎭 PostProcessing.EndScenePassAndApplyBloom: Starting bloom pipeline...");
-            
-            // ───────────────────────────────────────────────────────────────────────
-            // THREE-STAGE BLOOM PIPELINE
-            // ───────────────────────────────────────────────────────────────────────
-
-            // Stage 1: Brightness Thresholding
-            // Isolate pixels above luminance threshold for blooming
-            Console.WriteLine("🎭 PostProcessing.EndScenePassAndApplyBloom: Stage 1 - Extracting bright areas...");
             ExtractBrightAreas();
-            Console.WriteLine("✅ PostProcessing.EndScenePassAndApplyBloom: Stage 1 completed");
-
-            // Stage 2: Blur Generation
-            // Apply separable Gaussian blur using ping-pong technique
-            Console.WriteLine("🎭 PostProcessing.EndScenePassAndApplyBloom: Stage 2 - Blurring bright areas...");
             BlurBrightAreas();
-            Console.WriteLine("✅ PostProcessing.EndScenePassAndApplyBloom: Stage 2 completed");
-
-            // Stage 3: Final Composition
-            // Blend original scene with blurred bloom using additive blending
-            Console.WriteLine("🎭 PostProcessing.EndScenePassAndApplyBloom: Stage 3 - Compositing scene...");
             CompositeScene();
-            Console.WriteLine("✅ PostProcessing.EndScenePassAndApplyBloom: Stage 3 completed");
-            
-            Console.WriteLine("🎉 PostProcessing.EndScenePassAndApplyBloom: Bloom pipeline completed successfully!");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ PostProcessing.EndScenePassAndApplyBloom: Failed: {ex.Message}");
-            Console.WriteLine($"❌ PostProcessing.EndScenePassAndApplyBloom: Stack trace: {ex.StackTrace}");
             throw;
         }
     }
@@ -679,7 +579,7 @@ public class PostProcessing : IDisposable
 
     /// <summary>
     /// Cleans up all resources.
-    /// 
+    ///
     /// LEGACY METHOD - Use Dispose() instead.
     /// Maintained for backwards compatibility.
     /// </summary>

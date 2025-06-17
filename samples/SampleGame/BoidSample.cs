@@ -54,7 +54,7 @@ public static class BoidSample
     //
     // This sample demonstrates the engine's different visual effects through
     // interactive shader mode switching, showcasing the rendering capabilities.
-    
+
     private static ShaderMode _currentShaderMode = ShaderMode.Normal;
     private static List<ShaderMode> _availableShaderModes = new() { ShaderMode.Normal, ShaderMode.SoftGlow };
     private static int _shaderModeIndex = 0;
@@ -175,12 +175,12 @@ public static class BoidSample
         {
             // ECS systems (including BoidSystem) already executed by the engine facade.
             // Any additional per-frame logic would go here (UI updates, audio, etc.)
-            
+
             // Show periodic tips during bloom mode to help users understand effects
             if (_currentShaderMode == ShaderMode.Bloom)
             {
                 _timeSinceLastTip += deltaSeconds;
-                
+
                 // Show a tip every 15 seconds during bloom mode
                 if (_timeSinceLastTip >= 15f)
                 {
@@ -207,7 +207,7 @@ public static class BoidSample
         // ═══════════════════════════════════════════════════════════════════════════
         // STARTUP MESSAGE
         // ═══════════════════════════════════════════════════════════════════════════
-        
+
         ShowStartupMessage();
 
         engine.Run();
@@ -223,17 +223,17 @@ public static class BoidSample
             Console.WriteLine("║                    BOID SAMPLE - BLOOM DEMONSTRATION                        ║");
             Console.WriteLine("╚══════════════════════════════════════════════════════════════════════════════╝");
             Console.WriteLine();
-            
+
             Console.WriteLine("🎮 CONTROLS:");
             Console.WriteLine("   'S' - Cycle through shader modes (Normal → SoftGlow → Bloom)");
             Console.WriteLine();
-            
+
             Console.WriteLine("🌈 SHADER MODES & VISUAL EFFECTS:");
             Console.WriteLine("   • Normal:   Standard rendering, no glow effects");
             Console.WriteLine("   • SoftGlow: Gentle halos around all boids");
             Console.WriteLine("   • Bloom:    HDR bloom effects with dramatic glowing! (tested when accessed)");
             Console.WriteLine();
-            
+
             Console.WriteLine("🦋 BOID SPECIES & EFFECTS:");
             Console.WriteLine("   • All boids use the currently selected shader mode consistently");
             Console.WriteLine("   • White Boids (Small):  Standard flocking, smallest size");
@@ -241,14 +241,14 @@ public static class BoidSample
             Console.WriteLine("   • Red Boids (Large):    Predator species, largest size");
             Console.WriteLine("   • All species demonstrate the same shader effects for clear comparison");
             Console.WriteLine();
-            
+
             Console.WriteLine("👀 WHAT TO LOOK FOR:");
             Console.WriteLine("   • SoftGlow: Soft, subtle halos around boids");
             Console.WriteLine("   • Bloom: Bright halos that 'bleed' light into surrounding areas");
             Console.WriteLine("   • HDR Effects: Colors that appear to glow intensely beyond normal brightness");
             Console.WriteLine("   • Red boids in Bloom mode show the most spectacular effects!");
             Console.WriteLine();
-            
+
             Console.WriteLine("💡 TIPS FOR OPTIMAL SHADER VISIBILITY:");
             Console.WriteLine("   • All boids use the same shader mode for consistent demonstration");
             Console.WriteLine("   • Red boids show most dramatic effects due to intense HDR red values");
@@ -257,7 +257,7 @@ public static class BoidSample
             Console.WriteLine("   • Obstacle participates in shader effects alongside the boids");
             Console.WriteLine("   • Watch flocking behavior - it remains the same across all shader modes");
             Console.WriteLine();
-            
+
             Console.WriteLine($"🚀 Starting in {_currentShaderMode} mode. Press 'S' to cycle modes and see the effects!");
             Console.WriteLine();
         }
@@ -274,126 +274,90 @@ public static class BoidSample
                 "💡 TIP: The obstacle also participates in bloom effects for complete demonstration!",
                 "💡 TIP: Try switching back to Normal mode (press 'S') to see the dramatic difference!",
             };
-            
+
             Console.WriteLine(bloomTips[_tipIndex % bloomTips.Length]);
             _tipIndex++;
         }
 
-        bool TestBloomModeSupport()
-        {
-            Console.WriteLine("🧪 TestBloomModeSupport: Testing bloom mode availability...");
-            try
-            {
-                // Test Bloom mode support
-                Console.WriteLine("🧪 TestBloomModeSupport: Attempting to set bloom mode...");
-                engine.Renderer.SetShaderMode(ShaderMode.Bloom);
-                Console.WriteLine("✅ TestBloomModeSupport: Bloom mode set successfully");
-                
-                Console.WriteLine("🧪 TestBloomModeSupport: Reverting to normal mode...");
-                engine.Renderer.SetShaderMode(ShaderMode.Normal);
-                Console.WriteLine("✅ TestBloomModeSupport: Reverted to normal mode successfully");
-                
-                Console.WriteLine("✅ TestBloomModeSupport: Bloom mode is supported and available");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ TestBloomModeSupport: Bloom mode not supported: {ex.Message}");
-                // Ensure we fall back to Normal mode safely
-                try
-                {
-                    Console.WriteLine("🧪 TestBloomModeSupport: Attempting fallback to normal mode...");
-                    engine.Renderer.SetShaderMode(ShaderMode.Normal);
-                    Console.WriteLine("✅ TestBloomModeSupport: Fallback to normal mode successful");
-                }
-                catch (Exception fallbackEx)
-                {
-                    Console.WriteLine($"⚠️ TestBloomModeSupport: Warning: Could not set Normal mode: {fallbackEx.Message}");
-                }
-                return false;
-            }
-        }
 
         void CycleShaderMode()
         {
-            if (_availableShaderModes.Count == 0) return;
-            
-            try
+        if (_availableShaderModes.Count == 0) return;
+
+        try
+        {
+            _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Count;
+            var targetMode = _availableShaderModes[_shaderModeIndex];
+
+            // If we've cycled through all basic modes and bloom hasn't been added yet
+            if (_shaderModeIndex == 0 && !_availableShaderModes.Contains(ShaderMode.Bloom))
             {
-                _shaderModeIndex = (_shaderModeIndex + 1) % _availableShaderModes.Count;
-                var targetMode = _availableShaderModes[_shaderModeIndex];
-                
-                // If we've cycled through all basic modes, try to add bloom mode if not tested yet
-                if (_shaderModeIndex == 0 && !_availableShaderModes.Contains(ShaderMode.Bloom))
-                {
-                    // Test bloom support on-demand
-                    if (TestBloomModeSupport())
-                    {
-                        _availableShaderModes.Add(ShaderMode.Bloom);
-                        // Switch directly to bloom mode since user is cycling
-                        _shaderModeIndex = _availableShaderModes.Count - 1;
-                        targetMode = ShaderMode.Bloom;
-                        Console.WriteLine("📊 Bloom mode added to available modes");
-                    }
-                }
-                
-                _currentShaderMode = targetMode;
-                
-                // Reset tip timer when changing modes
-                _timeSinceLastTip = 0f;
-                
-                // Enhanced console output with detailed mode explanations
-                Console.WriteLine();
-                Console.WriteLine($"=== SHADER MODE: {_currentShaderMode.ToString().ToUpper()} ===");
-                
-                switch (_currentShaderMode)
-                {
-                    case ShaderMode.Normal:
-                        Console.WriteLine("• Standard rendering mode");
-                        Console.WriteLine("• All boids use regular colors (no glow effects)");
-                        Console.WriteLine("• Best for seeing basic flocking behavior clearly");
-                        break;
-                        
-                    case ShaderMode.SoftGlow:
-                        Console.WriteLine("• Subtle glow effects enabled");
-                        Console.WriteLine("• All boids: SoftGlow effect with gentle halos");
-                        Console.WriteLine("• Obstacle: SoftGlow effect");
-                        Console.WriteLine("• Look for: Soft halos around all entities");
-                        break;
-                        
-                    case ShaderMode.Bloom:
-                        Console.WriteLine("• HDR bloom effects enabled - DRAMATIC GLOW!");
-                        Console.WriteLine("• All boids: Bloom with HDR colors for intense glow");
-                        Console.WriteLine("• Obstacle: Bloom effect with enhanced brightness");
-                        Console.WriteLine("• Look for: Bright halos that 'bleed' into surrounding areas");
-                        Console.WriteLine("• Tip: All species show dramatic bloom effects consistently!");
-                        break;
-                }
-                
-                Console.WriteLine($"• Species behavior: {GetSpeciesBehaviorDescription()}");
-                Console.WriteLine();
-                
-                // Report available modes on first cycle
-                if (_shaderModeIndex == 0)
-                {
-                    Console.WriteLine($"📊 Available shader modes: {string.Join(", ", _availableShaderModes)}");
-                }
+                // Simply add bloom mode to available modes without testing
+                // The renderer will handle initialization at the proper time
+                _availableShaderModes.Add(ShaderMode.Bloom);
+                // Switch directly to bloom mode since user is cycling
+                _shaderModeIndex = _availableShaderModes.Count - 1;
+                targetMode = ShaderMode.Bloom;
+                Console.WriteLine("📊 Bloom mode added to available modes");
             }
-            catch (Exception ex)
+
+            _currentShaderMode = targetMode;
+
+            // Reset tip timer when changing modes
+            _timeSinceLastTip = 0f;
+
+            // Enhanced console output with detailed mode explanations
+            Console.WriteLine();
+            Console.WriteLine($"=== SHADER MODE: {_currentShaderMode.ToString().ToUpper()} ===");
+
+            switch (_currentShaderMode)
             {
-                Console.WriteLine($"❌ Failed to switch to shader mode: {ex.Message}");
-                // Revert to previous mode index if the switch failed
-                _shaderModeIndex = (_shaderModeIndex - 1 + _availableShaderModes.Count) % _availableShaderModes.Count;
-                _currentShaderMode = _availableShaderModes[_shaderModeIndex];
+                case ShaderMode.Normal:
+                    Console.WriteLine("• Standard rendering mode");
+                    Console.WriteLine("• All boids use regular colors (no glow effects)");
+                    Console.WriteLine("• Best for seeing basic flocking behavior clearly");
+                    break;
+
+                case ShaderMode.SoftGlow:
+                    Console.WriteLine("• Subtle glow effects enabled");
+                    Console.WriteLine("• All boids: SoftGlow effect with gentle halos");
+                    Console.WriteLine("• Obstacle: SoftGlow effect");
+                    Console.WriteLine("• Look for: Soft halos around all entities");
+                    break;
+
+                case ShaderMode.Bloom:
+                    Console.WriteLine("• HDR bloom effects enabled - DRAMATIC GLOW!");
+                    Console.WriteLine("• All boids: Bloom with HDR colors for intense glow");
+                    Console.WriteLine("• Obstacle: Bloom effect with enhanced brightness");
+                    Console.WriteLine("• Look for: Bright halos that 'bleed' into surrounding areas");
+                    Console.WriteLine("• Tip: All species show dramatic bloom effects consistently!");
+                    break;
+            }
+
+            Console.WriteLine($"• Species behavior: {GetSpeciesBehaviorDescription()}");
+            Console.WriteLine();
+
+            // Report available modes on first cycle
+            if (_shaderModeIndex == 0)
+            {
+                Console.WriteLine($"📊 Available shader modes: {string.Join(", ", _availableShaderModes)}");
             }
         }
-        
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to switch to shader mode: {ex.Message}");
+            // Revert to previous mode index if the switch failed
+            _shaderModeIndex = (_shaderModeIndex - 1 + _availableShaderModes.Count) % _availableShaderModes.Count;
+            _currentShaderMode = _availableShaderModes[_shaderModeIndex];
+        }
+    }
+
         string GetSpeciesBehaviorDescription()
         {
             return _currentShaderMode switch
             {
                 ShaderMode.Normal => "All entities rendered with standard colors",
-                ShaderMode.SoftGlow => "All entities show gentle glow effects", 
+                ShaderMode.SoftGlow => "All entities show gentle glow effects",
                 ShaderMode.Bloom => "All entities use HDR bloom for dramatic effects",
                 _ => "Standard rendering"
             };
@@ -561,14 +525,14 @@ public static class BoidSample
             {
                 ShaderMode.Normal => baseColor,
                 ShaderMode.SoftGlow => new Vector4D<float>(
-                    Math.Min(baseColor.X * 1.3f, 1.0f), 
-                    Math.Min(baseColor.Y * 1.3f, 1.0f), 
-                    Math.Min(baseColor.Z * 1.3f, 1.0f), 
+                    Math.Min(baseColor.X * 1.3f, 1.0f),
+                    Math.Min(baseColor.Y * 1.3f, 1.0f),
+                    Math.Min(baseColor.Z * 1.3f, 1.0f),
                     1f),
                 ShaderMode.Bloom => new Vector4D<float>(
-                    Math.Min(baseColor.X * 1.6f, 1.0f), 
-                    Math.Min(baseColor.Y * 1.6f, 1.0f), 
-                    Math.Min(baseColor.Z * 1.6f, 1.0f), 
+                    Math.Min(baseColor.X * 1.6f, 1.0f),
+                    Math.Min(baseColor.Y * 1.6f, 1.0f),
+                    Math.Min(baseColor.Z * 1.6f, 1.0f),
                     1f),
                 _ => baseColor
             };
@@ -639,7 +603,7 @@ public static class BoidSample
                 for (int i = 0; i < trianglePoints.Length; i++)
                 {
                     var off = trianglePoints[i];
-                    
+
                     // 1. Scale the local vertex
                     var s = off * scale;
 
@@ -652,10 +616,10 @@ public static class BoidSample
                     var p = wp + r;
 
                     // Add to vertex buffer with appropriate texture coordinates
-                    var texCoord = shaderToUse == ShaderMode.Normal ? 
-                        new Vector2D<float>(0f, 0f) : 
+                    var texCoord = shaderToUse == ShaderMode.Normal ?
+                        new Vector2D<float>(0f, 0f) :
                         triangleWithTexCoords![i].tex;
-                    
+
                     vertices.Add(new FullVertex(p, texCoord, enhancedColor));
                 }
 
@@ -679,20 +643,20 @@ public static class BoidSample
 
             // Use the current shader mode for obstacles to demonstrate effects consistently
             var obstacleShaderMode = _currentShaderMode;
-            
+
             // Color enhancement based on current shader mode for optimal visual effects
             var enhancedColor = obstacleShaderMode switch
             {
                 ShaderMode.Normal => color,
                 ShaderMode.SoftGlow => new Vector4D<float>(
-                    Math.Min(color.X * 1.3f, 1.0f), 
-                    Math.Min(color.Y * 1.3f, 1.0f), 
-                    Math.Min(color.Z * 1.3f, 1.0f), 
+                    Math.Min(color.X * 1.3f, 1.0f),
+                    Math.Min(color.Y * 1.3f, 1.0f),
+                    Math.Min(color.Z * 1.3f, 1.0f),
                     1f),
                 ShaderMode.Bloom => new Vector4D<float>(
-                    Math.Min(color.X * 1.8f, 1.0f), 
-                    Math.Min(color.Y * 1.8f, 1.0f), 
-                    Math.Min(color.Z * 1.8f, 1.0f), 
+                    Math.Min(color.X * 1.8f, 1.0f),
+                    Math.Min(color.Y * 1.8f, 1.0f),
+                    Math.Min(color.Z * 1.8f, 1.0f),
                     1f),
                 _ => color
             };

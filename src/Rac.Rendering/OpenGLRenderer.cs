@@ -236,7 +236,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         var defaultColor = new Vector4D<float>(1f, 1f, 1f, 1f);
         var defaultTexCoord = new Vector2D<float>(0f, 0f);
-        
+
         return vertices.Select(v => new FullVertex(v.Position, defaultTexCoord, defaultColor)).ToArray();
     }
 
@@ -246,7 +246,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     private FullVertex[] ConvertTexturedToFull(TexturedVertex[] vertices)
     {
         var defaultColor = new Vector4D<float>(1f, 1f, 1f, 1f);
-        
+
         return vertices.Select(v => new FullVertex(v.Position, v.TexCoord, defaultColor)).ToArray();
     }
 
@@ -257,7 +257,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         var defaultColor = new Vector4D<float>(1f, 1f, 1f, 1f);
         var defaultTexCoord = new Vector2D<float>(0f, 0f);
-        
+
         var floatsPerVertex = layout.Stride / sizeof(float);
         var vertexCount = vertices.Length / floatsPerVertex;
         var result = new FullVertex[vertexCount];
@@ -265,15 +265,15 @@ public class OpenGLRenderer : IRenderer, IDisposable
         for (int i = 0; i < vertexCount; i++)
         {
             var offset = i * floatsPerVertex;
-            
+
             // Position is always first (2 floats)
             var position = new Vector2D<float>(vertices[offset], vertices[offset + 1]);
-            
+
             // TexCoord depends on layout
-            var texCoord = floatsPerVertex >= 4 
+            var texCoord = floatsPerVertex >= 4
                 ? new Vector2D<float>(vertices[offset + 2], vertices[offset + 3])
                 : defaultTexCoord;
-            
+
             // Color always defaults to (1,1,1,1) for float arrays
             result[i] = new FullVertex(position, texCoord, defaultColor);
         }
@@ -332,30 +332,47 @@ public class OpenGLRenderer : IRenderer, IDisposable
 
     public void Clear()
     {
-        if (_isBloomActive)
+        // ═══════════════════════════════════════════════════════════════════════════
+        // DEFERRED POST-PROCESSING INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // PostProcessing must be initialized at a safe point in the render pipeline,
+        // not during active rendering. Clear() is called at the start of each frame
+        // before any drawing, making it the ideal place for deferred initialization.
+        //
+        // This prevents crashes that occur when trying to create framebuffers while
+        // OpenGL has active render state (bound VAOs, active shaders, etc).
+
+        if (_isBloomActive && _postProcessing == null)
         {
-            if (_postProcessing != null)
+            EnsurePostProcessingInitialized();
+
+            // If initialization failed, disable bloom
+            if (_postProcessing == null)
             {
-                Console.WriteLine("🎬 OpenGLRenderer.Clear: Beginning scene pass for bloom rendering...");
-                _postProcessing.BeginScenePass();
-                Console.WriteLine("✅ OpenGLRenderer.Clear: Scene pass started for bloom rendering");
+                _isBloomActive = false;
+                _currentShaderMode = ShaderMode.Normal;
+                if (_shaders.ContainsKey(ShaderMode.Normal))
+                {
+                    _currentShader = _shaders[ShaderMode.Normal];
+                    _currentUniforms = _uniforms[ShaderMode.Normal];
+                }
             }
-            else
-            {
-                Console.WriteLine("⚠️ OpenGLRenderer.Clear: PostProcessing is null, falling back to normal clear");
-                _gl.Clear(ClearBufferMask.ColorBufferBit);
-            }
+        }
+
+        if (_isBloomActive && _postProcessing != null)
+        {
+            _postProcessing.BeginScenePass();
         }
         else
         {
-            Console.WriteLine("📋 OpenGLRenderer.Clear: Normal rendering mode, clearing screen buffer");
             _gl.Clear(ClearBufferMask.ColorBufferBit);
         }
     }
 
     /// <summary>
     /// Sets the current rendering color with full HDR (High Dynamic Range) support.
-    /// 
+    ///
     /// HDR COLOR USAGE:
     /// - Standard colors: 0.0-1.0 range for normal rendering modes
     /// - HDR colors: Values > 1.0 for dramatic bloom effects when bloom mode is active
@@ -363,7 +380,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     ///   * Red bloom: (2.5f, 0.3f, 0.3f, 1.0f) - Creates intense red glow
     ///   * White bloom: (2.0f, 2.0f, 2.0f, 1.0f) - Creates bright white glow
     ///   * Blue bloom: (0.3f, 0.3f, 2.5f, 1.0f) - Creates intense blue glow
-    /// 
+    ///
     /// BACKWARD COMPATIBILITY:
     /// - Non-bloom shaders automatically handle HDR colors through tone mapping
     /// - Standard LDR colors (0.0-1.0) work identically in all shader modes
@@ -373,7 +390,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     public void SetColor(Vector4D<float> rgba)
     {
         _currentColor = rgba;
-        
+
         // HDR colors (values > 1.0) are preserved and passed directly to shaders
         // The bloom shader will process these through enhanceHDRColor() and dynamic range scaling
         // Non-bloom shaders handle HDR values through their respective tone mapping functions
@@ -414,51 +431,42 @@ public class OpenGLRenderer : IRenderer, IDisposable
     }
 
     /// <summary>
-    /// Switches active shader mode with comprehensive state management
+    /// Switches active shader mode with comprehensive state management.
+    ///
+    /// DEFERRED INITIALIZATION PATTERN:
+    /// PostProcessing initialization is deferred to Clear() to prevent crashes.
+    /// This method may be called during active rendering (e.g., from DrawSpecies),
+    /// and creating framebuffers mid-render can cause OpenGL state conflicts.
     /// </summary>
     public void SetShaderMode(ShaderMode mode)
     {
-        Console.WriteLine($"🎨 OpenGLRenderer.SetShaderMode: Attempting to switch to {mode}");
-        
         // Safety check: Don't allow bloom mode if window size is not set (renderer not fully initialized)
         if (mode == ShaderMode.Bloom && (_windowSize.X <= 0 || _windowSize.Y <= 0))
         {
-            Console.WriteLine($"⚠️ OpenGLRenderer.SetShaderMode: Bloom mode requested but renderer not fully initialized (window size: {_windowSize.X}x{_windowSize.Y}), falling back to Normal");
-            mode = ShaderMode.Normal;
-        }
-        
-        if (!_shaders.ContainsKey(mode))
-        {
-            Console.WriteLine($"❌ OpenGLRenderer.SetShaderMode: Shader mode {mode} not available, falling back to Normal");
             mode = ShaderMode.Normal;
         }
 
-        Console.WriteLine($"🎨 OpenGLRenderer.SetShaderMode: Setting shader mode to {mode}");
+        if (!_shaders.ContainsKey(mode))
+        {
+            mode = ShaderMode.Normal;
+        }
+
+        // CRITICAL FIX: Defer PostProcessing initialization to prevent crashes
+        // We only set the mode here, actual initialization happens at frame boundary
         _currentShaderMode = mode;
         _currentShader = _shaders[mode];
         _currentUniforms = _uniforms[mode];
 
+        bool wasBloomActive = _isBloomActive;
         _isBloomActive = (mode == ShaderMode.Bloom);
-        Console.WriteLine($"🎨 OpenGLRenderer.SetShaderMode: Bloom active: {_isBloomActive}");
-        
-        // Initialize PostProcessing immediately when Bloom mode is requested
-        // This prevents initialization during the render loop which can cause hangs
-        if (_isBloomActive && _postProcessing == null)
+
+        // Mark that we need to initialize PostProcessing, but don't do it now
+        // This prevents crashes from initializing during active rendering
+        if (_isBloomActive && !wasBloomActive && _postProcessing == null)
         {
-            Console.WriteLine("🎨 OpenGLRenderer.SetShaderMode: Bloom mode requested, initializing post-processing immediately...");
-            EnsurePostProcessingInitialized();
-            
-            // If PostProcessing initialization failed, fall back to Normal mode
-            if (_postProcessing == null)
-            {
-                Console.WriteLine("❌ OpenGLRenderer.SetShaderMode: PostProcessing initialization failed, falling back to Normal mode");
-                _isBloomActive = false;
-                _currentShaderMode = ShaderMode.Normal;
-                _currentShader = _shaders[ShaderMode.Normal];
-                _currentUniforms = _uniforms[ShaderMode.Normal];
-            }
+            // PostProcessing will be initialized in Clear() at the start of next frame
         }
-        
+
         ConfigureBlendingForMode(mode);
 
         // Activate shader and set uniforms with validation
@@ -472,8 +480,6 @@ public class OpenGLRenderer : IRenderer, IDisposable
             if (_currentUniforms.ColorLocation >= 0)
                 _gl.Uniform4(_currentUniforms.ColorLocation, _currentColor.X, _currentColor.Y, _currentColor.Z, _currentColor.W);
         }
-        
-        Console.WriteLine($"✅ OpenGLRenderer.SetShaderMode: Successfully switched to {_currentShaderMode}");
     }
 
     /// <summary>
@@ -525,32 +531,32 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         // Step 1: Validate OpenGL version and extensions
         Console.WriteLine("Validating OpenGL capabilities for post-processing...");
-        
+
         if (!ValidateOpenGLVersion())
         {
             Console.WriteLine("Error: OpenGL version validation failed");
             return false;
         }
-        
+
         if (!ValidateOpenGLExtensions())
         {
             Console.WriteLine("Error: Required OpenGL extensions not available");
             return false;
         }
-        
+
         Console.WriteLine("✓ OpenGL capabilities validated successfully");
 
         // Step 2: Validate shader files
         var requiredShaders = new[]
         {
             "fullscreen_quad.vert",
-            "brightness_extract.frag", 
+            "brightness_extract.frag",
             "gaussian_blur.frag",
             "bloom_composite.frag"
         };
 
         Console.WriteLine("Validating post-processing shader files...");
-        
+
         foreach (var shaderFile in requiredShaders)
         {
             try
@@ -588,7 +594,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
                 var versionPtr = _gl.GetString(StringName.Version);
                 versionString = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((IntPtr)versionPtr) ?? "";
             }
-            
+
             if (string.IsNullOrEmpty(versionString))
             {
                 Console.WriteLine("Error: Unable to query OpenGL version");
@@ -659,7 +665,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
                     var extensionPtr = _gl.GetString(StringName.Extensions, (uint)i);
                     extension = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((IntPtr)extensionPtr) ?? "";
                 }
-                
+
                 if (!string.IsNullOrEmpty(extension))
                 {
                     availableExtensions.Add(extension);
@@ -766,7 +772,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
         if (_postProcessing == null)
         {
             Console.WriteLine("Post-processing system not initialized, attempting initialization...");
-            
+
             if (!InitializePostProcessing())
             {
                 Console.WriteLine("Warning: Post-processing initialization failed - falling back to non-bloom rendering");
@@ -786,30 +792,18 @@ public class OpenGLRenderer : IRenderer, IDisposable
         {
             if (_isBloomActive && _postProcessing != null)
             {
-                Console.WriteLine("🎬 OpenGLRenderer.FinalizeFrame: Bloom is active, applying bloom effects...");
                 _postProcessing.EndScenePassAndApplyBloom();
-                Console.WriteLine("✅ OpenGLRenderer.FinalizeFrame: Bloom effects applied successfully");
-            }
-            else if (_isBloomActive && _postProcessing == null)
-            {
-                Console.WriteLine("⚠️ OpenGLRenderer.FinalizeFrame: Bloom is active but PostProcessing is null - skipping bloom");
-            }
-            else
-            {
-                Console.WriteLine("📋 OpenGLRenderer.FinalizeFrame: Bloom not active, skipping post-processing");
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ OpenGLRenderer.FinalizeFrame: Failed during frame finalization: {ex.Message}");
-            Console.WriteLine($"❌ OpenGLRenderer.FinalizeFrame: Stack trace: {ex.StackTrace}");
-            
+
             // Disable bloom to prevent further crashes
-            Console.WriteLine("🛡️ OpenGLRenderer.FinalizeFrame: Disabling bloom to prevent further crashes");
             _isBloomActive = false;
             _postProcessing?.Dispose();
             _postProcessing = null;
-            
+
             throw;
         }
     }
@@ -878,7 +872,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
 
     /// <summary>
     /// Shuts down the renderer and releases all resources.
-    /// 
+    ///
     /// LEGACY METHOD - Use Dispose() instead.
     /// Maintained for backwards compatibility.
     /// </summary>
