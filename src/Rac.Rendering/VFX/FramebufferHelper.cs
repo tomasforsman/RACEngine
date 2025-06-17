@@ -32,8 +32,14 @@ public class FramebufferHelper
         _gl.BindTexture(TextureTarget.Texture2D, texture);
         
         // Setup texture parameters
-        _gl.TexImage2D(TextureTarget.Texture2D, 0, format, (uint)width, (uint)height, 0, 
-                      PixelFormat.Rgb, PixelType.Float, in System.IntPtr.Zero);
+        // NOTE: Using unsafe (void*)null instead of "in System.IntPtr.Zero" to avoid
+        // Silk.NET marshaling bug where it tries to take the address of IntPtr.Zero,
+        // leading to null pointer dereference. See issue #69.
+        unsafe
+        {
+            _gl.TexImage2D(TextureTarget.Texture2D, 0, format, (uint)width, (uint)height, 0, 
+                          PixelFormat.Rgb, PixelType.Float, (void*)null);
+        }
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
