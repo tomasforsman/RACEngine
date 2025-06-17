@@ -1,3 +1,4 @@
+using Rac.Audio;
 using Rac.ECS.Core;
 using Rac.ECS.Systems;
 using Rac.Input.State;
@@ -19,6 +20,9 @@ public interface IEngineFacade
 
     /// <summary>Gets the renderer for graphics operations.</summary>
     IRenderer Renderer { get; }
+
+    /// <summary>Gets the audio service for sound and music playback.</summary>
+    IAudioService Audio { get; }
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     event Action? LoadEvent;
