@@ -1,3 +1,4 @@
+using Rac.Audio;
 using Rac.Core.Logger;
 using Rac.Core.Manager;
 using Rac.ECS.Core;
@@ -25,6 +26,7 @@ public class ModularEngineFacade : IEngineFacade
     private readonly World _world;
     private readonly SystemScheduler _systems;
     private readonly IRenderer _renderer;
+    private readonly IAudioService _audio;
 
     public ModularEngineFacade(
         IWindowManager windowManager,
@@ -50,6 +52,9 @@ public class ModularEngineFacade : IEngineFacade
         // Cache renderer reference (resolved once)
         _renderer = _inner.Renderer;
 
+        // Initialize audio service (use null object pattern as fallback)
+        _audio = new NullAudioService();
+
         _logger.LogDebug("Setting up event pipeline");
         SetupEventPipeline();
 
@@ -60,6 +65,7 @@ public class ModularEngineFacade : IEngineFacade
     public World World => _world;
     public SystemScheduler Systems => _systems;
     public IRenderer Renderer => _renderer;
+    public IAudioService Audio => _audio;
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;

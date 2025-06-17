@@ -37,14 +37,15 @@ RACEngine/
 
 ### System Requirements
 
-For optimal performance and full visual effects support:
+For optimal performance and full audiovisual effects support:
 
 * **Graphics:** OpenGL 3.3 or higher
+* **Audio:** OpenAL-compatible audio device (automatically handled by Silk.NET.OpenAL)
 * **Required OpenGL Extensions:**
   - GL_ARB_framebuffer_object (for post-processing effects)
   - GL_ARB_texture_float (for HDR rendering)
 
-**Note:** The engine will automatically detect your graphics capabilities and gracefully fall back to basic rendering if post-processing requirements aren't met. Update your graphics drivers or use a newer graphics card for full visual effects support.
+**Note:** The engine will automatically detect your graphics and audio capabilities and gracefully fall back to basic rendering/no audio if requirements aren't met. Update your graphics drivers or use a newer graphics card for full visual effects support. Audio will use the NullAudioService as fallback if OpenAL initialization fails.
 
 ### Building the Engine
 

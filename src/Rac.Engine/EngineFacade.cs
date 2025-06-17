@@ -1,5 +1,6 @@
 ﻿// File: src/Rac.Engine/EngineFacade.cs
 
+using Rac.Audio;
 using Rac.Core.Manager;
 using Rac.ECS.Core;
 using Rac.ECS.Systems;
@@ -24,6 +25,9 @@ public class EngineFacade : IEngineFacade
         Systems = new SystemScheduler();
         _inner = new GameEngine.Engine(windowManager, inputService, configManager);
 
+        // Initialize audio service (use null object pattern as fallback)
+        Audio = new NullAudioService();
+
         // hook up core pipeline
         _inner.OnLoadEvent += () => LoadEvent?.Invoke();
         _inner.OnEcsUpdate += dt =>
@@ -40,6 +44,7 @@ public class EngineFacade : IEngineFacade
     public World World { get; }
     public SystemScheduler Systems { get; }
     public IRenderer Renderer => _inner.Renderer;
+    public IAudioService Audio { get; }
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;
