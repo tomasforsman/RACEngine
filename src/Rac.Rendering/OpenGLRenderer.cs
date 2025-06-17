@@ -333,16 +333,27 @@ public class OpenGLRenderer : IRenderer, IDisposable
     public void Clear()
     {
         // ═══════════════════════════════════════════════════════════════════════════
-        // DEFERRED POST-PROCESSING INITIALIZATION
+        // DEFERRED POST-PROCESSING INITIALIZATION AND CLEANUP
         // ═══════════════════════════════════════════════════════════════════════════
         //
         // PostProcessing must be initialized at a safe point in the render pipeline,
         // not during active rendering. Clear() is called at the start of each frame
         // before any drawing, making it the ideal place for deferred initialization.
         //
-        // This prevents crashes that occur when trying to create framebuffers while
-        // OpenGL has active render state (bound VAOs, active shaders, etc).
+        // Similarly, when bloom is disabled, we need to clean up PostProcessing 
+        // resources to prevent continued bloom rendering and resource leaks.
 
+        // CLEANUP: Dispose PostProcessing when bloom is turned off
+        if (!_isBloomActive && _postProcessing != null)
+        {
+            _postProcessing.Dispose();
+            _postProcessing = null;
+            
+            // Ensure we're rendering to default framebuffer when bloom is disabled
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        }
+
+        // INITIALIZATION: Create PostProcessing when bloom is turned on
         if (_isBloomActive && _postProcessing == null)
         {
             EnsurePostProcessingInitialized();
@@ -519,7 +530,13 @@ public class OpenGLRenderer : IRenderer, IDisposable
         _gl.BufferData<uint>(BufferTargetARB.ElementArrayBuffer, indices, BufferUsageARB.DynamicDraw);
 
         _gl.BindVertexArray(_vao);
-        _gl.DrawElements(PrimitiveType.Triangles, (uint)indices.Length, DrawElementsType.UnsignedInt, in System.IntPtr.Zero);
+        
+        // CRITICAL FIX: Use null pointer instead of "in System.IntPtr.Zero" to prevent crashes.
+        // Taking the address of IntPtr.Zero can cause undefined behavior similar to issue #69.
+        unsafe
+        {
+            _gl.DrawElements(PrimitiveType.Triangles, (uint)indices.Length, DrawElementsType.UnsignedInt, null);
+        }
     }
 
     /// <summary>
