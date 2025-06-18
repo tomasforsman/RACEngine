@@ -9,6 +9,7 @@ using Rac.Input.State;
 using Rac.Rendering;
 using Rac.Rendering.Camera;
 using Silk.NET.Input;
+using Silk.NET.Maths;
 
 namespace Rac.Engine;
 
@@ -53,6 +54,9 @@ public class EngineFacade : IEngineFacade
 
         // forward key events
         _inner.OnKeyEvent += (key, evt) => KeyEvent?.Invoke(key, evt);
+        
+        // forward mouse events
+        _inner.OnLeftClick += pos => LeftClickEvent?.Invoke(pos);
     }
 
     public World World { get; }
@@ -60,6 +64,7 @@ public class EngineFacade : IEngineFacade
     public IRenderer Renderer => _inner.Renderer;
     public IAudioService Audio { get; }
     public ICameraManager CameraManager { get; }
+    public IWindowManager WindowManager => _windowManager;
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;
@@ -72,6 +77,9 @@ public class EngineFacade : IEngineFacade
 
     /// <summary>Fires whenever a key is pressed or released.</summary>
     public event Action<Key, KeyboardKeyState.KeyEvent>? KeyEvent;
+
+    /// <summary>Fires when the left mouse button is clicked, providing screen coordinates in pixels.</summary>
+    public event Action<Vector2D<float>>? LeftClickEvent;
 
     /// <summary>Register an ECS system.</summary>
     public void AddSystem(ISystem system)

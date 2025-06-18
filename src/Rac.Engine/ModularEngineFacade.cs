@@ -8,6 +8,7 @@ using Rac.Input.State;
 using Rac.Rendering;
 using Rac.Rendering.Camera;
 using Silk.NET.Input;
+using Silk.NET.Maths;
 
 namespace Rac.Engine;
 
@@ -72,6 +73,7 @@ public class ModularEngineFacade : IEngineFacade
     public IRenderer Renderer => _renderer;
     public IAudioService Audio => _audio;
     public ICameraManager CameraManager => _cameraManager;
+    public IWindowManager WindowManager => _windowManager;
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;
@@ -84,6 +86,9 @@ public class ModularEngineFacade : IEngineFacade
 
     /// <summary>Fires whenever a key is pressed or released.</summary>
     public event Action<Key, KeyboardKeyState.KeyEvent>? KeyEvent;
+
+    /// <summary>Fires when the left mouse button is clicked, providing screen coordinates in pixels.</summary>
+    public event Action<Vector2D<float>>? LeftClickEvent;
 
     /// <summary>Register an ECS system.</summary>
     public void AddSystem(ISystem system)
@@ -133,6 +138,13 @@ public class ModularEngineFacade : IEngineFacade
         {
             _logger.LogDebug($"Key event: {key} - {evt}");
             KeyEvent?.Invoke(key, evt);
+        };
+
+        // Forward mouse events with debugging
+        _inner.OnLeftClick += pos =>
+        {
+            _logger.LogDebug($"Mouse click at: {pos}");
+            LeftClickEvent?.Invoke(pos);
         };
     }
 }

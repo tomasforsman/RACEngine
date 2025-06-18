@@ -1,10 +1,12 @@
 using Rac.Audio;
+using Rac.Core.Manager;
 using Rac.ECS.Core;
 using Rac.ECS.Systems;
 using Rac.Input.State;
 using Rac.Rendering;
 using Rac.Rendering.Camera;
 using Silk.NET.Input;
+using Silk.NET.Maths;
 
 namespace Rac.Engine;
 
@@ -28,6 +30,9 @@ public interface IEngineFacade
     /// <summary>Gets the camera manager for dual-camera system (game world and UI).</summary>
     ICameraManager CameraManager { get; }
 
+    /// <summary>Gets the window manager for window operations and size information.</summary>
+    IWindowManager WindowManager { get; }
+
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     event Action? LoadEvent;
 
@@ -39,6 +44,9 @@ public interface IEngineFacade
 
     /// <summary>Fires whenever a key is pressed or released.</summary>
     event Action<Key, KeyboardKeyState.KeyEvent>? KeyEvent;
+
+    /// <summary>Fires when the left mouse button is clicked, providing screen coordinates in pixels.</summary>
+    event Action<Vector2D<float>>? LeftClickEvent;
 
     /// <summary>Register an ECS system.</summary>
     void AddSystem(ISystem system);
