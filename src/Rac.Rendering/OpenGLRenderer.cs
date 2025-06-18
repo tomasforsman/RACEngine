@@ -287,9 +287,8 @@ public class OpenGLRenderer : IRenderer, IDisposable
             }
             else
             {
-                // Generate texture coordinates from position for backward compatibility
-                // This enables bloom and distance-based effects to work with position-only vertices
-                // Maps position space to texture coordinate space for proper distance calculations
+                // For position-only vertices, use position as texture coordinates
+                // This enables bloom distance calculations to work correctly
                 texCoord = position;
             }
 

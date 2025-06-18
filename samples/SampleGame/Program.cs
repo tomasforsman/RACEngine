@@ -25,6 +25,10 @@ public static class Program
                 CameraDemonstration.Run(args); // Camera system demonstration
                 break;
 
+            case "minimalbloom":
+                MinimalBloomTest.Run(args); // Minimal bloom test for debugging
+                break;
+
             // ─── add more samples here ────────────────────
             // case "othersample": OtherSample.Run(args); break;
 
