@@ -23,15 +23,41 @@ out float vDistance;
 void main()
 {
     // -------------------------------------------------------------------------------------
-    // MODERN CAMERA TRANSFORMATION PIPELINE
+    // HYBRID CAMERA TRANSFORMATION PIPELINE WITH BACKWARD COMPATIBILITY
     // -------------------------------------------------------------------------------------
-    // Transform vertex position through camera matrix system:
-    // 1. World coordinates -> Camera view space (position, rotation, zoom)
-    // 2. Camera space -> Clip space (orthographic projection)
-    // 3. Result: Proper 2D camera transformations with zoom, pan, rotate support
+    // Provides both modern camera system and legacy aspect ratio compatibility:
+    // 1. Modern camera matrix transformation for full 2D camera capabilities
+    // 2. Legacy aspect ratio fallback for existing bloom and shader effects
+    // 3. Automatic detection ensures seamless compatibility
     
     vec4 worldPosition = vec4(aPosition, 0.0, 1.0);
-    gl_Position = uCameraMatrix * worldPosition;
+    
+    // Check if camera matrix is identity (backward compatibility mode)
+    // Identity matrix has 1.0 on diagonal and 0.0 elsewhere
+    bool isIdentityMatrix = (
+        uCameraMatrix[0][0] == 1.0 && uCameraMatrix[1][1] == 1.0 && 
+        uCameraMatrix[2][2] == 1.0 && uCameraMatrix[3][3] == 1.0 &&
+        uCameraMatrix[0][1] == 0.0 && uCameraMatrix[0][2] == 0.0 && uCameraMatrix[0][3] == 0.0 &&
+        uCameraMatrix[1][0] == 0.0 && uCameraMatrix[1][2] == 0.0 && uCameraMatrix[1][3] == 0.0 &&
+        uCameraMatrix[2][0] == 0.0 && uCameraMatrix[2][1] == 0.0 && uCameraMatrix[2][3] == 0.0 &&
+        uCameraMatrix[3][0] == 0.0 && uCameraMatrix[3][1] == 0.0 && uCameraMatrix[3][2] == 0.0
+    );
+    
+    if (isIdentityMatrix) {
+        // -------------------------------------------------------------------------------------
+        // LEGACY COMPATIBILITY MODE (pre-camera system)
+        // -------------------------------------------------------------------------------------
+        // Use original aspect ratio correction for backward compatibility with bloom effects
+        vec2 correctedPosition = aPosition;
+        correctedPosition.x *= uAspect;
+        gl_Position = vec4(correctedPosition, 0.0, 1.0);
+    } else {
+        // -------------------------------------------------------------------------------------
+        // MODERN CAMERA SYSTEM MODE
+        // -------------------------------------------------------------------------------------
+        // Apply full camera transformation matrix for 2D camera capabilities
+        gl_Position = uCameraMatrix * worldPosition;
+    }
     
     // -------------------------------------------------------------------------------------
     // VERTEX ATTRIBUTE PASS-THROUGH

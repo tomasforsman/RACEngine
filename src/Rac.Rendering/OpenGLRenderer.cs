@@ -266,7 +266,6 @@ public class OpenGLRenderer : IRenderer, IDisposable
     private FullVertex[] ConvertFloatArrayToFull(float[] vertices, VertexLayout layout)
     {
         var defaultColor = new Vector4D<float>(1f, 1f, 1f, 1f);
-        var defaultTexCoord = new Vector2D<float>(0f, 0f);
 
         var floatsPerVertex = layout.Stride / sizeof(float);
         var vertexCount = vertices.Length / floatsPerVertex;
@@ -280,9 +279,19 @@ public class OpenGLRenderer : IRenderer, IDisposable
             var position = new Vector2D<float>(vertices[offset], vertices[offset + 1]);
 
             // TexCoord depends on layout
-            var texCoord = floatsPerVertex >= 4
-                ? new Vector2D<float>(vertices[offset + 2], vertices[offset + 3])
-                : defaultTexCoord;
+            Vector2D<float> texCoord;
+            if (floatsPerVertex >= 4)
+            {
+                // Explicit texture coordinates provided
+                texCoord = new Vector2D<float>(vertices[offset + 2], vertices[offset + 3]);
+            }
+            else
+            {
+                // Generate texture coordinates from position for backward compatibility
+                // This enables bloom and distance-based effects to work with position-only vertices
+                // Maps position space to texture coordinate space for proper distance calculations
+                texCoord = position;
+            }
 
             // Color always defaults to (1,1,1,1) for float arrays
             result[i] = new FullVertex(position, texCoord, defaultColor);
