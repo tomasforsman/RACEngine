@@ -97,6 +97,9 @@ public class Engine
     /// <summary>Fires when left mouse button is clicked with screen coordinates</summary>
     public event Action<Vector2D<float>>? OnLeftClick;
 
+    /// <summary>Fires when mouse wheel is scrolled with scroll delta</summary>
+    public event Action<float>? OnMouseScroll;
+
     /// <summary>Fires for all keyboard events with key and event type information</summary>
     public event Action<Key, KeyboardKeyState.KeyEvent>? OnKeyEvent;
 
@@ -253,6 +256,7 @@ public class Engine
 
         // Input event propagation
         _inputService.OnLeftClick += pos => OnLeftClick?.Invoke(pos);
+        _inputService.OnMouseScroll += delta => OnMouseScroll?.Invoke(delta);
         _inputService.OnKeyEvent += (key, eventType) => OnKeyEvent?.Invoke(key, eventType);
     }
 

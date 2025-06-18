@@ -48,6 +48,9 @@ public interface IEngineFacade
     /// <summary>Fires when the left mouse button is clicked, providing screen coordinates in pixels.</summary>
     event Action<Vector2D<float>>? LeftClickEvent;
 
+    /// <summary>Fires when the mouse wheel is scrolled, providing scroll delta.</summary>
+    event Action<float>? MouseScrollEvent;
+
     /// <summary>Register an ECS system.</summary>
     void AddSystem(ISystem system);
 

@@ -90,6 +90,9 @@ public class ModularEngineFacade : IEngineFacade
     /// <summary>Fires when the left mouse button is clicked, providing screen coordinates in pixels.</summary>
     public event Action<Vector2D<float>>? LeftClickEvent;
 
+    /// <summary>Fires when the mouse wheel is scrolled, providing scroll delta.</summary>
+    public event Action<float>? MouseScrollEvent;
+
     /// <summary>Register an ECS system.</summary>
     public void AddSystem(ISystem system)
     {
@@ -145,6 +148,12 @@ public class ModularEngineFacade : IEngineFacade
         {
             _logger.LogDebug($"Mouse click at: {pos}");
             LeftClickEvent?.Invoke(pos);
+        };
+
+        _inner.OnMouseScroll += delta =>
+        {
+            _logger.LogDebug($"Mouse scroll delta: {delta}");
+            MouseScrollEvent?.Invoke(delta);
         };
     }
 }

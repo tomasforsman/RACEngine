@@ -23,6 +23,11 @@ public interface IInputService
     event Action<Vector2D<float>>? OnLeftClick;
 
     /// <summary>
+    ///   Occurs when the mouse wheel is scrolled, providing the scroll delta.
+    /// </summary>
+    event Action<float>? OnMouseScroll;
+
+    /// <summary>
     ///   Occurs when any key is pressed, providing the <see cref="Silk.NET.Input.Key" />.
     /// </summary>
     event Action<Key, KeyboardKeyState.KeyEvent>? PressedKey;

@@ -57,6 +57,7 @@ public class EngineFacade : IEngineFacade
         
         // forward mouse events
         _inner.OnLeftClick += pos => LeftClickEvent?.Invoke(pos);
+        _inner.OnMouseScroll += delta => MouseScrollEvent?.Invoke(delta);
     }
 
     public World World { get; }
@@ -80,6 +81,9 @@ public class EngineFacade : IEngineFacade
 
     /// <summary>Fires when the left mouse button is clicked, providing screen coordinates in pixels.</summary>
     public event Action<Vector2D<float>>? LeftClickEvent;
+
+    /// <summary>Fires when the mouse wheel is scrolled, providing scroll delta.</summary>
+    public event Action<float>? MouseScrollEvent;
 
     /// <summary>Register an ECS system.</summary>
     public void AddSystem(ISystem system)

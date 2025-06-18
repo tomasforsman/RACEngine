@@ -31,6 +31,7 @@ using Rac.Rendering;
 using Rac.Rendering.Shader;
 using Silk.NET.Maths;
 using Silk.NET.Input;
+using System.Collections.Generic;
 
 namespace SampleGame;
 
@@ -76,6 +77,7 @@ public static class CameraDemonstration
         _engine.UpdateEvent += OnUpdate;
         _engine.RenderEvent += OnRender;
         _engine.KeyEvent += OnKeyEvent;
+        _engine.MouseScrollEvent += OnMouseScroll;
         
         // Start the engine
         _engine.Run();
@@ -225,25 +227,54 @@ public static class CameraDemonstration
 
     private static void RenderGrid()
     {
-        // Render a simple grid for reference
-        var gridVertices = new float[]
+        // ───────────────────────────────────────────────────────────────────────
+        // REFERENCE GRID RENDERING
+        // ───────────────────────────────────────────────────────────────────────
+        //
+        // This grid demonstrates world-space rendering that moves with the camera.
+        // It provides visual reference for camera transformations (pan, zoom, rotate).
+
+        var gridVertices = new List<float>();
+        const float majorGridSize = 8f;
+        const float majorGridSpacing = 1f;
+        const float minorGridSpacing = 0.2f;
+
+        // Major grid lines (every 1 unit) - slightly more visible
+        for (float y = -majorGridSize; y <= majorGridSize; y += majorGridSpacing)
         {
-            // Horizontal lines
-            -2f, -2f, 2f, -2f,
-            -2f, -1f, 2f, -1f,
-            -2f,  0f, 2f,  0f,
-            -2f,  1f, 2f,  1f,
-            -2f,  2f, 2f,  2f,
-            
-            // Vertical lines
-            -2f, -2f, -2f, 2f,
-            -1f, -2f, -1f, 2f,
-             0f, -2f,  0f, 2f,
-             1f, -2f,  1f, 2f,
-             2f, -2f,  2f, 2f,
-        };
-        
-        _engine.Renderer.UpdateVertices(gridVertices);
+            gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+        }
+        for (float x = -majorGridSize; x <= majorGridSize; x += majorGridSpacing)
+        {
+            gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+        }
+
+        // Render major grid lines with subtle but visible color
+        _engine.Renderer.SetShaderMode(ShaderMode.Normal);
+        _engine.Renderer.SetColor(new Vector4D<float>(0.4f, 0.4f, 0.4f, 0.8f));
+        _engine.Renderer.UpdateVertices(gridVertices.ToArray());
+        _engine.Renderer.Draw();
+
+        // Minor grid lines (every 0.2 units) - very subtle
+        gridVertices.Clear();
+        for (float y = -majorGridSize; y <= majorGridSize; y += minorGridSpacing)
+        {
+            if (y % majorGridSpacing != 0) // Skip major grid line positions
+            {
+                gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+            }
+        }
+        for (float x = -majorGridSize; x <= majorGridSize; x += minorGridSpacing)
+        {
+            if (x % majorGridSpacing != 0) // Skip major grid line positions
+            {
+                gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+            }
+        }
+
+        // Render minor grid lines with very subtle color
+        _engine.Renderer.SetColor(new Vector4D<float>(0.25f, 0.25f, 0.25f, 0.4f));
+        _engine.Renderer.UpdateVertices(gridVertices.ToArray());
         _engine.Renderer.Draw();
     }
 
@@ -337,6 +368,18 @@ public static class CameraDemonstration
                 _engine.Renderer.SetShaderMode(ShaderMode.Bloom);
                 break;
         }
+    }
+
+    private static void OnMouseScroll(float delta)
+    {
+        var camera = _engine.CameraManager.GameCamera;
+        
+        // Zoom with mouse wheel
+        const float zoomSensitivity = 0.1f;
+        float zoomDelta = delta * zoomSensitivity;
+        
+        // Apply zoom with limits
+        camera.Zoom = Math.Max(0.1f, Math.Min(10f, camera.Zoom + zoomDelta));
     }
 
     /// <summary>
