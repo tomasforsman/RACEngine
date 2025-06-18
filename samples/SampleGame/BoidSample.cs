@@ -73,6 +73,27 @@ public static class BoidSample
     private static List<ShaderMode> _availableShaderModes = new() { ShaderMode.Normal, ShaderMode.SoftGlow };
     private static int _shaderModeIndex = 0;
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CAMERA SYSTEM & UI INTEGRATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    //
+    // Camera controls for interactive world exploration and UI overlay management.
+    // Demonstrates dual-camera rendering with world-space boids and screen-space UI.
+
+    private static bool showUIOverlay = true;
+    private static List<WorldObject> spawnedObjects = new();
+
+    /// <summary>
+    /// Represents a user-spawned object demonstrating coordinate transformation.
+    /// Shows how screen coordinates (mouse clicks) map to world coordinates.
+    /// </summary>
+    private class WorldObject
+    {
+        public Vector2D<float> Position { get; set; }
+        public float Size { get; set; } = 0.05f;
+        public Vector4D<float> Color { get; set; } = new(1f, 0.8f, 0.2f, 1f); // Orange
+    }
+
     // ───────────────────────────────────────────────────────────────────────────
     // EDUCATIONAL TIP SYSTEM
     // ───────────────────────────────────────────────────────────────────────────
@@ -172,18 +193,23 @@ public static class BoidSample
         SpawnObstacles();
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // INPUT HANDLING FOR SHADER MODE SWITCHING
+        // INPUT HANDLING FOR CAMERA CONTROLS AND SHADER MODE SWITCHING
         // ═══════════════════════════════════════════════════════════════════════════
         //
-        // Interactive demonstration of different rendering modes.
-        // Press 'S' to cycle through Normal → SoftGlow → Bloom → Normal...
+        // Interactive demonstration of camera movement and rendering modes.
 
         engine.KeyEvent += (key, keyEvent) =>
         {
-            if (key == Key.S && keyEvent == KeyboardKeyState.KeyEvent.Pressed)
+            if (keyEvent == KeyboardKeyState.KeyEvent.Pressed)
             {
-                CycleShaderMode();
+                HandleKeyPress(key, engine);
             }
+        };
+
+        // ─── Hook Mouse Input for Click-to-Spawn ────────────────
+        engine.LeftClickEvent += screenPosition =>
+        {
+            HandleMouseClick(screenPosition, engine);
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -214,10 +240,44 @@ public static class BoidSample
 
         engine.RenderEvent += deltaSeconds =>
         {
+            // Clear the render target before rendering
+            engine.Renderer.Clear();
+
+            // ═══════════════════════════════════════════════════════════════════════════
+            // PASS 1: RENDER GAME WORLD (with camera transformations)
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // Set the game camera to apply world-space transformations (pan, zoom, rotate).
+            // All objects rendered in this pass will be affected by camera movement.
+
+            engine.Renderer.SetActiveCamera(engine.CameraManager.GameCamera);
+
+            // Render background grid for visual reference
+            DrawBackgroundGrid(engine);
+
+            // Render user-spawned objects (click-to-spawn demonstration)
+            DrawSpawnedObjects(engine);
+
             // Render each species separately to apply different visual effects
             foreach (string id in speciesIds)
-                DrawSpecies(id);
-            DrawObstacles(new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f));
+                DrawSpecies(id, engine);
+            DrawObstacles(new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine);
+
+            // ═══════════════════════════════════════════════════════════════════════════
+            // PASS 2: RENDER UI OVERLAY (screen-space, camera-independent)
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // Set the UI camera for screen-space rendering that remains fixed regardless
+            // of game camera transformations. Perfect for HUD, menus, and debug information.
+
+            if (showUIOverlay)
+            {
+                engine.Renderer.SetActiveCamera(engine.CameraManager.UICamera);
+                DrawUIOverlay(engine);
+            }
+
+            // Finalize the frame
+            engine.Renderer.FinalizeFrame();
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -249,7 +309,12 @@ public static class BoidSample
             Console.WriteLine("");
 
             Console.WriteLine("🎮 CONTROLS:");
-            Console.WriteLine("   'S' - Cycle through shader modes (Normal → SoftGlow → Bloom)");
+            Console.WriteLine("   WASD:        Camera movement (pan world view)");
+            Console.WriteLine("   Q/E:         Camera zoom out/in");
+            Console.WriteLine("   R:           Reset camera to origin");
+            Console.WriteLine("   Tab:         Toggle UI overlay visibility");
+            Console.WriteLine("   Mouse Click: Spawn objects at world coordinates");
+            Console.WriteLine("   S:           Cycle through shader modes (Normal → SoftGlow → Bloom)");
             Console.WriteLine("");
 
             Console.WriteLine("🌈 SHADER MODES & VISUAL EFFECTS:");
@@ -258,12 +323,20 @@ public static class BoidSample
             Console.WriteLine("   • Bloom:    HDR bloom effects with dramatic glowing! (tested when accessed)");
             Console.WriteLine("");
 
-            Console.WriteLine("🦋 BOID SPECIES & EFFECTS:");
-            Console.WriteLine("   • All boids use the currently selected shader mode consistently");
-            Console.WriteLine("   • White Boids (Small):  Standard flocking, smallest size");
-            Console.WriteLine("   • Blue Boids (Medium):  Neutral species, medium size");
-            Console.WriteLine("   • Red Boids (Large):    Predator species, largest size");
-            Console.WriteLine("   • All species demonstrate the same shader effects for clear comparison");
+            Console.WriteLine("🦋 BOID SPECIES & ECOSYSTEM:");
+            Console.WriteLine("   • White Boids (Small):  Prey species, smallest size");
+            Console.WriteLine("   • Blue Boids (Medium):  Secondary predator, medium size");
+            Console.WriteLine("   • Red Boids (Large):    Apex predator, largest size");
+            Console.WriteLine("   • All species demonstrate flocking behavior with predator-prey interactions");
+            Console.WriteLine("");
+
+            Console.WriteLine("🔧 TECHNICAL FEATURES DEMONSTRATED:");
+            Console.WriteLine("   • Dual-camera system: Game world + UI overlay rendering");
+            Console.WriteLine("   • Screen-to-world coordinate transformation via mouse clicks");
+            Console.WriteLine("   • Camera controls: Pan, zoom, and reset functionality");
+            Console.WriteLine("   • Craig Reynolds' Boids Algorithm (1986) implementation");
+            Console.WriteLine("   • ECS architecture with efficient component queries");
+            Console.WriteLine("   • Dynamic shader mode switching for visual effects comparison");
             Console.WriteLine("");
 
             Console.WriteLine("👀 WHAT TO LOOK FOR:");
@@ -375,6 +448,215 @@ public static class BoidSample
             _currentShaderMode = _availableShaderModes[_shaderModeIndex];
         }
     }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CAMERA CONTROL HANDLERS
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        void HandleKeyPress(Key key, EngineFacade engine)
+        {
+            // ─── Camera Movement Controls (WASD) ─────────────────────────────────────
+            const float cameraSpeed = 0.1f;
+            var camera = engine.CameraManager.GameCamera;
+            
+            switch (key)
+            {
+                case Key.W: // Move camera up
+                    camera.Move(new Vector2D<float>(0f, cameraSpeed));
+                    break;
+                case Key.A: // Move camera left  
+                    camera.Move(new Vector2D<float>(-cameraSpeed, 0f));
+                    break;
+                case Key.S: // Cycle shader modes (preserved existing functionality)
+                    CycleShaderMode();
+                    return; // Exit early to avoid camera movement
+                case Key.D: // Move camera right
+                    camera.Move(new Vector2D<float>(cameraSpeed, 0f));
+                    break;
+                
+                // ─── Camera Zoom Controls (Q/E) ─────────────────────────────────────
+                case Key.Q: // Zoom out
+                    camera.Zoom = Math.Max(0.1f, camera.Zoom - 0.1f);
+                    break;
+                case Key.E: // Zoom in
+                    camera.Zoom = Math.Min(5f, camera.Zoom + 0.1f);
+                    break;
+                
+                // ─── Camera Reset (R) ────────────────────────────────────────────────
+                case Key.R:
+                    camera.Position = Vector2D<float>.Zero;
+                    camera.Zoom = 1f;
+                    camera.Rotation = 0f;
+                    Console.WriteLine("Camera reset to origin");
+                    break;
+                
+                // ─── UI Toggle (Tab) ─────────────────────────────────────────────────
+                case Key.Tab:
+                    showUIOverlay = !showUIOverlay;
+                    Console.WriteLine($"UI overlay: {(showUIOverlay ? "ON" : "OFF")}");
+                    break;
+            }
+        }
+
+        void HandleMouseClick(Vector2D<float> screenPosition, EngineFacade engine)
+        {
+            // Convert screen coordinates to world coordinates using camera manager
+            var windowSize = engine.WindowManager.Size;
+            var worldPosition = engine.CameraManager.ScreenToGameWorld(
+                screenPosition, 
+                windowSize.X, 
+                windowSize.Y
+            );
+
+            // Spawn a new object at the clicked world position
+            spawnedObjects.Add(new WorldObject
+            {
+                Position = worldPosition,
+                Size = 0.05f,
+                Color = new Vector4D<float>(1f, 0.8f, 0.2f, 1f) // Orange
+            });
+
+            Console.WriteLine($"Spawned object at world position: ({worldPosition.X:F2}, {worldPosition.Y:F2})");
+        }
+
+        void DrawBackgroundGrid(EngineFacade engine)
+        {
+            // ═══════════════════════════════════════════════════════════════════════════
+            // BACKGROUND REFERENCE GRID
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // Provides visual reference for camera movement and world coordinate system.
+            // Grid remains in world space, so it moves with camera transformations.
+
+            const float gridSize = 2f;
+            const float gridSpacing = 0.2f;
+            var gridVertices = new List<float>();
+
+            // Vertical lines
+            for (float x = -gridSize; x <= gridSize; x += gridSpacing)
+            {
+                gridVertices.AddRange(new[] { x, -gridSize, x, gridSize });
+            }
+
+            // Horizontal lines
+            for (float y = -gridSize; y <= gridSize; y += gridSpacing)
+            {
+                gridVertices.AddRange(new[] { -gridSize, y, gridSize, y });
+            }
+
+            // Render grid with subtle color
+            engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            engine.Renderer.SetColor(new Vector4D<float>(0.2f, 0.2f, 0.2f, 1f));
+            engine.Renderer.UpdateVertices(gridVertices.ToArray());
+            engine.Renderer.Draw();
+        }
+
+        void DrawSpawnedObjects(EngineFacade engine)
+        {
+            // ═══════════════════════════════════════════════════════════════════════════
+            // CLICK-TO-SPAWN OBJECTS DEMONSTRATION
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // These objects demonstrate coordinate transformation from screen space to world space.
+            // Each object is positioned at the world coordinates corresponding to mouse click position.
+
+            if (spawnedObjects.Count == 0)
+                return;
+
+            var vertexBuffer = new List<float>();
+
+            foreach (var obj in spawnedObjects)
+            {
+                // Render each spawned object as a small quad
+                float halfSize = obj.Size * 0.5f;
+                vertexBuffer.AddRange(new[]
+                {
+                    // Triangle 1
+                    obj.Position.X - halfSize, obj.Position.Y - halfSize,
+                    obj.Position.X + halfSize, obj.Position.Y - halfSize,
+                    obj.Position.X + halfSize, obj.Position.Y + halfSize,
+                    
+                    // Triangle 2
+                    obj.Position.X - halfSize, obj.Position.Y - halfSize,
+                    obj.Position.X + halfSize, obj.Position.Y + halfSize,
+                    obj.Position.X - halfSize, obj.Position.Y + halfSize,
+                });
+            }
+
+            // Render all spawned objects with current shader mode
+            engine.Renderer.SetShaderMode(_currentShaderMode);
+            engine.Renderer.SetColor(new Vector4D<float>(1f, 0.5f, 0.2f, 1f)); // Orange
+            engine.Renderer.UpdateVertices(vertexBuffer.ToArray());
+            engine.Renderer.Draw();
+        }
+
+        void DrawUIOverlay(EngineFacade engine)
+        {
+            // ═══════════════════════════════════════════════════════════════════════════
+            // SCREEN-SPACE UI OVERLAY DEMONSTRATION
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // This UI remains fixed in screen space regardless of camera transformations.
+            // Uses geometric shapes as placeholders for text-based information display.
+
+            var camera = engine.CameraManager.GameCamera;
+            
+            // UI Panel background (top-left corner)
+            DrawUIQuad(-380f, 250f, 200f, 120f, new Vector4D<float>(0.1f, 0.1f, 0.3f, 0.8f), engine);
+
+            // Camera position indicators (colored bars representing X and Y)
+            float posX = Math.Clamp(camera.Position.X * 50f, -80f, 80f);
+            float posY = Math.Clamp(camera.Position.Y * 50f, -80f, 80f);
+            
+            DrawUIQuad(-350f, 220f, posX, 10f, new Vector4D<float>(1f, 0f, 0f, 1f), engine); // X position (red)
+            DrawUIQuad(-350f, 200f, posY, 10f, new Vector4D<float>(0f, 1f, 0f, 1f), engine); // Y position (green)
+
+            // Zoom level indicator (horizontal bar)
+            float zoomBarWidth = camera.Zoom * 60f;
+            DrawUIQuad(-350f, 180f, zoomBarWidth, 8f, new Vector4D<float>(0f, 0f, 1f, 1f), engine); // Zoom (blue)
+
+            // Controls indicator (small rectangles)
+            DrawUIQuad(-380f, 140f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine); // "WASD: Camera"
+            DrawUIQuad(-380f, 130f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine); // "Q/E: Zoom"
+            DrawUIQuad(-380f, 120f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine); // "R: Reset"
+            DrawUIQuad(-380f, 110f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine); // "Tab: UI Toggle"
+
+            // Crosshair at screen center
+            DrawUICrosshair(engine);
+        }
+
+        void DrawUIQuad(float x, float y, float width, float height, Vector4D<float> color, EngineFacade engine)
+        {
+            var vertices = new float[]
+            {
+                x, y,                    // Bottom-left
+                x + width, y,           // Bottom-right  
+                x + width, y + height,  // Top-right
+                
+                x, y,                   // Bottom-left
+                x + width, y + height,  // Top-right
+                x, y + height,          // Top-left
+            };
+
+            engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            engine.Renderer.SetColor(color);
+            engine.Renderer.UpdateVertices(vertices);
+            engine.Renderer.Draw();
+        }
+
+        void DrawUICrosshair(EngineFacade engine)
+        {
+            var crosshairVertices = new float[]
+            {
+                -20f, 0f, 20f, 0f,    // Horizontal line
+                0f, -20f, 0f, 20f     // Vertical line
+            };
+
+            engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            engine.Renderer.SetColor(new Vector4D<float>(1f, 1f, 1f, 0.7f));
+            engine.Renderer.UpdateVertices(crosshairVertices);
+            engine.Renderer.Draw();
+        }
 
         string GetSpeciesBehaviorDescription()
         {
@@ -526,7 +808,7 @@ public static class BoidSample
             world.SetComponent(e, new ObstacleComponent(0.2f));       // Radius in NDC units
         }
 
-        void DrawSpecies(string filterId)
+        void DrawSpecies(string filterId, EngineFacade engine)
         {
             // ───────────────────────────────────────────────────────────────────────
             // BOID VISUAL REPRESENTATION
@@ -666,7 +948,7 @@ public static class BoidSample
             engine.Renderer.Draw();
         }
 
-        void DrawObstacles(Vector4D<float> color)
+        void DrawObstacles(Vector4D<float> color, EngineFacade engine)
         {
             const int segments = 16;
             var vertices = new List<FullVertex>();
