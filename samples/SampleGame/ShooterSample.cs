@@ -586,24 +586,45 @@ public static class ShooterSample
         // It provides visual reference for camera transformations (pan, zoom, rotate).
 
         var gridVertices = new List<float>();
-        const float gridSize = 10f;
-        const float gridSpacing = 0.5f;
+        const float majorGridSize = 8f;
+        const float majorGridSpacing = 1f;
+        const float minorGridSpacing = 0.2f;
 
-        // Generate horizontal grid lines
-        for (float y = -gridSize; y <= gridSize; y += gridSpacing)
+        // Major grid lines (every 1 unit) - slightly more visible
+        for (float y = -majorGridSize; y <= majorGridSize; y += majorGridSpacing)
         {
-            gridVertices.AddRange(new[] { -gridSize, y, gridSize, y });
+            gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+        }
+        for (float x = -majorGridSize; x <= majorGridSize; x += majorGridSpacing)
+        {
+            gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
         }
 
-        // Generate vertical grid lines  
-        for (float x = -gridSize; x <= gridSize; x += gridSpacing)
-        {
-            gridVertices.AddRange(new[] { x, -gridSize, x, gridSize });
-        }
-
-        // Render grid with subtle color
+        // Render major grid lines with subtle but visible color
         engineFacade!.Renderer.SetShaderMode(ShaderMode.Normal);
-        engineFacade.Renderer.SetColor(new Vector4D<float>(0.2f, 0.2f, 0.2f, 1f));
+        engineFacade.Renderer.SetColor(new Vector4D<float>(0.4f, 0.4f, 0.4f, 0.8f));
+        engineFacade.Renderer.UpdateVertices(gridVertices.ToArray());
+        engineFacade.Renderer.Draw();
+
+        // Minor grid lines (every 0.2 units) - very subtle
+        gridVertices.Clear();
+        for (float y = -majorGridSize; y <= majorGridSize; y += minorGridSpacing)
+        {
+            if (y % majorGridSpacing != 0) // Skip major grid line positions
+            {
+                gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+            }
+        }
+        for (float x = -majorGridSize; x <= majorGridSize; x += minorGridSpacing)
+        {
+            if (x % majorGridSpacing != 0) // Skip major grid line positions
+            {
+                gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+            }
+        }
+
+        // Render minor grid lines with very subtle color
+        engineFacade.Renderer.SetColor(new Vector4D<float>(0.25f, 0.25f, 0.25f, 0.4f));
         engineFacade.Renderer.UpdateVertices(gridVertices.ToArray());
         engineFacade.Renderer.Draw();
     }

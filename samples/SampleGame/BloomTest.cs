@@ -38,8 +38,13 @@
 //    - Scientific validation of graphics algorithms in real-time
 //
 // CONTROLS & INTERACTION:
-// - 'S' or 'B': Toggle bloom effect ON/OFF
+// - 'B': Toggle bloom effect ON/OFF
 // - 'H': Toggle HDR color mode (demonstrates dramatic vs subtle effects)
+// - WASD: Camera movement (pan world view)
+// - Q/E: Camera zoom out/in
+// - R: Reset camera to origin
+// - Tab: Toggle UI overlay visibility
+// - Mouse Click: Spawn objects at world coordinates
 //
 // EXPECTED LEARNING OUTCOMES:
 // - Understanding HDR color spaces and their visual impact
@@ -239,7 +244,7 @@ public static class BloomTest
         Console.WriteLine("   R:           Reset camera to origin");
         Console.WriteLine("   Tab:         Toggle UI overlay visibility");
         Console.WriteLine("   Mouse Click: Spawn objects at world coordinates");
-        Console.WriteLine("   S/B:         Toggle Bloom mode ON/OFF");
+        Console.WriteLine("   B:           Toggle Bloom mode ON/OFF");
         Console.WriteLine("   H:           Toggle HDR colors ON/OFF (dramatic vs subtle)");
         Console.WriteLine();
         Console.WriteLine("🔬 TECHNICAL FEATURES DEMONSTRATED:");
@@ -340,10 +345,8 @@ public static class BloomTest
                 case Key.A: // Move camera left  
                     camera.Move(new Vector2D<float>(-cameraSpeed, 0f));
                     break;
-                case Key.S: // Toggle bloom mode (preserved existing functionality)
-                case Key.B: // Toggle bloom mode (legacy support)
-                    currentShaderMode = currentShaderMode == ShaderMode.Bloom ? ShaderMode.Normal : ShaderMode.Bloom;
-                    Console.WriteLine($"Shader Mode: {currentShaderMode}");
+                case Key.S: // Move camera down
+                    camera.Move(new Vector2D<float>(0f, -cameraSpeed));
                     break;
                 case Key.D: // Move camera right
                     camera.Move(new Vector2D<float>(cameraSpeed, 0f));
@@ -355,6 +358,12 @@ public static class BloomTest
                     break;
                 case Key.E: // Zoom in
                     camera.Zoom = Math.Min(5f, camera.Zoom + 0.1f);
+                    break;
+                
+                // ─── Bloom Toggle Controls (B) ──────────────────────────────────────
+                case Key.B: // Toggle bloom mode
+                    currentShaderMode = currentShaderMode == ShaderMode.Bloom ? ShaderMode.Normal : ShaderMode.Bloom;
+                    Console.WriteLine($"Shader Mode: {currentShaderMode}");
                     break;
                 
                 // ─── Other Controls ─────────────────────────────────────────────────
@@ -407,25 +416,46 @@ public static class BloomTest
             // Provides visual reference for camera movement and world coordinate system.
             // Grid remains in world space, so it moves with camera transformations.
 
-            const float gridSize = 2f;
-            const float gridSpacing = 0.2f;
+            const float majorGridSize = 4f;
+            const float majorGridSpacing = 1f;
+            const float minorGridSpacing = 0.2f;
             var gridVertices = new List<float>();
 
-            // Vertical lines
-            for (float x = -gridSize; x <= gridSize; x += gridSpacing)
+            // Major grid lines (every 1 unit) - slightly more visible
+            for (float x = -majorGridSize; x <= majorGridSize; x += majorGridSpacing)
             {
-                gridVertices.AddRange(new[] { x, -gridSize, x, gridSize });
+                gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+            }
+            for (float y = -majorGridSize; y <= majorGridSize; y += majorGridSpacing)
+            {
+                gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
             }
 
-            // Horizontal lines
-            for (float y = -gridSize; y <= gridSize; y += gridSpacing)
-            {
-                gridVertices.AddRange(new[] { -gridSize, y, gridSize, y });
-            }
-
-            // Render grid with subtle color
+            // Render major grid lines with subtle but visible color
             engine.Renderer.SetShaderMode(ShaderMode.Normal);
-            engine.Renderer.SetColor(new Vector4D<float>(0.2f, 0.2f, 0.2f, 1f));
+            engine.Renderer.SetColor(new Vector4D<float>(0.4f, 0.4f, 0.4f, 0.8f));
+            engine.Renderer.UpdateVertices(gridVertices.ToArray());
+            engine.Renderer.Draw();
+
+            // Minor grid lines (every 0.2 units) - very subtle
+            gridVertices.Clear();
+            for (float x = -majorGridSize; x <= majorGridSize; x += minorGridSpacing)
+            {
+                if (x % majorGridSpacing != 0) // Skip major grid line positions
+                {
+                    gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+                }
+            }
+            for (float y = -majorGridSize; y <= majorGridSize; y += minorGridSpacing)
+            {
+                if (y % majorGridSpacing != 0) // Skip major grid line positions
+                {
+                    gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+                }
+            }
+
+            // Render minor grid lines with very subtle color
+            engine.Renderer.SetColor(new Vector4D<float>(0.25f, 0.25f, 0.25f, 0.4f));
             engine.Renderer.UpdateVertices(gridVertices.ToArray());
             engine.Renderer.Draw();
         }
