@@ -1,5 +1,9 @@
 using Rac.Rendering;
+using Rac.Rendering.Camera;
+using Rac.Rendering.Shader;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
+using Silk.NET.Windowing;
 using Xunit;
 
 namespace Rac.Rendering.Tests;
@@ -123,7 +127,10 @@ public class VertexTypeSafetyTests
         public void Initialize(Silk.NET.Windowing.IWindow window) { }
         public void Clear() { }
         public void SetColor(Vector4D<float> rgba) { }
+        public void SetCameraMatrix(Matrix4X4<float> cameraMatrix) { }
+        public void SetActiveCamera(ICamera camera) { }
         public void SetShaderMode(Rac.Rendering.Shader.ShaderMode mode) { }
+        public void SetPrimitiveType(PrimitiveType primitiveType) { }
         public void Draw() { }
         public void FinalizeFrame() { }
         public void Resize(Vector2D<int> newSize) { }

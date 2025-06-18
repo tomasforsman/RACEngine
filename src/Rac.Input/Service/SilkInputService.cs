@@ -19,6 +19,11 @@ public class SilkInputService : IInputService
     public event Action<Vector2D<float>>? OnLeftClick;
 
     /// <summary>
+    /// Event triggered when the mouse wheel is scrolled, providing the scroll delta.
+    /// </summary>
+    public event Action<float>? OnMouseScroll;
+
+    /// <summary>
     /// Event triggered when any key is pressed, providing the key.
     /// </summary>
     public event Action<Key, KeyboardKeyState.KeyEvent>? PressedKey;
@@ -52,6 +57,7 @@ public class SilkInputService : IInputService
                 ? inputContext.Mice[0]
                 : throw new InvalidOperationException("No mouse found");
         _mouse.MouseDown += OnMouseDown;
+        _mouse.Scroll += OnMouseScrollWheel;
 
         // Keyboard
         foreach (var keyboard in inputContext.Keyboards)
@@ -87,6 +93,7 @@ public class SilkInputService : IInputService
         if (_mouse != null)
         {
             _mouse.MouseDown -= OnMouseDown;
+            _mouse.Scroll -= OnMouseScrollWheel;
         }
     }
 
@@ -102,5 +109,16 @@ public class SilkInputService : IInputService
 
         var pos = m.Position;
         OnLeftClick?.Invoke(new Vector2D<float>(pos.X, pos.Y));
+    }
+
+    /// <summary>
+    /// Handles mouse scroll wheel events.
+    /// </summary>
+    /// <param name="m">The mouse instance that triggered the event.</param>
+    /// <param name="wheel">The scroll wheel data containing delta values.</param>
+    private void OnMouseScrollWheel(IMouse m, ScrollWheel wheel)
+    {
+        // Use Y component for vertical scrolling (standard mouse wheel)
+        OnMouseScroll?.Invoke(wheel.Y);
     }
 }

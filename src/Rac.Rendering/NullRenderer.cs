@@ -1,6 +1,8 @@
 using System;
 using Rac.Rendering.Shader;
+using Rac.Rendering.Camera;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
 namespace Rac.Rendering;
@@ -42,9 +44,24 @@ public class NullRenderer : IRenderer
         // No-op: no color to set
     }
 
+    public void SetCameraMatrix(Matrix4X4<float> cameraMatrix)
+    {
+        // No-op: no camera matrix to set
+    }
+
+    public void SetActiveCamera(ICamera camera)
+    {
+        // No-op: no camera to set
+    }
+
     public void SetShaderMode(ShaderMode mode)
     {
         // No-op: no shader to set
+    }
+
+    public void SetPrimitiveType(PrimitiveType primitiveType)
+    {
+        // No-op: no primitive type to set
     }
 
     public void UpdateVertices(float[] vertices)

@@ -1,7 +1,9 @@
 ﻿// File: src/Engine/Rendering/IRenderer.cs
 
 using Rac.Rendering.Shader;
+using Rac.Rendering.Camera;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
 namespace Rac.Rendering;
@@ -20,8 +22,17 @@ public interface IRenderer
     /// <summary>Set the RGBA color for subsequent draw calls.</summary>
     void SetColor(Vector4D<float> rgba);
 
+    /// <summary>Set the camera transformation matrix for vertex transformations.</summary>
+    void SetCameraMatrix(Matrix4X4<float> cameraMatrix);
+
+    /// <summary>Set the active camera for subsequent rendering operations.</summary>
+    void SetActiveCamera(ICamera camera);
+
     /// <summary>Set the shader mode for visual effects.</summary>
     void SetShaderMode(ShaderMode mode);
+
+    /// <summary>Set the primitive type for subsequent draw calls (default: Triangles).</summary>
+    void SetPrimitiveType(PrimitiveType primitiveType);
 
     /// <summary>Upload vertex positions (2D) into the VBO.</summary>
     void UpdateVertices(float[] vertices);

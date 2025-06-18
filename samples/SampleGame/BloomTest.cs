@@ -38,8 +38,13 @@
 //    - Scientific validation of graphics algorithms in real-time
 //
 // CONTROLS & INTERACTION:
-// - 'S' or 'B': Toggle bloom effect ON/OFF
+// - 'B': Toggle bloom effect ON/OFF
 // - 'H': Toggle HDR color mode (demonstrates dramatic vs subtle effects)
+// - WASD: Camera movement (pan world view)
+// - Q/E: Camera zoom out/in
+// - R: Reset camera to origin
+// - Tab: Toggle UI overlay visibility
+// - Mouse Click: Spawn objects at world coordinates
 //
 // EXPECTED LEARNING OUTCOMES:
 // - Understanding HDR color spaces and their visual impact
@@ -59,6 +64,7 @@ using Rac.Rendering;
 using Rac.Rendering.Shader;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 
 namespace SampleGame;
 
@@ -85,6 +91,27 @@ namespace SampleGame;
 /// </summary>
 public static class BloomTest
 {
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CAMERA SYSTEM & UI INTEGRATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    //
+    // Camera controls for interactive exploration and UI overlay management.
+    // Demonstrates dual-camera rendering with world-space bloom shapes and screen-space UI.
+
+    private static bool showUIOverlay = true;
+    private static List<WorldObject> spawnedObjects = new();
+
+    /// <summary>
+    /// Represents a user-spawned object demonstrating coordinate transformation.
+    /// Shows how screen coordinates (mouse clicks) map to world coordinates.
+    /// </summary>
+    private class WorldObject
+    {
+        public Vector2D<float> Position { get; set; }
+        public float Size { get; set; } = 0.1f;
+        public Vector4D<float> Color { get; set; } = new(1f, 0.8f, 0.2f, 1f); // Orange
+    }
+
     public static void Run(string[] args)
     {
         // ═══════════════════════════════════════════════════════════════════════════
@@ -136,27 +163,26 @@ public static class BloomTest
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // INTERACTIVE CONTROLS FOR COMPARISON
+        // INTERACTIVE CONTROLS FOR CAMERA AND COMPARISON
         // ═══════════════════════════════════════════════════════════════════════════
 
         engine.KeyEvent += (key, keyEvent) =>
         {
             if (keyEvent == KeyboardKeyState.KeyEvent.Pressed)
             {
-                switch (key)
-                {
-                    case Key.S: // Toggle bloom mode (primary as per issue #52)
-                    case Key.B: // Toggle bloom mode (legacy support)
-                        currentShaderMode = currentShaderMode == ShaderMode.Bloom ? ShaderMode.Normal : ShaderMode.Bloom;
-                        Console.WriteLine($"Shader Mode: {currentShaderMode}");
-                        break;
-
-                    case Key.H: // Toggle HDR colors
-                        showHDRColors = !showHDRColors;
-                        Console.WriteLine($"HDR Colors: {(showHDRColors ? "ON (dramatic bloom)" : "OFF (subtle bloom)")}");
-                        break;
-                }
+                HandleKeyPress(key, engine, ref currentShaderMode, ref showHDRColors);
             }
+        };
+
+        // ─── Hook Mouse Input for Click-to-Spawn ────────────────
+        engine.LeftClickEvent += screenPosition =>
+        {
+            HandleMouseClick(screenPosition, engine);
+        };
+
+        engine.MouseScrollEvent += delta =>
+        {
+            HandleMouseScroll(delta, engine);
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -165,7 +191,42 @@ public static class BloomTest
 
         engine.RenderEvent += deltaSeconds =>
         {
-            DrawBloomDemonstrationShapes();
+            // Clear the render target before rendering
+            engine.Renderer.Clear();
+
+            // ═══════════════════════════════════════════════════════════════════════════
+            // PASS 1: RENDER GAME WORLD (with camera transformations)
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // Set the game camera to apply world-space transformations (pan, zoom, rotate).
+            // All objects rendered in this pass will be affected by camera movement.
+
+            engine.Renderer.SetActiveCamera(engine.CameraManager.GameCamera);
+
+            // Render background grid for visual reference
+            DrawBackgroundGrid(engine);
+
+            // Render user-spawned objects (click-to-spawn demonstration)
+            DrawSpawnedObjects(engine, currentShaderMode, showHDRColors);
+
+            // Render bloom demonstration shapes
+            DrawBloomDemonstrationShapes(engine, currentShaderMode, showHDRColors);
+
+            // ═══════════════════════════════════════════════════════════════════════════
+            // PASS 2: RENDER UI OVERLAY (screen-space, camera-independent)
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // Set the UI camera for screen-space rendering that remains fixed regardless
+            // of game camera transformations. Perfect for HUD, menus, and debug information.
+
+            if (showUIOverlay)
+            {
+                engine.Renderer.SetActiveCamera(engine.CameraManager.UICamera);
+                DrawUIOverlay(engine, currentShaderMode, showHDRColors);
+            }
+
+            // Finalize the frame
+            engine.Renderer.FinalizeFrame();
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -184,15 +245,21 @@ public static class BloomTest
         Console.WriteLine("   • Experience interactive graphics programming");
         Console.WriteLine();
         Console.WriteLine("🎮 INTERACTIVE CONTROLS:");
-        Console.WriteLine("   'S' - Toggle Bloom mode ON/OFF (primary control)");
-        Console.WriteLine("   'B' - Toggle Bloom mode ON/OFF (legacy support)");
-        Console.WriteLine("   'H' - Toggle HDR colors ON/OFF (dramatic vs subtle)");
+        Console.WriteLine("   WASD:        Camera movement (pan world view)");
+        Console.WriteLine("   Q/E:         Camera zoom out/in");
+        Console.WriteLine("   R:           Reset camera to origin");
+        Console.WriteLine("   Tab:         Toggle UI overlay visibility");
+        Console.WriteLine("   Mouse Click: Spawn objects at world coordinates");
+        Console.WriteLine("   B:           Toggle Bloom mode ON/OFF");
+        Console.WriteLine("   H:           Toggle HDR colors ON/OFF (dramatic vs subtle)");
         Console.WriteLine();
-        Console.WriteLine("🔬 SCIENTIFIC OBSERVATION GUIDE:");
-        Console.WriteLine("   • HDR ON + Bloom ON = Dramatic bloom with bright halos exceeding object boundaries");
-        Console.WriteLine("   • HDR OFF + Bloom ON = Subtle bloom effects within LDR constraints");
-        Console.WriteLine("   • Any mode + Bloom OFF = No post-processing, standard rasterization only");
-        Console.WriteLine("   • Notice luminance thresholds: Dim objects remain unaffected regardless of mode");
+        Console.WriteLine("🔬 TECHNICAL FEATURES DEMONSTRATED:");
+        Console.WriteLine("   • Dual-camera system: Game world + UI overlay rendering");
+        Console.WriteLine("   • Screen-to-world coordinate transformation via mouse clicks");
+        Console.WriteLine("   • Camera controls: Pan, zoom, and reset functionality");
+        Console.WriteLine("   • HDR vs LDR color space comparison");
+        Console.WriteLine("   • Bloom algorithm with bright extraction and Gaussian blur");
+        Console.WriteLine("   • Interactive real-time graphics programming concepts");
         Console.WriteLine();
         Console.WriteLine("📊 COLOR ANALYSIS:");
         Console.WriteLine("   • Red HDR (2.5, 0.3, 0.3): Demonstrates channel-specific intensity");
@@ -212,7 +279,7 @@ public static class BloomTest
         // LOCAL HELPER FUNCTIONS
         // ═══════════════════════════════════════════════════════════════════════════
 
-        void DrawBloomDemonstrationShapes()
+        void DrawBloomDemonstrationShapes(EngineFacade engine, ShaderMode currentShaderMode, bool showHDRColors)
         {
             var currentColors = showHDRColors ? hdrColors : ldrColors;
 
@@ -227,11 +294,11 @@ public static class BloomTest
 
             foreach (var (colorName, position) in positions)
             {
-                DrawTestSquare(position, currentColors[colorName], colorName);
+                DrawTestSquare(position, currentColors[colorName], colorName, engine, currentShaderMode);
             }
         }
 
-        void DrawTestSquare(Vector2D<float> center, Vector4D<float> color, string label)
+        void DrawTestSquare(Vector2D<float> center, Vector4D<float> color, string label, EngineFacade engine, ShaderMode currentShaderMode)
         {
             // ───────────────────────────────────────────────────────────────────────
             // GEOMETRIC PRIMITIVE CONSTRUCTION
@@ -263,6 +330,270 @@ public static class BloomTest
             engine.Renderer.SetShaderMode(currentShaderMode);
             engine.Renderer.SetColor(color);
             engine.Renderer.UpdateVertices(verts.ToArray());
+            engine.Renderer.Draw();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CAMERA CONTROL HANDLERS
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        void HandleKeyPress(Key key, EngineFacade engine, ref ShaderMode currentShaderMode, ref bool showHDRColors)
+        {
+            // ─── Camera Movement Controls (WASD) ─────────────────────────────────────
+            const float cameraSpeed = 0.1f;
+            var camera = engine.CameraManager.GameCamera;
+            
+            switch (key)
+            {
+                case Key.W: // Move camera up
+                    camera.Move(new Vector2D<float>(0f, cameraSpeed));
+                    break;
+                case Key.A: // Move camera left  
+                    camera.Move(new Vector2D<float>(-cameraSpeed, 0f));
+                    break;
+                case Key.S: // Move camera down
+                    camera.Move(new Vector2D<float>(0f, -cameraSpeed));
+                    break;
+                case Key.D: // Move camera right
+                    camera.Move(new Vector2D<float>(cameraSpeed, 0f));
+                    break;
+                
+                // ─── Camera Zoom Controls (Q/E) ─────────────────────────────────────
+                case Key.Q: // Zoom out
+                    camera.Zoom = Math.Max(0.1f, camera.Zoom - 0.1f);
+                    break;
+                case Key.E: // Zoom in
+                    camera.Zoom = Math.Min(5f, camera.Zoom + 0.1f);
+                    break;
+                
+                // ─── Bloom Toggle Controls (B) ──────────────────────────────────────
+                case Key.B: // Toggle bloom mode
+                    currentShaderMode = currentShaderMode == ShaderMode.Bloom ? ShaderMode.Normal : ShaderMode.Bloom;
+                    Console.WriteLine($"Shader Mode: {currentShaderMode}");
+                    break;
+                
+                // ─── Other Controls ─────────────────────────────────────────────────
+                case Key.H: // Toggle HDR colors
+                    showHDRColors = !showHDRColors;
+                    Console.WriteLine($"HDR Colors: {(showHDRColors ? "ON (dramatic bloom)" : "OFF (subtle bloom)")}");
+                    break;
+                
+                case Key.R: // Reset camera
+                    camera.Position = Vector2D<float>.Zero;
+                    camera.Zoom = 1f;
+                    camera.Rotation = 0f;
+                    Console.WriteLine("Camera reset to origin");
+                    break;
+                
+                case Key.Tab: // Toggle UI overlay
+                    showUIOverlay = !showUIOverlay;
+                    Console.WriteLine($"UI overlay: {(showUIOverlay ? "ON" : "OFF")}");
+                    break;
+            }
+        }
+
+        void HandleMouseClick(Vector2D<float> screenPosition, EngineFacade engine)
+        {
+            // Convert screen coordinates to world coordinates using camera manager
+            var windowSize = engine.WindowManager.Size;
+            var worldPosition = engine.CameraManager.ScreenToGameWorld(
+                screenPosition, 
+                windowSize.X, 
+                windowSize.Y
+            );
+
+            // Spawn a new object at the clicked world position
+            spawnedObjects.Add(new WorldObject
+            {
+                Position = worldPosition,
+                Size = 0.1f,
+                Color = new Vector4D<float>(1f, 0.8f, 0.2f, 1f) // Orange
+            });
+
+            Console.WriteLine($"Spawned object at world position: ({worldPosition.X:F2}, {worldPosition.Y:F2})");
+        }
+
+        void HandleMouseScroll(float delta, EngineFacade engine)
+        {
+            var camera = engine.CameraManager.GameCamera;
+            
+            // Zoom with mouse wheel
+            const float zoomSensitivity = 0.1f;
+            float zoomDelta = delta * zoomSensitivity;
+            
+            // Apply zoom with limits
+            camera.Zoom = Math.Max(0.1f, Math.Min(10f, camera.Zoom + zoomDelta));
+        }
+
+        void DrawBackgroundGrid(EngineFacade engine)
+        {
+            // ═══════════════════════════════════════════════════════════════════════════
+            // BACKGROUND REFERENCE GRID
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // Provides visual reference for camera movement and world coordinate system.
+            // Grid remains in world space, so it moves with camera transformations.
+
+            const float majorGridSize = 4f;
+            const float majorGridSpacing = 1f;
+            const float minorGridSpacing = 0.2f;
+            var gridVertices = new List<float>();
+
+            // Major grid lines (every 1 unit) - slightly more visible
+            for (float x = -majorGridSize; x <= majorGridSize; x += majorGridSpacing)
+            {
+                gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+            }
+            for (float y = -majorGridSize; y <= majorGridSize; y += majorGridSpacing)
+            {
+                gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+            }
+
+            // Render major grid lines with subtle but visible color
+            engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            engine.Renderer.SetPrimitiveType(PrimitiveType.Lines);
+            engine.Renderer.SetColor(new Vector4D<float>(0.4f, 0.4f, 0.4f, 0.8f));
+            engine.Renderer.UpdateVertices(gridVertices.ToArray());
+            engine.Renderer.Draw();
+
+            // Minor grid lines (every 0.2 units) - very subtle
+            gridVertices.Clear();
+            for (float x = -majorGridSize; x <= majorGridSize; x += minorGridSpacing)
+            {
+                if (x % majorGridSpacing != 0) // Skip major grid line positions
+                {
+                    gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+                }
+            }
+            for (float y = -majorGridSize; y <= majorGridSize; y += minorGridSpacing)
+            {
+                if (y % majorGridSpacing != 0) // Skip major grid line positions
+                {
+                    gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+                }
+            }
+
+            // Render minor grid lines with very subtle color
+            engine.Renderer.SetColor(new Vector4D<float>(0.25f, 0.25f, 0.25f, 0.4f));
+            engine.Renderer.UpdateVertices(gridVertices.ToArray());
+            engine.Renderer.Draw();
+
+            // Reset to triangles for other objects
+            engine.Renderer.SetPrimitiveType(PrimitiveType.Triangles);
+        }
+
+        void DrawSpawnedObjects(EngineFacade engine, ShaderMode currentShaderMode, bool showHDRColors)
+        {
+            // ═══════════════════════════════════════════════════════════════════════════
+            // CLICK-TO-SPAWN OBJECTS DEMONSTRATION
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // These objects demonstrate coordinate transformation from screen space to world space.
+            // Each object is positioned at the world coordinates corresponding to mouse click position.
+
+            if (spawnedObjects.Count == 0)
+                return;
+
+            var vertexBuffer = new List<float>();
+
+            foreach (var obj in spawnedObjects)
+            {
+                // Render each spawned object as a small quad
+                float halfSize = obj.Size * 0.5f;
+                vertexBuffer.AddRange(new[]
+                {
+                    // Triangle 1
+                    obj.Position.X - halfSize, obj.Position.Y - halfSize,
+                    obj.Position.X + halfSize, obj.Position.Y - halfSize,
+                    obj.Position.X + halfSize, obj.Position.Y + halfSize,
+                    
+                    // Triangle 2
+                    obj.Position.X - halfSize, obj.Position.Y - halfSize,
+                    obj.Position.X + halfSize, obj.Position.Y + halfSize,
+                    obj.Position.X - halfSize, obj.Position.Y + halfSize,
+                });
+            }
+
+            // Render all spawned objects with current shader mode
+            engine.Renderer.SetShaderMode(currentShaderMode);
+            engine.Renderer.SetColor(new Vector4D<float>(1f, 0.5f, 0.2f, 1f)); // Orange
+            engine.Renderer.UpdateVertices(vertexBuffer.ToArray());
+            engine.Renderer.Draw();
+        }
+
+        void DrawUIOverlay(EngineFacade engine, ShaderMode currentShaderMode, bool showHDRColors)
+        {
+            // ═══════════════════════════════════════════════════════════════════════════
+            // SCREEN-SPACE UI OVERLAY DEMONSTRATION
+            // ═══════════════════════════════════════════════════════════════════════════
+            //
+            // This UI remains fixed in screen space regardless of camera transformations.
+            // Uses geometric shapes as placeholders for text-based information display.
+
+            var camera = engine.CameraManager.GameCamera;
+            
+            // UI Panel background (top-left corner)
+            DrawUIQuad(-380f, 250f, 200f, 120f, new Vector4D<float>(0.1f, 0.1f, 0.3f, 0.8f), engine);
+
+            // Camera position indicators (colored bars representing X and Y)
+            float posX = Math.Clamp(camera.Position.X * 50f, -80f, 80f);
+            float posY = Math.Clamp(camera.Position.Y * 50f, -80f, 80f);
+            
+            DrawUIQuad(-350f, 220f, posX, 10f, new Vector4D<float>(1f, 0f, 0f, 1f), engine); // X position (red)
+            DrawUIQuad(-350f, 200f, posY, 10f, new Vector4D<float>(0f, 1f, 0f, 1f), engine); // Y position (green)
+
+            // Zoom level indicator (horizontal bar)
+            float zoomBarWidth = camera.Zoom * 60f;
+            DrawUIQuad(-350f, 180f, zoomBarWidth, 8f, new Vector4D<float>(0f, 0f, 1f, 1f), engine); // Zoom (blue)
+
+            // Shader mode indicator
+            DrawUIQuad(-350f, 160f, 20f, 8f, currentShaderMode == ShaderMode.Bloom ? 
+                new Vector4D<float>(1f, 1f, 0f, 1f) : new Vector4D<float>(0.5f, 0.5f, 0.5f, 1f), engine); // Yellow if bloom
+
+            // HDR mode indicator  
+            DrawUIQuad(-350f, 145f, 20f, 8f, showHDRColors ? 
+                new Vector4D<float>(1f, 0.5f, 1f, 1f) : new Vector4D<float>(0.5f, 0.5f, 0.5f, 1f), engine); // Magenta if HDR
+
+            // Controls indicator (small rectangles)
+            DrawUIQuad(-380f, 125f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine); // "WASD: Camera"
+            DrawUIQuad(-380f, 115f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine); // "Q/E: Zoom"
+            DrawUIQuad(-380f, 105f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine); // "S/B: Bloom"
+            DrawUIQuad(-380f, 95f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f), engine); // "H: HDR"
+
+            // Crosshair at screen center
+            DrawUICrosshair(engine);
+        }
+
+        void DrawUIQuad(float x, float y, float width, float height, Vector4D<float> color, EngineFacade engine)
+        {
+            var vertices = new float[]
+            {
+                x, y,                    // Bottom-left
+                x + width, y,           // Bottom-right  
+                x + width, y + height,  // Top-right
+                
+                x, y,                   // Bottom-left
+                x + width, y + height,  // Top-right
+                x, y + height,          // Top-left
+            };
+
+            engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            engine.Renderer.SetColor(color);
+            engine.Renderer.UpdateVertices(vertices);
+            engine.Renderer.Draw();
+        }
+
+        void DrawUICrosshair(EngineFacade engine)
+        {
+            var crosshairVertices = new float[]
+            {
+                -20f, 0f, 20f, 0f,    // Horizontal line
+                0f, -20f, 0f, 20f     // Vertical line
+            };
+
+            engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            engine.Renderer.SetColor(new Vector4D<float>(1f, 1f, 1f, 0.7f));
+            engine.Renderer.UpdateVertices(crosshairVertices);
             engine.Renderer.Draw();
         }
     }

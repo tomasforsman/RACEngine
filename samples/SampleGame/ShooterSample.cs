@@ -50,14 +50,21 @@
 //    - Separation of concerns: Clear boundaries between subsystems
 //
 // CONTROLS & INTERACTION:
-// - WASD/Arrow Keys: Immediate ship rotation (discrete directional control)
+// - WASD: Camera movement (pan world view for exploration)  
+// - Arrow Keys: Ship rotation (discrete directional control)
+// - Q/E: Camera zoom in/out (scale world view)
 // - Space: Toggle auto-fire mode (persistent state change)
-// - V: Cycle through visual effect combinations (educational demonstration)
+// - R: Reset camera to origin (return to default view)
+// - Tab: Toggle UI overlay visibility (show/hide camera information)
+// - Mouse Click: Spawn objects at world coordinates (coordinate transformation demo)
+// - V or 1/2/3: Cycle through visual effect combinations (shader demonstration)
 //
 // EDUCATIONAL OBJECTIVES:
 // - Understand fundamental game loop structure and timing
-// - Experience real-time input handling and state management
+// - Experience real-time input handling and state management  
 // - Observe 2D graphics transformations and coordinate systems
+// - Learn dual-camera rendering with world/UI separation
+// - Experience coordinate transformation between screen and world space
 // - Learn performance optimization through batched rendering
 // - Connect mathematical concepts to visual results
 //
@@ -70,6 +77,7 @@ using Rac.Input.State;
 using Rac.Rendering.Shader;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 
 namespace SampleGame;
 
@@ -129,6 +137,19 @@ public static class ShooterSample
     // Dynamic collection of active projectiles in the game world
     private static readonly List<Bullet> activeBullets = new();
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CAMERA SYSTEM INTEGRATION STATE
+    // ═══════════════════════════════════════════════════════════════════════════
+    //
+    // Camera-related state for demonstrating dual-camera rendering and world/UI separation.
+    // These additions showcase the camera system without disrupting existing ship mechanics.
+
+    // UI overlay visibility toggle (Tab key control)
+    private static bool showUIOverlay = true;
+
+    // Collection of world objects spawned by mouse clicks for demonstration
+    private static readonly List<WorldObject> spawnedObjects = new();
+
     // ───────────────────────────────────────────────────────────────────────────
     // SHIP GEOMETRY DEFINITION
     // ───────────────────────────────────────────────────────────────────────────
@@ -168,15 +189,23 @@ public static class ShooterSample
         Console.WriteLine("   • Experience real-time game loop architecture");
         Console.WriteLine("   • Understand input handling and state management");
         Console.WriteLine("   • Observe 2D transformation mathematics in action");
-        Console.WriteLine("   • Learn performance optimization through batched rendering");
+        Console.WriteLine("   • Learn dual-camera rendering with world/UI separation");
+        Console.WriteLine("   • Experience coordinate transformation (screen ↔ world space)");
         Console.WriteLine();
         Console.WriteLine("🎮 INTERACTIVE CONTROLS:");
-        Console.WriteLine("   WASD/Arrows: Rotate ship direction (immediate visual feedback)");
+        Console.WriteLine("   WASD:        Move camera (pan world view)");
+        Console.WriteLine("   Arrow Keys:  Rotate ship direction (preserved functionality)");
+        Console.WriteLine("   Q/E:         Zoom camera in/out");
         Console.WriteLine("   Space:       Toggle auto-fire mode (persistent state)");
-        Console.WriteLine("   V:           Cycle visual effects (educational demonstration)");
+        Console.WriteLine("   R:           Reset camera to origin");
+        Console.WriteLine("   Tab:         Toggle UI overlay visibility");
+        Console.WriteLine("   Mouse Click: Spawn objects at world coordinates");
+        Console.WriteLine("   V or 1/2/3:  Cycle visual effects (shader demonstration)");
         Console.WriteLine();
         Console.WriteLine("🔧 TECHNICAL FEATURES DEMONSTRATED:");
         Console.WriteLine("   • Frame-rate independent physics using delta time");
+        Console.WriteLine("   • Dual-camera system: Game world + UI overlay rendering");
+        Console.WriteLine("   • Screen-to-world coordinate transformation");
         Console.WriteLine("   • Mixed shader modes: Ship vs Bullet rendering separation");
         Console.WriteLine("   • Dynamic geometry generation with rotation transforms");
         Console.WriteLine("   • Efficient batch rendering for multiple similar objects");
@@ -205,6 +234,12 @@ public static class ShooterSample
         // ─── Hook Input through the facade’s KeyEvent ───────────
         engineFacade.KeyEvent += OnKeyPressed;
 
+        // ─── Hook Mouse Input for Click-to-Spawn ────────────────
+        engineFacade.LeftClickEvent += OnMouseClick;
+
+        // ─── Hook Mouse Scroll for Camera Zoom ──────────────────
+        engineFacade.MouseScrollEvent += OnMouseScroll;
+
         // ─── Hook Game Loop ─────────────────────────────────────
         engineFacade.UpdateEvent += OnUpdate;
         engineFacade.RenderEvent += _ => RedrawScene();
@@ -219,13 +254,48 @@ public static class ShooterSample
         if (keyEvent != KeyboardKeyState.KeyEvent.Pressed)
             return;
 
-        // Rotate ship based on WASD or arrow keys
+        if (engineFacade == null)
+            return;
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CAMERA MOVEMENT CONTROLS (WASD)
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // Camera movement controls using WASD keys for intuitive navigation.
+        // Each key press moves the camera by a fixed increment for responsive control.
+        
+        const float cameraSpeed = 0.1f;
+        var camera = engineFacade.CameraManager.GameCamera;
+        
+        switch (key)
+        {
+            case Key.W: // Move camera up
+                camera.Move(new Vector2D<float>(0f, cameraSpeed));
+                break;
+            case Key.A: // Move camera left  
+                camera.Move(new Vector2D<float>(-cameraSpeed, 0f));
+                break;
+            case Key.S: // Move camera down
+                camera.Move(new Vector2D<float>(0f, -cameraSpeed));
+                break;
+            case Key.D: // Move camera right
+                camera.Move(new Vector2D<float>(cameraSpeed, 0f));
+                break;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SHIP ROTATION CONTROLS (ARROW KEYS)
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // Ship rotation controls moved to arrow keys to preserve existing functionality
+        // while freeing up WASD for camera movement as requested.
+
         shipDirection = key switch
         {
-            Key.W or Key.Up => Direction.Up,
-            Key.D or Key.Right => Direction.Right,
-            Key.S or Key.Down => Direction.Down,
-            Key.A or Key.Left => Direction.Left,
+            Key.Up => Direction.Up,
+            Key.Right => Direction.Right,
+            Key.Down => Direction.Down,
+            Key.Left => Direction.Left,
             _ => shipDirection,
         };
 
@@ -239,18 +309,119 @@ public static class ShooterSample
             _ => shipRotation,
         };
 
-        // Toggle auto-fire and spawn one bullet immediately
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CAMERA ZOOM CONTROLS (Q/E)
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        const float zoomSpeed = 0.1f;
+        if (key == Key.Q) // Zoom out
+        {
+            camera.Zoom = Math.Max(0.1f, camera.Zoom - zoomSpeed);
+        }
+        else if (key == Key.E) // Zoom in
+        {
+            camera.Zoom = Math.Min(5f, camera.Zoom + zoomSpeed);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // ADDITIONAL CONTROLS
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        // Toggle auto-fire and spawn one bullet immediately (preserved functionality)
         if (key == Key.Space)
         {
             isAutoFireEnabled = !isAutoFireEnabled;
             SpawnBulletInCurrentDirection();
         }
 
-        // Cycle through visual effect modes
+        // Reset camera to origin (R key)
+        if (key == Key.R)
+        {
+            camera.Position = Vector2D<float>.Zero;
+            camera.Zoom = 1f;
+            camera.Rotation = 0f;
+            Console.WriteLine("Camera reset to origin");
+        }
+
+        // Toggle UI overlay visibility (Tab key)
+        if (key == Key.Tab)
+        {
+            showUIOverlay = !showUIOverlay;
+            Console.WriteLine($"UI overlay: {(showUIOverlay ? "ON" : "OFF")}");
+        }
+
+        // Shader mode controls (both V for legacy and 1/2/3 for new style)
         if (key == Key.V)
         {
             CycleVisualEffects();
         }
+        else if (key == Key.Number1)
+        {
+            _shipShaderMode = ShaderMode.Normal;
+            _bulletShaderMode = ShaderMode.Normal;
+            Console.WriteLine("Shader Mode: Normal");
+        }
+        else if (key == Key.Number2)
+        {
+            _shipShaderMode = ShaderMode.Normal;
+            _bulletShaderMode = ShaderMode.SoftGlow;
+            Console.WriteLine("Shader Mode: Mixed (Ship: Normal, Bullets: SoftGlow)");
+        }
+        else if (key == Key.Number3)
+        {
+            _shipShaderMode = ShaderMode.SoftGlow;
+            _bulletShaderMode = ShaderMode.Bloom;
+            Console.WriteLine("Shader Mode: Advanced (Ship: SoftGlow, Bullets: Bloom)");
+        }
+    }
+
+    private static void OnMouseClick(Vector2D<float> screenPosition)
+    {
+        // ═══════════════════════════════════════════════════════════════════════════
+        // COORDINATE TRANSFORMATION DEMONSTRATION
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // This demonstrates the essential coordinate transformation from screen space
+        // (mouse cursor position) to world space (game object position), taking into
+        // account the current camera transformation state.
+
+        if (engineFacade == null)
+            return;
+
+        // Get current window size for coordinate transformation
+        var windowSize = engineFacade.WindowManager.Size;
+        
+        // Convert screen coordinates to world coordinates using camera manager
+        var worldPosition = engineFacade.CameraManager.ScreenToGameWorld(
+            screenPosition, 
+            windowSize.X, 
+            windowSize.Y
+        );
+
+        // Spawn a new object at the clicked world position
+        var newObject = new WorldObject
+        {
+            Position = worldPosition,
+            Color = new Vector4D<float>(1f, 0.5f, 0.2f, 1f), // Orange color for visibility
+            Size = 0.03f,
+            CreationTime = 0f // Could be used for animations
+        };
+
+        spawnedObjects.Add(newObject);
+
+        Console.WriteLine($"Spawned object at world: {worldPosition} (screen: {screenPosition})");
+    }
+
+    private static void OnMouseScroll(float delta)
+    {
+        var camera = engineFacade!.CameraManager.GameCamera;
+        
+        // Zoom with mouse wheel
+        const float zoomSensitivity = 0.1f;
+        float zoomDelta = delta * zoomSensitivity;
+        
+        // Apply zoom with limits
+        camera.Zoom = Math.Max(0.1f, Math.Min(10f, camera.Zoom + zoomDelta));
     }
 
     private static void OnUpdate(float deltaTime)
@@ -293,17 +464,43 @@ public static class ShooterSample
         if (engineFacade == null)
             return;
 
-        // ═══════════════════════════════════════════════════════════════════════════
-        // SHIP RENDERING WITH DEDICATED SHADER MODE
-        // ═══════════════════════════════════════════════════════════════════════════
+        // Clear the render target before rendering
+        engineFacade.Renderer.Clear();
 
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PASS 1: RENDER GAME WORLD (with camera transformations)
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // Set the game camera to apply world-space transformations (pan, zoom, rotate).
+        // All objects rendered in this pass will be affected by camera movement.
+
+        engineFacade.Renderer.SetActiveCamera(engineFacade.CameraManager.GameCamera);
+
+        // Render background grid for visual reference
+        DrawBackgroundGrid();
+
+        // Render spawned world objects (click-to-spawn demonstration)
+        DrawSpawnedObjects();
+
+        // Render game objects with existing shader modes
         DrawShip();
-
-        // ═══════════════════════════════════════════════════════════════════════════
-        // BULLET RENDERING WITH SEPARATE SHADER MODE
-        // ═══════════════════════════════════════════════════════════════════════════
-
         DrawBullets();
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PASS 2: RENDER UI OVERLAY (screen-space, camera-independent)
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // Set the UI camera for screen-space rendering that remains fixed regardless
+        // of game camera transformations. Perfect for HUD, menus, and debug information.
+
+        if (showUIOverlay)
+        {
+            engineFacade.Renderer.SetActiveCamera(engineFacade.CameraManager.UICamera);
+            DrawUIOverlay();
+        }
+
+        // Finalize the frame
+        engineFacade.Renderer.FinalizeFrame();
     }
 
     private static void DrawShip()
@@ -392,6 +589,177 @@ public static class ShooterSample
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // CAMERA SYSTEM DEMONSTRATION RENDERING
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private static void DrawBackgroundGrid()
+    {
+        // ═══════════════════════════════════════════════════════════════════════════
+        // WORLD SPACE REFERENCE GRID
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // This grid demonstrates world-space rendering that moves with the camera.
+        // It provides visual reference for camera transformations (pan, zoom, rotate).
+
+        var gridVertices = new List<float>();
+        const float majorGridSize = 8f;
+        const float majorGridSpacing = 1f;
+        const float minorGridSpacing = 0.2f;
+
+        // Major grid lines (every 1 unit) - slightly more visible
+        for (float y = -majorGridSize; y <= majorGridSize; y += majorGridSpacing)
+        {
+            gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+        }
+        for (float x = -majorGridSize; x <= majorGridSize; x += majorGridSpacing)
+        {
+            gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+        }
+
+        // Render major grid lines with subtle but visible color
+        engineFacade!.Renderer.SetShaderMode(ShaderMode.Normal);
+        engineFacade.Renderer.SetPrimitiveType(PrimitiveType.Lines);
+        engineFacade.Renderer.SetColor(new Vector4D<float>(0.4f, 0.4f, 0.4f, 0.8f));
+        engineFacade.Renderer.UpdateVertices(gridVertices.ToArray());
+        engineFacade.Renderer.Draw();
+
+        // Minor grid lines (every 0.2 units) - very subtle
+        gridVertices.Clear();
+        for (float y = -majorGridSize; y <= majorGridSize; y += minorGridSpacing)
+        {
+            if (y % majorGridSpacing != 0) // Skip major grid line positions
+            {
+                gridVertices.AddRange(new[] { -majorGridSize, y, majorGridSize, y });
+            }
+        }
+        for (float x = -majorGridSize; x <= majorGridSize; x += minorGridSpacing)
+        {
+            if (x % majorGridSpacing != 0) // Skip major grid line positions
+            {
+                gridVertices.AddRange(new[] { x, -majorGridSize, x, majorGridSize });
+            }
+        }
+
+        // Render minor grid lines with very subtle color
+        engineFacade.Renderer.SetColor(new Vector4D<float>(0.25f, 0.25f, 0.25f, 0.4f));
+        engineFacade.Renderer.UpdateVertices(gridVertices.ToArray());
+        engineFacade.Renderer.Draw();
+
+        // Reset to triangles for other objects
+        engineFacade.Renderer.SetPrimitiveType(PrimitiveType.Triangles);
+    }
+
+    private static void DrawSpawnedObjects()
+    {
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CLICK-TO-SPAWN OBJECTS DEMONSTRATION
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // These objects demonstrate coordinate transformation from screen space to world space.
+        // Each object is positioned at the world coordinates corresponding to mouse click position.
+
+        if (spawnedObjects.Count == 0)
+            return;
+
+        var vertexBuffer = new List<float>();
+
+        foreach (var obj in spawnedObjects)
+        {
+            // Render each spawned object as a small quad
+            float halfSize = obj.Size * 0.5f;
+            vertexBuffer.AddRange(new[]
+            {
+                // Triangle 1
+                obj.Position.X - halfSize, obj.Position.Y - halfSize,
+                obj.Position.X + halfSize, obj.Position.Y - halfSize,
+                obj.Position.X + halfSize, obj.Position.Y + halfSize,
+                
+                // Triangle 2
+                obj.Position.X - halfSize, obj.Position.Y - halfSize,
+                obj.Position.X + halfSize, obj.Position.Y + halfSize,
+                obj.Position.X - halfSize, obj.Position.Y + halfSize,
+            });
+        }
+
+        // Render all spawned objects
+        engineFacade!.Renderer.SetShaderMode(ShaderMode.SoftGlow);
+        engineFacade.Renderer.SetColor(new Vector4D<float>(1f, 0.5f, 0.2f, 1f)); // Orange
+        engineFacade.Renderer.UpdateVertices(vertexBuffer.ToArray());
+        engineFacade.Renderer.Draw();
+    }
+
+    private static void DrawUIOverlay()
+    {
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SCREEN-SPACE UI OVERLAY DEMONSTRATION
+        // ═══════════════════════════════════════════════════════════════════════════
+        //
+        // This UI remains fixed in screen space regardless of camera transformations.
+        // Uses geometric shapes as placeholders for text-based information display.
+
+        if (engineFacade == null)
+            return;
+
+        var camera = engineFacade.CameraManager.GameCamera;
+        
+        // UI Panel background (top-left corner)
+        DrawUIQuad(-380f, 250f, 200f, 120f, new Vector4D<float>(0.1f, 0.1f, 0.3f, 0.8f));
+
+        // Camera position indicators (colored bars representing X and Y)
+        float posX = Math.Clamp(camera.Position.X * 50f, -80f, 80f);
+        float posY = Math.Clamp(camera.Position.Y * 50f, -80f, 80f);
+        
+        DrawUIQuad(-350f, 220f, posX, 10f, new Vector4D<float>(1f, 0f, 0f, 1f)); // X position (red)
+        DrawUIQuad(-350f, 200f, posY, 10f, new Vector4D<float>(0f, 1f, 0f, 1f)); // Y position (green)
+
+        // Zoom level indicator (horizontal bar)
+        float zoomBarWidth = camera.Zoom * 60f;
+        DrawUIQuad(-350f, 180f, zoomBarWidth, 8f, new Vector4D<float>(0f, 0f, 1f, 1f)); // Zoom (blue)
+
+        // Controls indicator (small rectangles)
+        DrawUIQuad(-380f, 140f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f)); // "WASD: Camera"
+        DrawUIQuad(-380f, 130f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f)); // "Q/E: Zoom"
+        DrawUIQuad(-380f, 120f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f)); // "R: Reset"
+        DrawUIQuad(-380f, 110f, 15f, 5f, new Vector4D<float>(0.8f, 0.8f, 0.8f, 1f)); // "Tab: UI Toggle"
+
+        // Crosshair at screen center
+        DrawUICrosshair();
+    }
+
+    private static void DrawUIQuad(float x, float y, float width, float height, Vector4D<float> color)
+    {
+        var vertices = new float[]
+        {
+            x, y,                    // Bottom-left
+            x + width, y,           // Bottom-right  
+            x + width, y + height,  // Top-right
+            
+            x, y,                   // Bottom-left
+            x + width, y + height,  // Top-right
+            x, y + height,          // Top-left
+        };
+
+        engineFacade!.Renderer.SetShaderMode(ShaderMode.Normal);
+        engineFacade.Renderer.SetColor(color);
+        engineFacade.Renderer.UpdateVertices(vertices);
+        engineFacade.Renderer.Draw();
+    }
+
+    private static void DrawUICrosshair()
+    {
+        var crosshairVertices = new float[]
+        {
+            -20f, 0f, 20f, 0f,    // Horizontal line
+            0f, -20f, 0f, 20f     // Vertical line
+        };
+
+        engineFacade!.Renderer.SetShaderMode(ShaderMode.Normal);
+        engineFacade.Renderer.SetColor(new Vector4D<float>(1f, 1f, 1f, 0.7f));
+        engineFacade.Renderer.UpdateVertices(crosshairVertices);
+        engineFacade.Renderer.Draw();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // ADAPTIVE VISUAL EFFECTS MANAGEMENT SYSTEM
     // ═══════════════════════════════════════════════════════════════════════════
     //
@@ -474,5 +842,29 @@ public static class ShooterSample
         Right, // 90° clockwise rotation (+X axis)
         Down,  // 180° rotation (-Y axis)
         Left,  // 270° clockwise rotation (-X axis)
+    }
+
+    /// <summary>
+    /// Represents objects spawned in the world via mouse clicks for camera system demonstration.
+    ///
+    /// DESIGN PRINCIPLES:
+    /// - Minimal data: Essential state for rendering and lifetime management
+    /// - World-space positioning: Affected by camera transformations unlike UI elements
+    /// - Visual feedback: Provides clear demonstration of coordinate transformation
+    /// - Educational value: Shows difference between world and screen space
+    /// </summary>
+    private class WorldObject
+    {
+        /// <summary>Position in world coordinate space (affected by camera transformations)</summary>
+        public Vector2D<float> Position { get; set; }
+
+        /// <summary>Visual color for rendering identification</summary>
+        public Vector4D<float> Color { get; set; }
+
+        /// <summary>Size for rendering (diameter of the object)</summary>
+        public float Size { get; set; } = 0.05f;
+
+        /// <summary>Creation time for potential animation or lifetime management</summary>
+        public float CreationTime { get; set; }
     }
 }

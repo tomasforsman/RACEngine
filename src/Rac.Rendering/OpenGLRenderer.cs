@@ -36,6 +36,7 @@
 
 using Rac.Rendering.Shader;
 using Rac.Rendering.VFX;
+using Rac.Rendering.Camera;
 
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -75,6 +76,12 @@ public class OpenGLRenderer : IRenderer, IDisposable
     private ShaderMode _currentShaderMode = ShaderMode.Normal;
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // CAMERA MATRIX SYSTEM
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    private Matrix4X4<float> _currentCameraMatrix = Matrix4X4<float>.Identity;
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // DYNAMIC SHADER MANAGEMENT SYSTEM
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -109,6 +116,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     // ═══════════════════════════════════════════════════════════════════════════
 
     private Vector4D<float> _currentColor = new(1f, 1f, 1f, 1f);
+    private PrimitiveType _currentPrimitiveType = PrimitiveType.Triangles;
     private bool _disposed;
 
     /// <summary>
@@ -118,11 +126,13 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         public int AspectLocation { get; init; }
         public int ColorLocation { get; init; }
+        public int CameraMatrixLocation { get; init; }
 
         public ShaderUniforms(GL gl, uint programHandle)
         {
             AspectLocation = gl.GetUniformLocation(programHandle, "uAspect");
             ColorLocation = gl.GetUniformLocation(programHandle, "uColor");
+            CameraMatrixLocation = gl.GetUniformLocation(programHandle, "uCameraMatrix");
         }
     }
 
@@ -256,7 +266,6 @@ public class OpenGLRenderer : IRenderer, IDisposable
     private FullVertex[] ConvertFloatArrayToFull(float[] vertices, VertexLayout layout)
     {
         var defaultColor = new Vector4D<float>(1f, 1f, 1f, 1f);
-        var defaultTexCoord = new Vector2D<float>(0f, 0f);
 
         var floatsPerVertex = layout.Stride / sizeof(float);
         var vertexCount = vertices.Length / floatsPerVertex;
@@ -270,9 +279,18 @@ public class OpenGLRenderer : IRenderer, IDisposable
             var position = new Vector2D<float>(vertices[offset], vertices[offset + 1]);
 
             // TexCoord depends on layout
-            var texCoord = floatsPerVertex >= 4
-                ? new Vector2D<float>(vertices[offset + 2], vertices[offset + 3])
-                : defaultTexCoord;
+            Vector2D<float> texCoord;
+            if (floatsPerVertex >= 4)
+            {
+                // Explicit texture coordinates provided
+                texCoord = new Vector2D<float>(vertices[offset + 2], vertices[offset + 3]);
+            }
+            else
+            {
+                // For position-only vertices, use position as texture coordinates
+                // This enables bloom distance calculations to work correctly
+                texCoord = position;
+            }
 
             // Color always defaults to (1,1,1,1) for float arrays
             result[i] = new FullVertex(position, texCoord, defaultColor);
@@ -412,6 +430,43 @@ public class OpenGLRenderer : IRenderer, IDisposable
     }
 
     /// <summary>
+    /// Set camera transformation matrix for vertex transformations.
+    /// Enables 2D camera system with position, zoom, and rotation support.
+    /// </summary>
+    /// <param name="cameraMatrix">Combined view-projection matrix from camera system</param>
+    public void SetCameraMatrix(Matrix4X4<float> cameraMatrix)
+    {
+        _currentCameraMatrix = cameraMatrix;
+
+        // Upload camera matrix to current shader if available
+        if (_currentUniforms != null && _currentUniforms.CameraMatrixLocation >= 0)
+        {
+            // Convert Matrix4X4<float> to float array for OpenGL
+            var matrixArray = new float[]
+            {
+                cameraMatrix.M11, cameraMatrix.M12, cameraMatrix.M13, cameraMatrix.M14,
+                cameraMatrix.M21, cameraMatrix.M22, cameraMatrix.M23, cameraMatrix.M24,
+                cameraMatrix.M31, cameraMatrix.M32, cameraMatrix.M33, cameraMatrix.M34,
+                cameraMatrix.M41, cameraMatrix.M42, cameraMatrix.M43, cameraMatrix.M44
+            };
+            _gl.UniformMatrix4(_currentUniforms.CameraMatrixLocation, 1, false, matrixArray);
+        }
+    }
+
+    /// <summary>
+    /// Set the active camera for subsequent rendering operations.
+    /// Automatically updates the camera matrix from the provided camera.
+    /// </summary>
+    /// <param name="camera">Camera to use for rendering</param>
+    public void SetActiveCamera(ICamera camera)
+    {
+        if (camera == null)
+            throw new ArgumentNullException(nameof(camera));
+
+        SetCameraMatrix(camera.CombinedMatrix);
+    }
+
+    /// <summary>
     /// Set custom uniform value with type safety
     /// </summary>
     public void SetUniform(string name, float value)
@@ -490,7 +545,24 @@ public class OpenGLRenderer : IRenderer, IDisposable
 
             if (_currentUniforms.ColorLocation >= 0)
                 _gl.Uniform4(_currentUniforms.ColorLocation, _currentColor.X, _currentColor.Y, _currentColor.Z, _currentColor.W);
+
+            if (_currentUniforms.CameraMatrixLocation >= 0)
+            {
+                var matrixArray = new float[]
+                {
+                    _currentCameraMatrix.M11, _currentCameraMatrix.M12, _currentCameraMatrix.M13, _currentCameraMatrix.M14,
+                    _currentCameraMatrix.M21, _currentCameraMatrix.M22, _currentCameraMatrix.M23, _currentCameraMatrix.M24,
+                    _currentCameraMatrix.M31, _currentCameraMatrix.M32, _currentCameraMatrix.M33, _currentCameraMatrix.M34,
+                    _currentCameraMatrix.M41, _currentCameraMatrix.M42, _currentCameraMatrix.M43, _currentCameraMatrix.M44
+                };
+                _gl.UniformMatrix4(_currentUniforms.CameraMatrixLocation, 1, false, matrixArray);
+            }
         }
+    }
+
+    public void SetPrimitiveType(PrimitiveType primitiveType)
+    {
+        _currentPrimitiveType = primitiveType;
     }
 
     /// <summary>
@@ -514,7 +586,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
         if (_currentShader != null && _currentLayout != null)
         {
             _gl.BindVertexArray(_vao);
-            _gl.DrawArrays(PrimitiveType.Triangles, 0, _vertexCount);
+            _gl.DrawArrays(_currentPrimitiveType, 0, _vertexCount);
         }
     }
 
@@ -535,7 +607,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
         // Taking the address of IntPtr.Zero can cause undefined behavior similar to issue #69.
         unsafe
         {
-            _gl.DrawElements(PrimitiveType.Triangles, (uint)indices.Length, DrawElementsType.UnsignedInt, null);
+            _gl.DrawElements(_currentPrimitiveType, (uint)indices.Length, DrawElementsType.UnsignedInt, null);
         }
     }
 
@@ -849,10 +921,25 @@ public class OpenGLRenderer : IRenderer, IDisposable
         _aspectRatio = newSize.Y / (float)newSize.X;
         _windowSize = newSize;
 
-        // Update aspect ratio in current shader
-        if (_currentUniforms != null && _currentUniforms.AspectLocation >= 0)
+        // Update uniforms in current shader
+        if (_currentUniforms != null)
         {
-            _gl.Uniform1(_currentUniforms.AspectLocation, _aspectRatio);
+            if (_currentUniforms.AspectLocation >= 0)
+            {
+                _gl.Uniform1(_currentUniforms.AspectLocation, _aspectRatio);
+            }
+
+            if (_currentUniforms.CameraMatrixLocation >= 0)
+            {
+                var matrixArray = new float[]
+                {
+                    _currentCameraMatrix.M11, _currentCameraMatrix.M12, _currentCameraMatrix.M13, _currentCameraMatrix.M14,
+                    _currentCameraMatrix.M21, _currentCameraMatrix.M22, _currentCameraMatrix.M23, _currentCameraMatrix.M24,
+                    _currentCameraMatrix.M31, _currentCameraMatrix.M32, _currentCameraMatrix.M33, _currentCameraMatrix.M34,
+                    _currentCameraMatrix.M41, _currentCameraMatrix.M42, _currentCameraMatrix.M43, _currentCameraMatrix.M44
+                };
+                _gl.UniformMatrix4(_currentUniforms.CameraMatrixLocation, 1, false, matrixArray);
+            }
         }
 
         _postProcessing?.Resize(newSize.X, newSize.Y);

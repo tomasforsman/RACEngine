@@ -6,7 +6,9 @@ using Rac.ECS.Systems;
 using Rac.Input.Service;
 using Rac.Input.State;
 using Rac.Rendering;
+using Rac.Rendering.Camera;
 using Silk.NET.Input;
+using Silk.NET.Maths;
 
 namespace Rac.Engine;
 
@@ -27,6 +29,7 @@ public class ModularEngineFacade : IEngineFacade
     private readonly SystemScheduler _systems;
     private readonly IRenderer _renderer;
     private readonly IAudioService _audio;
+    private readonly ICameraManager _cameraManager;
 
     public ModularEngineFacade(
         IWindowManager windowManager,
@@ -55,6 +58,9 @@ public class ModularEngineFacade : IEngineFacade
         // Initialize audio service (use null object pattern as fallback)
         _audio = new NullAudioService();
 
+        // Initialize camera manager for dual-camera system
+        _cameraManager = new CameraManager();
+
         _logger.LogDebug("Setting up event pipeline");
         SetupEventPipeline();
 
@@ -66,6 +72,8 @@ public class ModularEngineFacade : IEngineFacade
     public SystemScheduler Systems => _systems;
     public IRenderer Renderer => _renderer;
     public IAudioService Audio => _audio;
+    public ICameraManager CameraManager => _cameraManager;
+    public IWindowManager WindowManager => _windowManager;
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;
@@ -78,6 +86,12 @@ public class ModularEngineFacade : IEngineFacade
 
     /// <summary>Fires whenever a key is pressed or released.</summary>
     public event Action<Key, KeyboardKeyState.KeyEvent>? KeyEvent;
+
+    /// <summary>Fires when the left mouse button is clicked, providing screen coordinates in pixels.</summary>
+    public event Action<Vector2D<float>>? LeftClickEvent;
+
+    /// <summary>Fires when the mouse wheel is scrolled, providing scroll delta.</summary>
+    public event Action<float>? MouseScrollEvent;
 
     /// <summary>Register an ECS system.</summary>
     public void AddSystem(ISystem system)
@@ -127,6 +141,19 @@ public class ModularEngineFacade : IEngineFacade
         {
             _logger.LogDebug($"Key event: {key} - {evt}");
             KeyEvent?.Invoke(key, evt);
+        };
+
+        // Forward mouse events with debugging
+        _inner.OnLeftClick += pos =>
+        {
+            _logger.LogDebug($"Mouse click at: {pos}");
+            LeftClickEvent?.Invoke(pos);
+        };
+
+        _inner.OnMouseScroll += delta =>
+        {
+            _logger.LogDebug($"Mouse scroll delta: {delta}");
+            MouseScrollEvent?.Invoke(delta);
         };
     }
 }
