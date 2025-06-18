@@ -1,4 +1,5 @@
 using Rac.Rendering;
+using Rac.Rendering.Camera;
 using Silk.NET.Maths;
 using Xunit;
 
@@ -124,6 +125,7 @@ public class VertexTypeSafetyTests
         public void Clear() { }
         public void SetColor(Vector4D<float> rgba) { }
         public void SetCameraMatrix(Matrix4X4<float> cameraMatrix) { }
+        public void SetActiveCamera(ICamera camera) { }
         public void SetShaderMode(Rac.Rendering.Shader.ShaderMode mode) { }
         public void Draw() { }
         public void FinalizeFrame() { }

@@ -36,6 +36,7 @@
 
 using Rac.Rendering.Shader;
 using Rac.Rendering.VFX;
+using Rac.Rendering.Camera;
 
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -441,6 +442,19 @@ public class OpenGLRenderer : IRenderer, IDisposable
             };
             _gl.UniformMatrix4(_currentUniforms.CameraMatrixLocation, 1, false, matrixArray);
         }
+    }
+
+    /// <summary>
+    /// Set the active camera for subsequent rendering operations.
+    /// Automatically updates the camera matrix from the provided camera.
+    /// </summary>
+    /// <param name="camera">Camera to use for rendering</param>
+    public void SetActiveCamera(ICamera camera)
+    {
+        if (camera == null)
+            throw new ArgumentNullException(nameof(camera));
+
+        SetCameraMatrix(camera.CombinedMatrix);
     }
 
     /// <summary>

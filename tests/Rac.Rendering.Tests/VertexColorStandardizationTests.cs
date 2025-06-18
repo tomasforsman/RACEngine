@@ -1,4 +1,5 @@
 using Rac.Rendering;
+using Rac.Rendering.Camera;
 using Silk.NET.Maths;
 using System;
 using System.Linq;
@@ -250,6 +251,7 @@ public class VertexColorStandardizationTests
         public void Clear() { }
         public void SetColor(Vector4D<float> rgba) { }
         public void SetCameraMatrix(Matrix4X4<float> cameraMatrix) { }
+        public void SetActiveCamera(ICamera camera) { }
         public void SetShaderMode(Rac.Rendering.Shader.ShaderMode mode) { }
         public void UpdateVertices(float[] vertices) => UpdateVertices(vertices, BasicVertex.GetLayout());
         public void Draw() { }

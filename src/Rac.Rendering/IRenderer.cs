@@ -1,6 +1,7 @@
 ﻿// File: src/Engine/Rendering/IRenderer.cs
 
 using Rac.Rendering.Shader;
+using Rac.Rendering.Camera;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
@@ -22,6 +23,9 @@ public interface IRenderer
 
     /// <summary>Set the camera transformation matrix for vertex transformations.</summary>
     void SetCameraMatrix(Matrix4X4<float> cameraMatrix);
+
+    /// <summary>Set the active camera for subsequent rendering operations.</summary>
+    void SetActiveCamera(ICamera camera);
 
     /// <summary>Set the shader mode for visual effects.</summary>
     void SetShaderMode(ShaderMode mode);

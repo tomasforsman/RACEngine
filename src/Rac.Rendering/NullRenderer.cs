@@ -1,5 +1,6 @@
 using System;
 using Rac.Rendering.Shader;
+using Rac.Rendering.Camera;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
@@ -45,6 +46,11 @@ public class NullRenderer : IRenderer
     public void SetCameraMatrix(Matrix4X4<float> cameraMatrix)
     {
         // No-op: no camera matrix to set
+    }
+
+    public void SetActiveCamera(ICamera camera)
+    {
+        // No-op: no camera to set
     }
 
     public void SetShaderMode(ShaderMode mode)
