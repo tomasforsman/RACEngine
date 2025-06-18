@@ -2,6 +2,7 @@ using System;
 using Rac.Rendering.Shader;
 using Rac.Rendering.Camera;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
 namespace Rac.Rendering;
@@ -56,6 +57,11 @@ public class NullRenderer : IRenderer
     public void SetShaderMode(ShaderMode mode)
     {
         // No-op: no shader to set
+    }
+
+    public void SetPrimitiveType(PrimitiveType primitiveType)
+    {
+        // No-op: no primitive type to set
     }
 
     public void UpdateVertices(float[] vertices)

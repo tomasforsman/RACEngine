@@ -116,6 +116,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     // ═══════════════════════════════════════════════════════════════════════════
 
     private Vector4D<float> _currentColor = new(1f, 1f, 1f, 1f);
+    private PrimitiveType _currentPrimitiveType = PrimitiveType.Triangles;
     private bool _disposed;
 
     /// <summary>
@@ -551,6 +552,11 @@ public class OpenGLRenderer : IRenderer, IDisposable
         }
     }
 
+    public void SetPrimitiveType(PrimitiveType primitiveType)
+    {
+        _currentPrimitiveType = primitiveType;
+    }
+
     /// <summary>
     /// Configures GPU blending state based on shader mode requirements
     /// </summary>
@@ -572,7 +578,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
         if (_currentShader != null && _currentLayout != null)
         {
             _gl.BindVertexArray(_vao);
-            _gl.DrawArrays(PrimitiveType.Triangles, 0, _vertexCount);
+            _gl.DrawArrays(_currentPrimitiveType, 0, _vertexCount);
         }
     }
 
@@ -593,7 +599,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
         // Taking the address of IntPtr.Zero can cause undefined behavior similar to issue #69.
         unsafe
         {
-            _gl.DrawElements(PrimitiveType.Triangles, (uint)indices.Length, DrawElementsType.UnsignedInt, null);
+            _gl.DrawElements(_currentPrimitiveType, (uint)indices.Length, DrawElementsType.UnsignedInt, null);
         }
     }
 

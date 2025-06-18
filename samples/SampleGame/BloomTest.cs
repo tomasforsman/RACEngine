@@ -64,6 +64,7 @@ using Rac.Rendering;
 using Rac.Rendering.Shader;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 
 namespace SampleGame;
 
@@ -177,6 +178,11 @@ public static class BloomTest
         engine.LeftClickEvent += screenPosition =>
         {
             HandleMouseClick(screenPosition, engine);
+        };
+
+        engine.MouseScrollEvent += delta =>
+        {
+            HandleMouseScroll(delta, engine);
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -407,6 +413,18 @@ public static class BloomTest
             Console.WriteLine($"Spawned object at world position: ({worldPosition.X:F2}, {worldPosition.Y:F2})");
         }
 
+        void HandleMouseScroll(float delta, EngineFacade engine)
+        {
+            var camera = engine.CameraManager.GameCamera;
+            
+            // Zoom with mouse wheel
+            const float zoomSensitivity = 0.1f;
+            float zoomDelta = delta * zoomSensitivity;
+            
+            // Apply zoom with limits
+            camera.Zoom = Math.Max(0.1f, Math.Min(10f, camera.Zoom + zoomDelta));
+        }
+
         void DrawBackgroundGrid(EngineFacade engine)
         {
             // ═══════════════════════════════════════════════════════════════════════════
@@ -433,6 +451,7 @@ public static class BloomTest
 
             // Render major grid lines with subtle but visible color
             engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            engine.Renderer.SetPrimitiveType(PrimitiveType.Lines);
             engine.Renderer.SetColor(new Vector4D<float>(0.4f, 0.4f, 0.4f, 0.8f));
             engine.Renderer.UpdateVertices(gridVertices.ToArray());
             engine.Renderer.Draw();
@@ -458,6 +477,9 @@ public static class BloomTest
             engine.Renderer.SetColor(new Vector4D<float>(0.25f, 0.25f, 0.25f, 0.4f));
             engine.Renderer.UpdateVertices(gridVertices.ToArray());
             engine.Renderer.Draw();
+
+            // Reset to triangles for other objects
+            engine.Renderer.SetPrimitiveType(PrimitiveType.Triangles);
         }
 
         void DrawSpawnedObjects(EngineFacade engine, ShaderMode currentShaderMode, bool showHDRColors)

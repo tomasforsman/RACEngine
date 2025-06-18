@@ -77,6 +77,7 @@ using Rac.Input.State;
 using Rac.Rendering.Shader;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 
 namespace SampleGame;
 
@@ -235,6 +236,9 @@ public static class ShooterSample
 
         // ─── Hook Mouse Input for Click-to-Spawn ────────────────
         engineFacade.LeftClickEvent += OnMouseClick;
+
+        // ─── Hook Mouse Scroll for Camera Zoom ──────────────────
+        engineFacade.MouseScrollEvent += OnMouseScroll;
 
         // ─── Hook Game Loop ─────────────────────────────────────
         engineFacade.UpdateEvent += OnUpdate;
@@ -406,6 +410,18 @@ public static class ShooterSample
         spawnedObjects.Add(newObject);
 
         Console.WriteLine($"Spawned object at world: {worldPosition} (screen: {screenPosition})");
+    }
+
+    private static void OnMouseScroll(float delta)
+    {
+        var camera = engineFacade!.CameraManager.GameCamera;
+        
+        // Zoom with mouse wheel
+        const float zoomSensitivity = 0.1f;
+        float zoomDelta = delta * zoomSensitivity;
+        
+        // Apply zoom with limits
+        camera.Zoom = Math.Max(0.1f, Math.Min(10f, camera.Zoom + zoomDelta));
     }
 
     private static void OnUpdate(float deltaTime)
@@ -602,6 +618,7 @@ public static class ShooterSample
 
         // Render major grid lines with subtle but visible color
         engineFacade!.Renderer.SetShaderMode(ShaderMode.Normal);
+        engineFacade.Renderer.SetPrimitiveType(PrimitiveType.Lines);
         engineFacade.Renderer.SetColor(new Vector4D<float>(0.4f, 0.4f, 0.4f, 0.8f));
         engineFacade.Renderer.UpdateVertices(gridVertices.ToArray());
         engineFacade.Renderer.Draw();
@@ -627,6 +644,9 @@ public static class ShooterSample
         engineFacade.Renderer.SetColor(new Vector4D<float>(0.25f, 0.25f, 0.25f, 0.4f));
         engineFacade.Renderer.UpdateVertices(gridVertices.ToArray());
         engineFacade.Renderer.Draw();
+
+        // Reset to triangles for other objects
+        engineFacade.Renderer.SetPrimitiveType(PrimitiveType.Triangles);
     }
 
     private static void DrawSpawnedObjects()

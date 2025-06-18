@@ -3,6 +3,7 @@
 using Rac.Rendering.Shader;
 using Rac.Rendering.Camera;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
 namespace Rac.Rendering;
@@ -29,6 +30,9 @@ public interface IRenderer
 
     /// <summary>Set the shader mode for visual effects.</summary>
     void SetShaderMode(ShaderMode mode);
+
+    /// <summary>Set the primitive type for subsequent draw calls (default: Triangles).</summary>
+    void SetPrimitiveType(PrimitiveType primitiveType);
 
     /// <summary>Upload vertex positions (2D) into the VBO.</summary>
     void UpdateVertices(float[] vertices);

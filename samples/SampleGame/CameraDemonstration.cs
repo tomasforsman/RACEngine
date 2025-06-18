@@ -31,6 +31,7 @@ using Rac.Rendering;
 using Rac.Rendering.Shader;
 using Silk.NET.Maths;
 using Silk.NET.Input;
+using Silk.NET.OpenGL;
 using System.Collections.Generic;
 
 namespace SampleGame;
@@ -251,6 +252,7 @@ public static class CameraDemonstration
 
         // Render major grid lines with subtle but visible color
         _engine.Renderer.SetShaderMode(ShaderMode.Normal);
+        _engine.Renderer.SetPrimitiveType(PrimitiveType.Lines);
         _engine.Renderer.SetColor(new Vector4D<float>(0.4f, 0.4f, 0.4f, 0.8f));
         _engine.Renderer.UpdateVertices(gridVertices.ToArray());
         _engine.Renderer.Draw();
@@ -276,6 +278,9 @@ public static class CameraDemonstration
         _engine.Renderer.SetColor(new Vector4D<float>(0.25f, 0.25f, 0.25f, 0.4f));
         _engine.Renderer.UpdateVertices(gridVertices.ToArray());
         _engine.Renderer.Draw();
+
+        // Reset to triangles for other objects
+        _engine.Renderer.SetPrimitiveType(PrimitiveType.Triangles);
     }
 
     private static void RenderQuad(Vector2D<float> position, float size)
