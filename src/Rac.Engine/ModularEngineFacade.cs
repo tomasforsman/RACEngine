@@ -6,6 +6,7 @@ using Rac.ECS.Systems;
 using Rac.Input.Service;
 using Rac.Input.State;
 using Rac.Rendering;
+using Rac.Rendering.Camera;
 using Silk.NET.Input;
 
 namespace Rac.Engine;
@@ -27,6 +28,7 @@ public class ModularEngineFacade : IEngineFacade
     private readonly SystemScheduler _systems;
     private readonly IRenderer _renderer;
     private readonly IAudioService _audio;
+    private readonly ICameraManager _cameraManager;
 
     public ModularEngineFacade(
         IWindowManager windowManager,
@@ -55,6 +57,9 @@ public class ModularEngineFacade : IEngineFacade
         // Initialize audio service (use null object pattern as fallback)
         _audio = new NullAudioService();
 
+        // Initialize camera manager for dual-camera system
+        _cameraManager = new CameraManager();
+
         _logger.LogDebug("Setting up event pipeline");
         SetupEventPipeline();
 
@@ -66,6 +71,7 @@ public class ModularEngineFacade : IEngineFacade
     public SystemScheduler Systems => _systems;
     public IRenderer Renderer => _renderer;
     public IAudioService Audio => _audio;
+    public ICameraManager CameraManager => _cameraManager;
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;

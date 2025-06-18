@@ -20,6 +20,9 @@ public interface IRenderer
     /// <summary>Set the RGBA color for subsequent draw calls.</summary>
     void SetColor(Vector4D<float> rgba);
 
+    /// <summary>Set the camera transformation matrix for vertex transformations.</summary>
+    void SetCameraMatrix(Matrix4X4<float> cameraMatrix);
+
     /// <summary>Set the shader mode for visual effects.</summary>
     void SetShaderMode(ShaderMode mode);
 

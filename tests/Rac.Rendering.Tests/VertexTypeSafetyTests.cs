@@ -123,6 +123,7 @@ public class VertexTypeSafetyTests
         public void Initialize(Silk.NET.Windowing.IWindow window) { }
         public void Clear() { }
         public void SetColor(Vector4D<float> rgba) { }
+        public void SetCameraMatrix(Matrix4X4<float> cameraMatrix) { }
         public void SetShaderMode(Rac.Rendering.Shader.ShaderMode mode) { }
         public void Draw() { }
         public void FinalizeFrame() { }

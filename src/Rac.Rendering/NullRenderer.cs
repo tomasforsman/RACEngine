@@ -42,6 +42,11 @@ public class NullRenderer : IRenderer
         // No-op: no color to set
     }
 
+    public void SetCameraMatrix(Matrix4X4<float> cameraMatrix)
+    {
+        // No-op: no camera matrix to set
+    }
+
     public void SetShaderMode(ShaderMode mode)
     {
         // No-op: no shader to set
