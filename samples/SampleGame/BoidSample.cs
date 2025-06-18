@@ -66,20 +66,20 @@ public static class BoidSample
     // shader mode enhancement. Users can interactively cycle through rendering modes
     // to understand the visual impact of different graphics techniques:
     // - Normal: Standard rasterization (baseline)
-    // - SoftGlow: Subtle luminance enhancement 
+    // - SoftGlow: Subtle luminance enhancement
     // - Bloom: HDR post-processing with dramatic light bleeding effects
 
     private static ShaderMode _currentShaderMode = ShaderMode.Normal;
     private static List<ShaderMode> _availableShaderModes = new() { ShaderMode.Normal, ShaderMode.SoftGlow };
     private static int _shaderModeIndex = 0;
-    
+
     // ───────────────────────────────────────────────────────────────────────────
     // EDUCATIONAL TIP SYSTEM
     // ───────────────────────────────────────────────────────────────────────────
     //
     // Provides contextual learning hints during bloom mode to help users understand
     // advanced graphics concepts and HDR rendering techniques.
-    
+
     private static float _timeSinceLastTip = 0f;
     private static int _tipIndex = 0;
 
@@ -560,9 +560,9 @@ public static class BoidSample
                     Math.Min(baseColor.Z * 1.3f, 1.0f),
                     1f),
                 ShaderMode.Bloom => new Vector4D<float>(
-                    Math.Min(baseColor.X * 1.6f, 1.0f),
-                    Math.Min(baseColor.Y * 1.6f, 1.0f),
-                    Math.Min(baseColor.Z * 1.6f, 1.0f),
+                    Math.Min(baseColor.X * 0.6f, 1.0f),
+                    Math.Min(baseColor.Y * 0.6f, 1.0f),
+                    Math.Min(baseColor.Z * 0.6f, 1.0f),
                     1f),
                 _ => baseColor
             };

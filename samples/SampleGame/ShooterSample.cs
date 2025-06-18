@@ -82,7 +82,7 @@ public static class ShooterSample
     // These values control the game feel and physics behavior:
     // - BulletSpeed: Projectile velocity in NDC units per second
     // - FireInterval: Time between automatic shots (balances gameplay)
-    
+
     private const float BulletSpeed = 0.75f;  // Fast projectile movement
     private const float FireInterval = 0.2f;  // 5 shots per second when auto-firing
 
@@ -93,7 +93,7 @@ public static class ShooterSample
     // This system showcases different rendering modes applied to different object types,
     // demonstrating how visual effects can be mixed and matched for educational purposes.
     // Each effect mode combination illustrates different graphics programming concepts.
-    
+
     private static ShaderMode _shipShaderMode = ShaderMode.Normal;
     private static ShaderMode _bulletShaderMode = ShaderMode.SoftGlow;
     private static readonly ShaderMode[] _availableShaderModes = { ShaderMode.Normal, ShaderMode.SoftGlow, ShaderMode.Bloom };
@@ -136,11 +136,11 @@ public static class ShooterSample
     // Triangle model defined in local coordinate space (centered at origin).
     // This demonstrates basic 2D geometry construction for game objects.
     // The triangle points "up" in local space, requiring rotation for other directions.
-    
+
     private static readonly Vector2D<float>[] shipModel = new[]
     {
         new Vector2D<float>(-0.05f, -0.05f),  // Left base vertex
-        new Vector2D<float>(0.05f, -0.05f),   // Right base vertex  
+        new Vector2D<float>(0.05f, -0.05f),   // Right base vertex
         new Vector2D<float>(0.00f, 0.10f),    // Top point (ship nose)
     };
 
@@ -158,7 +158,8 @@ public static class ShooterSample
         // ═══════════════════════════════════════════════════════════════════════════
         // EDUCATIONAL STARTUP GUIDANCE
         // ═══════════════════════════════════════════════════════════════════════════
-        
+        Console.OutputEncoding = System.Text.Encoding.Unicode;
+
         Console.WriteLine("╔══════════════════════════════════════════════════════════════════════════════╗");
         Console.WriteLine("║                    SHOOTER SAMPLE - GAME ENGINE EDUCATION                   ║");
         Console.WriteLine("╚══════════════════════════════════════════════════════════════════════════════╝");
@@ -197,7 +198,7 @@ public static class ShooterSample
         // ═══════════════════════════════════════════════════════════════════════════
         // EVENT REGISTRATION
         // ═══════════════════════════════════════════════════════════════════════════
-        
+
         // Initial Draw when Renderer is ready
         engineFacade.LoadEvent += () => RedrawScene();
 
@@ -295,13 +296,13 @@ public static class ShooterSample
         // ═══════════════════════════════════════════════════════════════════════════
         // SHIP RENDERING WITH DEDICATED SHADER MODE
         // ═══════════════════════════════════════════════════════════════════════════
-        
+
         DrawShip();
 
         // ═══════════════════════════════════════════════════════════════════════════
         // BULLET RENDERING WITH SEPARATE SHADER MODE
         // ═══════════════════════════════════════════════════════════════════════════
-        
+
         DrawBullets();
     }
 
@@ -314,7 +315,7 @@ public static class ShooterSample
         // This demonstrates the standard 2D transformation pipeline used in computer
         // graphics for rotating objects. The process applies rotation mathematics
         // to each vertex of the ship model.
-        
+
         var vertexBuffer = new List<float>();
 
         // Transform each vertex through the rotation matrix
@@ -325,7 +326,7 @@ public static class ShooterSample
             // Apply 2D rotation transformation to local vertex coordinates
             float x = vertex.X * MathF.Cos(shipRotation) - vertex.Y * MathF.Sin(shipRotation);
             float y = vertex.X * MathF.Sin(shipRotation) + vertex.Y * MathF.Cos(shipRotation);
-            
+
             // Add transformed coordinates to vertex buffer for GPU upload
             vertexBuffer.Add(x);
             vertexBuffer.Add(y);
@@ -363,7 +364,7 @@ public static class ShooterSample
         {
             // Define bullet as small square centered at bullet position
             const float halfSize = 0.02f;
-            
+
             // Build quad as two triangles with shared vertices for efficiency
             // Triangle 1: Bottom-left → Top-left → Top-right
             // Triangle 2: Bottom-left → Top-right → Bottom-right
@@ -372,9 +373,9 @@ public static class ShooterSample
                 {
                     // First triangle vertices
                     bullet.Position.X - halfSize, bullet.Position.Y - halfSize,  // Bottom-left
-                    bullet.Position.X + halfSize, bullet.Position.Y - halfSize,  // Bottom-right  
+                    bullet.Position.X + halfSize, bullet.Position.Y - halfSize,  // Bottom-right
                     bullet.Position.X + halfSize, bullet.Position.Y + halfSize,  // Top-right
-                    
+
                     // Second triangle vertices (completing the quad)
                     bullet.Position.X - halfSize, bullet.Position.Y - halfSize,  // Bottom-left (shared)
                     bullet.Position.X + halfSize, bullet.Position.Y + halfSize,  // Top-right (shared)
@@ -385,7 +386,7 @@ public static class ShooterSample
 
         // Configure bullet-specific rendering state and submit batch to GPU
         engineFacade!.Renderer.SetShaderMode(_bulletShaderMode);
-        engineFacade.Renderer.SetColor(new Vector4D<float>(1f, 1f, 0.5f, 1f)); // Yellow projectiles for visibility
+        engineFacade.Renderer.SetColor(new Vector4D<float>(1f, 1f, 0.3f, 1f)); // Yellow projectiles for visibility
         engineFacade.Renderer.UpdateVertices(vertexBuffer.ToArray());
         engineFacade.Renderer.Draw();
     }
@@ -401,7 +402,7 @@ public static class ShooterSample
     private static void CycleVisualEffects()
     {
         _effectModeIndex = (_effectModeIndex + 1) % _availableShaderModes.Length;
-        
+
         // Cycle through carefully chosen effect combinations to highlight different
         // graphics programming concepts and visual techniques
         switch (_effectModeIndex)
@@ -414,7 +415,7 @@ public static class ShooterSample
                 Console.WriteLine("   • Bullets: Standard quad rasterization");
                 Console.WriteLine("   • Demonstrates: Basic GPU geometry processing");
                 break;
-                
+
             case 1: // Mixed mode: Demonstrates selective effect application
                 _shipShaderMode = ShaderMode.Normal;
                 _bulletShaderMode = ShaderMode.SoftGlow;
@@ -423,7 +424,7 @@ public static class ShooterSample
                 Console.WriteLine("   • Bullets: SoftGlow effect (projectile emphasis)");
                 Console.WriteLine("   • Demonstrates: Per-object shader mode assignment");
                 break;
-                
+
             case 2: // Advanced mode: Full post-processing demonstration
                 _shipShaderMode = ShaderMode.SoftGlow;
                 _bulletShaderMode = ShaderMode.Bloom;
@@ -442,7 +443,7 @@ public static class ShooterSample
 
     /// <summary>
     /// Represents a projectile in flight with position and velocity state.
-    /// 
+    ///
     /// DESIGN PRINCIPLES:
     /// - Minimal data: Only essential state for physics simulation
     /// - Value semantics: Immutable position updates through assignment
@@ -453,14 +454,14 @@ public static class ShooterSample
     {
         /// <summary>Current position in NDC coordinate space (-1 to +1 range)</summary>
         public Vector2D<float> Position { get; set; }
-        
+
         /// <summary>Movement velocity in NDC units per second</summary>
         public Vector2D<float> Velocity { get; set; }
     }
 
     /// <summary>
     /// Cardinal directions for discrete ship orientation state.
-    /// 
+    ///
     /// DESIGN RATIONALE:
     /// - Simplified controls: Reduces input complexity for educational focus
     /// - Predictable behavior: Deterministic rotation angles for each direction

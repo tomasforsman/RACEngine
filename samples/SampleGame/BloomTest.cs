@@ -64,19 +64,19 @@ namespace SampleGame;
 
 /// <summary>
 /// Educational bloom effect demonstration showcasing HDR color theory and post-processing.
-/// 
+///
 /// EDUCATIONAL OBJECTIVES:
 /// - Demonstrate HDR vs LDR color space differences through interactive comparison
 /// - Illustrate bloom algorithm stages (bright extraction, blur, composite)
 /// - Provide hands-on experience with real-time graphics programming concepts
 /// - Connect mathematical theory to practical visual results
-/// 
+///
 /// TECHNICAL VALIDATION:
 /// - Validates HDR bloom requirements from issue #51
 /// - Tests color values exceeding 1.0 for dramatic bloom effects
 /// - Demonstrates proper tone mapping and color space handling
 /// - Ensures consistent behavior across different shader modes
-/// 
+///
 /// GRAPHICS TECHNIQUES SHOWCASED:
 /// - Multi-pass rendering pipeline
 /// - Framebuffer object usage for render-to-texture
@@ -90,7 +90,7 @@ public static class BloomTest
         // ═══════════════════════════════════════════════════════════════════════════
         // ENGINE SETUP FOR BLOOM DEMONSTRATION
         // ═══════════════════════════════════════════════════════════════════════════
-        
+
         var windowManager = new WindowManager();
         var inputService = new SilkInputService();
         var configurationManager = new ConfigManager();
@@ -150,7 +150,7 @@ public static class BloomTest
                         currentShaderMode = currentShaderMode == ShaderMode.Bloom ? ShaderMode.Normal : ShaderMode.Bloom;
                         Console.WriteLine($"Shader Mode: {currentShaderMode}");
                         break;
-                        
+
                     case Key.H: // Toggle HDR colors
                         showHDRColors = !showHDRColors;
                         Console.WriteLine($"HDR Colors: {(showHDRColors ? "ON (dramatic bloom)" : "OFF (subtle bloom)")}");
@@ -171,7 +171,8 @@ public static class BloomTest
         // ═══════════════════════════════════════════════════════════════════════════
         // STARTUP EDUCATIONAL GUIDANCE
         // ═══════════════════════════════════════════════════════════════════════════
-        
+        Console.OutputEncoding = System.Text.Encoding.Unicode;
+
         Console.WriteLine("╔══════════════════════════════════════════════════════════════════════════════╗");
         Console.WriteLine("║               BLOOM HDR DEMONSTRATION - GRAPHICS EDUCATION                  ║");
         Console.WriteLine("╚══════════════════════════════════════════════════════════════════════════════╝");
@@ -214,12 +215,12 @@ public static class BloomTest
         void DrawBloomDemonstrationShapes()
         {
             var currentColors = showHDRColors ? hdrColors : ldrColors;
-            
+
             // Draw test shapes in a grid pattern to compare effects
             var positions = new Dictionary<string, Vector2D<float>>
             {
                 ["Red"] = new(-0.6f, 0.6f),    // Top left
-                ["White"] = new(0.6f, 0.6f),   // Top right  
+                ["White"] = new(0.6f, 0.6f),   // Top right
                 ["Blue"] = new(-0.6f, -0.6f),  // Bottom left
                 ["Dim"] = new(0.6f, -0.6f),    // Bottom right
             };
@@ -238,10 +239,10 @@ public static class BloomTest
             //
             // Constructs a square using two triangles in counter-clockwise winding order.
             // This demonstrates basic 2D geometry tessellation for GPU rendering.
-            
+
             const float size = 0.3f; // Square size in NDC coordinates
             var halfSize = size * 0.5f;
-            
+
             // Triangle strip approach: Reuses vertices for efficiency
             // Triangle 1: Top-left → Top-right → Bottom-left
             // Triangle 2: Top-right → Bottom-right → Bottom-left
@@ -251,8 +252,8 @@ public static class BloomTest
                 center.X - halfSize, center.Y + halfSize,  // Top-left vertex
                 center.X + halfSize, center.Y + halfSize,  // Top-right vertex
                 center.X - halfSize, center.Y - halfSize,  // Bottom-left vertex
-                
-                // Second triangle vertices (CCW winding) 
+
+                // Second triangle vertices (CCW winding)
                 center.X + halfSize, center.Y + halfSize,  // Top-right vertex (shared)
                 center.X + halfSize, center.Y - halfSize,  // Bottom-right vertex
                 center.X - halfSize, center.Y - halfSize,  // Bottom-left vertex (shared)
