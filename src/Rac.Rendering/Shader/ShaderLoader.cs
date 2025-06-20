@@ -196,6 +196,33 @@ public static class ShaderLoader
         return report;
     }
 
+    /// <summary>
+    /// Loads a specific shader file by name.
+    /// </summary>
+    /// <param name="filename">Shader file name (e.g., "fullscreen_quad.vert")</param>
+    /// <returns>Shader source code as string</returns>
+    /// <exception cref="FileNotFoundException">When shader file doesn't exist</exception>
+    /// <exception cref="ArgumentException">When filename is null or empty</exception>
+    public static string LoadShaderFile(string filename)
+    {
+        if (string.IsNullOrEmpty(filename))
+            throw new ArgumentException("Filename cannot be null or empty", nameof(filename));
+            
+        var key = $"file:{filename}";
+        if (_cache.TryGetValue(key, out var cached))
+            return cached;
+            
+        var shaderDirectory = GetShaderDirectory();
+        var fullPath = Path.Combine(shaderDirectory, filename);
+        
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"Shader file not found: {fullPath}");
+            
+        var source = File.ReadAllText(fullPath);
+        _cache[key] = source;
+        return source;
+    }
+
     public static ShaderDirectoryStatus ValidateShaderDirectory()
     {
         var status = new ShaderDirectoryStatus();
