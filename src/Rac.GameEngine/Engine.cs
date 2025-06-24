@@ -10,7 +10,7 @@
 // - Multi-pass rendering pipeline with clear/render/finalize phases
 // - Comprehensive input handling (mouse, keyboard) with event propagation
 // - ECS update coordination with frame timing
-// - Dynamic vertex management with type safety and legacy compatibility
+// - Dynamic vertex management with type safety
 // - Advanced renderer integration (shader modes, post-processing)
 // - Resource management with graceful initialization and cleanup
 //
@@ -43,7 +43,7 @@ namespace Rac.GameEngine;
 ///
 /// DESIGN GOALS:
 /// - Complete abstraction of windowing and rendering complexity
-/// - Type-safe vertex management with backward compatibility
+/// - Type-safe vertex management
 /// - Structured event-driven architecture for game logic integration
 /// - Configuration-driven setup with sensible defaults
 /// - Clean resource management and deterministic cleanup
@@ -133,7 +133,7 @@ public class Engine
 
     /// <summary>
     /// Upload raw float array vertex data with automatic layout detection.
-    /// Maintains backward compatibility with existing rendering code.
+    /// Supports existing rendering code that uses float array format.
     /// </summary>
     /// <param name="vertices">Float array containing vertex data in basic position format</param>
     public void UpdateVertices(float[] vertices)
@@ -270,6 +270,9 @@ public class Engine
     private void OnWindowLoad()
     {
         _renderer.Initialize(_window);
+        _renderer.InitializePreprocessing();
+        _renderer.InitializeProcessing();
+        _renderer.InitializePostProcessing();
 
         // Process any vertices that were uploaded before renderer initialization
         if (_pendingVertices is not null)

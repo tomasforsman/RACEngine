@@ -1,24 +1,26 @@
 using Rac.Rendering;
 using Rac.Rendering.Pipeline;
+using Silk.NET.Maths;
 using Xunit;
 
 namespace Rac.Rendering.Tests.Pipeline;
 
-public class PhaseBasedArchitectureTests
+public class PipelineArchitectureTests
 {
     [Fact]
-    public void OpenGLRenderer_HasPhaseBasedArchitecture()
+    public void OpenGLRenderer_HasPipelineArchitecture()
     {
         // Arrange & Act
         var renderer = new OpenGLRenderer();
         
-        // Assert - Verify the renderer exposes the new phase-based properties
+        // Assert - Verify the renderer exposes the required properties
         Assert.NotNull(renderer);
         Assert.False(renderer.IsFullyInitialized); // Should not be initialized yet
         
         // Verify configuration is accessible
         var config = renderer.Configuration;
-        Assert.NotNull(config);
+        // RenderConfiguration is a value type, so just verify it has expected default properties
+        Assert.Equal(default(Vector2D<int>), config.ViewportSize);
     }
     
     [Fact]

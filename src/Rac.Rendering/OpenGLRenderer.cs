@@ -1,10 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// PHASE-BASED OPENGL RENDERER ORCHESTRATOR
+// OPENGL RENDERER ORCHESTRATOR
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This is the new phase-based OpenGL renderer that orchestrates the four distinct
-// rendering phases while maintaining backward compatibility with the existing IRenderer
-// interface. This class enforces proper phase ordering and validates prerequisites.
+// OpenGL renderer that orchestrates distinct rendering phases.
+// This class enforces proper phase ordering and validates prerequisites.
 //
 // EDUCATIONAL ASPECTS:
 // - Orchestrator pattern: Coordinates multiple specialized components
@@ -22,7 +21,7 @@ using Silk.NET.Windowing;
 namespace Rac.Rendering;
 
 /// <summary>
-/// Phase-based OpenGL renderer that orchestrates distinct rendering phases.
+/// OpenGL renderer that orchestrates distinct rendering phases.
 /// 
 /// PHASE ARCHITECTURE:
 /// 1. Configuration: Pure data structures (no GPU interaction)
@@ -72,14 +71,14 @@ public class OpenGLRenderer : IRenderer, IDisposable
     
     /// <summary>
     /// Initializes the renderer with window context and default configuration.
-    /// This triggers the preprocessing phase automatically for backward compatibility.
+    /// Applications must explicitly call preprocessing phases after initialization.
     /// </summary>
     public void Initialize(IWindow window)
     {
         if (_isInitialized)
             throw new InvalidOperationException("Renderer is already initialized");
             
-        Console.WriteLine("Initializing phase-based OpenGL renderer...");
+        Console.WriteLine("Initializing OpenGL renderer...");
         
         // Get OpenGL context
         _gl = GL.GetApi(window);
@@ -88,13 +87,8 @@ public class OpenGLRenderer : IRenderer, IDisposable
         // Create default configuration based on window
         _configuration = new RenderConfiguration(window.Size);
         
-        // Automatically proceed to preprocessing for backward compatibility
-        InitializePreprocessing();
-        InitializeProcessing();
-        InitializePostProcessing();
-        
         _isInitialized = true;
-        Console.WriteLine("✓ Phase-based renderer initialization complete");
+        Console.WriteLine("✓ Renderer initialization complete");
     }
     
     /// <summary>
@@ -120,8 +114,15 @@ public class OpenGLRenderer : IRenderer, IDisposable
     // PHASE 2: PREPROCESSING
     // ───────────────────────────────────────────────────────────────────────────
     
-    private void InitializePreprocessing()
+    /// <summary>
+    /// Initializes the preprocessing phase for asset loading and GPU resource compilation.
+    /// Must be called after Initialize() and before rendering operations.
+    /// </summary>
+    public void InitializePreprocessing()
     {
+        if (!_isInitialized)
+            throw new InvalidOperationException("Renderer must be initialized before preprocessing");
+            
         Console.WriteLine("Initializing preprocessing phase...");
         
         _preprocessor?.Dispose();
@@ -135,7 +136,11 @@ public class OpenGLRenderer : IRenderer, IDisposable
     // PHASE 3: PROCESSING SETUP
     // ───────────────────────────────────────────────────────────────────────────
     
-    private void InitializeProcessing()
+    /// <summary>
+    /// Initializes the processing phase for GPU rendering operations.
+    /// Must be called after InitializePreprocessing().
+    /// </summary>
+    public void InitializeProcessing()
     {
         Console.WriteLine("Initializing processing phase...");
         
@@ -151,7 +156,11 @@ public class OpenGLRenderer : IRenderer, IDisposable
     // PHASE 4: POST-PROCESSING SETUP
     // ───────────────────────────────────────────────────────────────────────────
     
-    private void InitializePostProcessing()
+    /// <summary>
+    /// Initializes the post-processing phase for screen-space effects.
+    /// Must be called after InitializePreprocessing().
+    /// </summary>
+    public void InitializePostProcessing()
     {
         Console.WriteLine("Initializing post-processing phase...");
         
@@ -253,7 +262,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         // Note: Custom uniform support would require extending RenderProcessor
         // For now, log a warning that this feature is not yet implemented
-        Console.WriteLine($"Warning: SetUniform({name}, {value}) not yet supported in phase-based renderer");
+        Console.WriteLine($"Warning: SetUniform({name}, {value}) not yet supported");
     }
     
     /// <summary>
@@ -261,7 +270,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     /// </summary>
     public void SetUniform(string name, Vector2D<float> value)
     {
-        Console.WriteLine($"Warning: SetUniform({name}, Vector2D) not yet supported in phase-based renderer");
+        Console.WriteLine($"Warning: SetUniform({name}, Vector2D) not yet supported");
     }
     
     /// <summary>
@@ -269,7 +278,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     /// </summary>
     public void SetUniform(string name, Vector4D<float> value)
     {
-        Console.WriteLine($"Warning: SetUniform({name}, Vector4D) not yet supported in phase-based renderer");
+        Console.WriteLine($"Warning: SetUniform({name}, Vector4D) not yet supported");
     }
     
     public void FinalizeFrame()
@@ -376,7 +385,7 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         if (_disposed) return;
         
-        Console.WriteLine("Disposing phase-based renderer...");
+        Console.WriteLine("Disposing renderer...");
         
         // Reset frame state
         _isFrameActive = false;
@@ -394,6 +403,6 @@ public class OpenGLRenderer : IRenderer, IDisposable
         _disposed = true;
         
         GC.SuppressFinalize(this);
-        Console.WriteLine("✓ Phase-based renderer disposed");
+        Console.WriteLine("✓ Renderer disposed");
     }
 }

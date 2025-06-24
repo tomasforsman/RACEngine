@@ -78,7 +78,7 @@ public class VertexTypeSafetyTests
     [Fact]
     public void IRenderer_StillSupportsBasicFloatArray()
     {
-        // Ensure backward compatibility is maintained
+        // Ensure float array support is maintained
         var vertices = new float[] { -0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f };
 
         var renderer = new MockRenderer();
