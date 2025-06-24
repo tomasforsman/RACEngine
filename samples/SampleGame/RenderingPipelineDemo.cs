@@ -51,6 +51,7 @@ using Rac.Rendering.Pipeline;
 using Rac.Rendering.Shader;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 using System;
 using System.Collections.Generic;
 
@@ -379,45 +380,45 @@ public static class RenderingPipelineDemo
         // Draw static triangle (left side) to show basic vertex processing
         engine.Renderer.SetColor(new Vector4D<float>(1f, 1f, 1f, 1f));
         
-        // Transform vertices for left position
-        var leftTriangleVertices = TransformVertices(_triangleVertices, new Vector2D<float>(-0.6f, 0f), 0f, 0.8f);
+        // Convert and transform vertices for left position
+        var leftTriangleVertices = ConvertToFullVertices(_triangleVertices, new Vector2D<float>(-0.6f, 0f), 0f, 0.8f);
         engine.Renderer.UpdateVertices(leftTriangleVertices);
         engine.Renderer.Draw();
         
-        // Draw rotating quad (right side) to show animation and transformation
-        var rightQuadVertices = TransformVertices(_quadVertices, new Vector2D<float>(0.6f, 0f), _rotationAngle, 0.8f);
+        // Convert and transform vertices for right position  
+        var rightQuadVertices = ConvertToFullVertices(_quadVertices, new Vector2D<float>(0.6f, 0f), _rotationAngle, 0.8f);
         engine.Renderer.UpdateVertices(rightQuadVertices);
         engine.Renderer.Draw();
     }
 
-    private static float[] TransformVertices(float[] vertices, Vector2D<float> offset, float rotation, float scale)
+    private static FullVertex[] ConvertToFullVertices(float[] vertices, Vector2D<float> offset, float rotation, float scale)
     {
-        var transformed = new float[vertices.Length];
         var cos = MathF.Cos(rotation * MathF.PI / 180f);
         var sin = MathF.Sin(rotation * MathF.PI / 180f);
         
-        for (int i = 0; i < vertices.Length; i += 6) // 6 floats per vertex (x, y, r, g, b, a)
+        var result = new FullVertex[vertices.Length / 6]; // 6 floats per vertex in input
+        
+        for (int i = 0, vertexIndex = 0; i < vertices.Length; i += 6, vertexIndex++)
         {
-            // Get original position
+            // Get original position and color
             var x = vertices[i] * scale;
             var y = vertices[i + 1] * scale;
+            var color = new Vector4D<float>(vertices[i + 2], vertices[i + 3], vertices[i + 4], vertices[i + 5]);
             
             // Apply rotation
             var rotX = x * cos - y * sin;
             var rotY = x * sin + y * cos;
             
-            // Apply translation and store
-            transformed[i] = rotX + offset.X;
-            transformed[i + 1] = rotY + offset.Y;
+            // Apply translation
+            var position = new Vector2D<float>(rotX + offset.X, rotY + offset.Y);
             
-            // Copy color values unchanged
-            transformed[i + 2] = vertices[i + 2]; // R
-            transformed[i + 3] = vertices[i + 3]; // G
-            transformed[i + 4] = vertices[i + 4]; // B
-            transformed[i + 5] = vertices[i + 5]; // A
+            // Create texture coordinates (use position as simple mapping)
+            var texCoord = new Vector2D<float>(position.X, position.Y);
+            
+            result[vertexIndex] = new FullVertex(position, texCoord, color);
         }
         
-        return transformed;
+        return result;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
