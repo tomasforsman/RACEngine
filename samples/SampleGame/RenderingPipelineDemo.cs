@@ -446,17 +446,21 @@ public static class RenderingPipelineDemo
             //
             // UV coordinates must be calculated from the original local position
             // to ensure texture mapping remains consistent regardless of object
-            // transformations. Standard UV range is [0,1] where:
-            // - (0,0) represents bottom-left of texture
-            // - (1,1) represents top-right of texture
+            // transformations. For procedural effects, coordinates are centered
+            // around (0,0) to enable proper distance-based calculations:
+            // - (0,0) represents the center of the geometry
+            // - Distance from center = length(UV) for procedural effects
             //
             // Mathematical derivation:
             // Given local position (localX, localY) and bounds [minX, maxX] × [minY, maxY]
-            // U-coordinate: (localX - minX) / (maxX - minX)
-            // V-coordinate: (localY - minY) / (maxY - minY)
+            // Center coordinates: centerX = (minX + maxX) / 2, centerY = (minY + maxY) / 2
+            // U-coordinate: (localX - centerX) / (maxX - minX)
+            // V-coordinate: (localY - centerY) / (maxY - minY)
             
-            var texCoordU = (localX - minX) / rangeX;
-            var texCoordV = (localY - minY) / rangeY;
+            var centerX = (minX + maxX) * 0.5f;
+            var centerY = (minY + maxY) * 0.5f;
+            var texCoordU = (localX - centerX) / rangeX;
+            var texCoordV = (localY - centerY) / rangeY;
             var texCoord = new Vector2D<float>(texCoordU, texCoordV);
             
             // ───────────────────────────────────────────────────────────────

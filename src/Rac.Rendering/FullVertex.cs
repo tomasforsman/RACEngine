@@ -23,29 +23,30 @@ public struct FullVertex
     /// <summary>
     /// Texture coordinates (UV mapping) for sampling textures during rendering.
     /// 
-    /// TEXTURE COORDINATE SYSTEM:
-    /// - Values typically range from [0,1] representing normalized texture space
-    /// - (0,0) corresponds to bottom-left corner of the texture
-    /// - (1,1) corresponds to top-right corner of the texture  
-    /// - U component (X) represents horizontal texture position
-    /// - V component (Y) represents vertical texture position
+    /// TEXTURE COORDINATE SYSTEM FOR PROCEDURAL EFFECTS:
+    /// - Coordinates are centered around (0,0) representing the geometry center
+    /// - Values typically range from approximately [-0.5, 0.5] for normalized geometry
+    /// - Distance from center = length(UV) used for procedural distance-based effects
+    /// - Compatible with OpenGL texture sampling when offset to [0,1] range if needed
     /// 
     /// UV MAPPING BEST PRACTICES:
     /// - Calculate from original local vertex positions before transformations
-    /// - Normalize coordinates to [0,1] range: U = (localX - minX) / (maxX - minX)
+    /// - Center coordinates around (0,0): U = (localX - centerX) / rangeX
     /// - Ensure consistency regardless of object rotation, translation, or scaling
-    /// - Values outside [0,1] create tiling/wrapping effects based on texture settings
+    /// - Centered coordinates enable proper distance-based procedural effects
     /// 
     /// GRAPHICS PIPELINE INTEGRATION:
-    /// - Passed to fragment shaders for texture sampling (texture2D, sampler2D)
-    /// - Used with OpenGL texture coordinate interpolation across triangles
-    /// - Essential for proper texture mapping in 2D and 3D rendering
+    /// - Used for distance calculations in procedural fragment shaders
+    /// - Can be transformed to [0,1] range for traditional texture sampling
+    /// - Essential for proper effect calculations in procedural rendering
     /// </summary>
     /// <example>
     /// <code>
-    /// // Standard UV mapping for a quad from local coordinates [-0.5, 0.5]
-    /// var texCoordU = (localX + 0.5f) / 1.0f;  // Maps [-0.5, 0.5] to [0, 1]
-    /// var texCoordV = (localY + 0.5f) / 1.0f;  // Maps [-0.5, 0.5] to [0, 1]
+    /// // Centered UV mapping for a quad from local coordinates [-0.3, 0.3]
+    /// var centerX = 0.0f; // (minX + maxX) / 2 = (-0.3 + 0.3) / 2
+    /// var centerY = 0.0f; // (minY + maxY) / 2 = (-0.3 + 0.3) / 2
+    /// var texCoordU = (localX - centerX) / rangeX;  // Center at (0,0)
+    /// var texCoordV = (localY - centerY) / rangeY;  // Distance-based effects work correctly
     /// var vertex = new FullVertex(position, new Vector2D&lt;float&gt;(texCoordU, texCoordV), color);
     /// </code>
     /// </example>

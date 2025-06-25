@@ -24,10 +24,10 @@ public class UvMappingValidationTests
 {
     /// <summary>
     /// Test that validates UV coordinates are calculated from local positions
-    /// and normalized to [0,1] range correctly for the quad geometry used in the demo.
+    /// and centered around (0,0) for proper distance-based procedural effects.
     /// </summary>
     [Fact]
-    public void UvMapping_QuadGeometry_ShouldNormalizeToStandardRange()
+    public void UvMapping_QuadGeometry_ShouldCenterAroundOrigin()
     {
         // Arrange: Simulate the quad vertices from RenderingPipelineDemo
         // This represents a square with local coordinates ranging from -0.3 to 0.3
@@ -39,21 +39,24 @@ public class UvMappingValidationTests
              0.3f,  0.3f,     0.6f, 0.2f, 0.8f, 1.0f,  // Top right
         };
         
-        // Act: Calculate UV coordinates using the same logic as the fixed method
+        // Act: Calculate UV coordinates using the centered mapping logic
         var uvCoordinates = CalculateUvCoordinatesFromVertices(quadVertices);
         
-        // Assert: Verify UV coordinates are properly normalized to [0,1] range
-        // Bottom left (-0.3, -0.3) should map to (0, 0)
-        Assert.Equal(0.0f, uvCoordinates[0].X, precision: 3);
-        Assert.Equal(0.0f, uvCoordinates[0].Y, precision: 3);
+        // Assert: Verify UV coordinates are centered around (0,0)
+        // Bottom left (-0.3, -0.3) should map to (-0.5, -0.5)
+        Assert.Equal(-0.5f, uvCoordinates[0].X, precision: 3);
+        Assert.Equal(-0.5f, uvCoordinates[0].Y, precision: 3);
         
-        // Bottom right (0.3, -0.3) should map to (1, 0)
-        Assert.Equal(1.0f, uvCoordinates[1].X, precision: 3);
-        Assert.Equal(0.0f, uvCoordinates[1].Y, precision: 3);
+        // Bottom right (0.3, -0.3) should map to (0.5, -0.5)
+        Assert.Equal(0.5f, uvCoordinates[1].X, precision: 3);
+        Assert.Equal(-0.5f, uvCoordinates[1].Y, precision: 3);
         
-        // Top right (0.3, 0.3) should map to (1, 1)
-        Assert.Equal(1.0f, uvCoordinates[2].X, precision: 3);
-        Assert.Equal(1.0f, uvCoordinates[2].Y, precision: 3);
+        // Top right (0.3, 0.3) should map to (0.5, 0.5)
+        Assert.Equal(0.5f, uvCoordinates[2].X, precision: 3);
+        Assert.Equal(0.5f, uvCoordinates[2].Y, precision: 3);
+        
+        // Verify center would be at (0, 0) - center of geometry at (0,0) maps to UV (0,0)
+        // This is important for distance-based procedural effects: distance = length(UV)
     }
     
     /// <summary>
@@ -95,10 +98,10 @@ public class UvMappingValidationTests
     }
     
     /// <summary>
-    /// Test that validates UV mapping for triangle geometry with different coordinate ranges.
+    /// Test that validates UV mapping for triangle geometry with centered coordinates.
     /// </summary>
     [Fact]
-    public void UvMapping_TriangleGeometry_ShouldNormalizeCorrectly()
+    public void UvMapping_TriangleGeometry_ShouldCenterCorrectly()
     {
         // Arrange: Triangle vertices from RenderingPipelineDemo
         // X ranges from -0.5 to 0.5 (range = 1.0), Y ranges from -0.5 to 0.5 (range = 1.0)
@@ -113,18 +116,18 @@ public class UvMappingValidationTests
         // Act: Calculate UV coordinates
         var uvCoordinates = CalculateUvCoordinatesFromVertices(triangleVertices);
         
-        // Assert: Verify UV coordinates are properly normalized
-        // Top vertex (0.0, 0.5) should map to (0.5, 1.0)
-        Assert.Equal(0.5f, uvCoordinates[0].X, precision: 3);
-        Assert.Equal(1.0f, uvCoordinates[0].Y, precision: 3);
+        // Assert: Verify UV coordinates are centered around (0,0)
+        // Top vertex (0.0, 0.5) should map to (0.0, 0.5)
+        Assert.Equal(0.0f, uvCoordinates[0].X, precision: 3);
+        Assert.Equal(0.5f, uvCoordinates[0].Y, precision: 3);
         
-        // Bottom left (-0.5, -0.5) should map to (0.0, 0.0)
-        Assert.Equal(0.0f, uvCoordinates[1].X, precision: 3);
-        Assert.Equal(0.0f, uvCoordinates[1].Y, precision: 3);
+        // Bottom left (-0.5, -0.5) should map to (-0.5, -0.5)
+        Assert.Equal(-0.5f, uvCoordinates[1].X, precision: 3);
+        Assert.Equal(-0.5f, uvCoordinates[1].Y, precision: 3);
         
-        // Bottom right (0.5, -0.5) should map to (1.0, 0.0)
-        Assert.Equal(1.0f, uvCoordinates[2].X, precision: 3);
-        Assert.Equal(0.0f, uvCoordinates[2].Y, precision: 3);
+        // Bottom right (0.5, -0.5) should map to (0.5, -0.5)
+        Assert.Equal(0.5f, uvCoordinates[2].X, precision: 3);
+        Assert.Equal(-0.5f, uvCoordinates[2].Y, precision: 3);
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
@@ -133,7 +136,7 @@ public class UvMappingValidationTests
     
     /// <summary>
     /// Helper method that simulates the UV coordinate calculation logic
-    /// from the fixed ConvertToFullVertices method.
+    /// from the fixed ConvertToFullVertices method using centered coordinates.
     /// </summary>
     private static Vector2D<float>[] CalculateUvCoordinatesFromVertices(float[] vertices)
     {
@@ -154,23 +157,25 @@ public class UvMappingValidationTests
             maxY = MathF.Max(maxY, y);
         }
         
-        // Calculate ranges for normalization
+        // Calculate ranges and centers for normalization
         float rangeX = maxX - minX;
         float rangeY = maxY - minY;
+        float centerX = (minX + maxX) * 0.5f;
+        float centerY = (minY + maxY) * 0.5f;
         
         // Handle degenerate cases
         if (rangeX <= 0f) rangeX = 1f;
         if (rangeY <= 0f) rangeY = 1f;
         
-        // Calculate UV coordinates for each vertex
+        // Calculate UV coordinates for each vertex (centered around origin)
         for (int i = 0, vertexIndex = 0; i < vertices.Length; i += 6, vertexIndex++)
         {
             var localX = vertices[i];
             var localY = vertices[i + 1];
             
-            // Normalize to [0,1] range
-            var texCoordU = (localX - minX) / rangeX;
-            var texCoordV = (localY - minY) / rangeY;
+            // Center around (0,0) for distance-based effects
+            var texCoordU = (localX - centerX) / rangeX;
+            var texCoordV = (localY - centerY) / rangeY;
             
             result[vertexIndex] = new Vector2D<float>(texCoordU, texCoordV);
         }

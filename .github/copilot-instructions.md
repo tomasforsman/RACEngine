@@ -181,13 +181,16 @@ These instructions guide GitHub Copilot to generate code following RACEngine-spe
 
 ### UV Mapping and Texture Coordinate Guidelines
 - **CRITICAL**: Always calculate UV coordinates from original local vertex positions before any transformations
-- Normalize texture coordinates to [0,1] range using: U = (localX - minX) / (maxX - minX), V = (localY - minY) / (maxY - minY)
+- **PROCEDURAL EFFECTS**: Center coordinates around (0,0) for distance-based effects: U = (localX - centerX) / rangeX, V = (localY - centerY) / rangeY
+- **TRADITIONAL TEXTURING**: Use [0,1] range when doing actual texture sampling: U = (localX - minX) / (maxX - minX), V = (localY - minY) / (maxY - minY)
 - Never use final transformed positions (after rotation/translation) for texture coordinate calculation
-- Document UV coordinate ranges and expected texture space mapping in vertex structure comments
+- Document UV coordinate system and expected ranges in vertex structure comments
 - Ensure texture coordinates remain consistent regardless of object transformations (rotation, translation, scaling)
-- Use educational comments explaining UV mapping concepts: (0,0) = bottom-left, (1,1) = top-right of texture
-- Provide practical examples in XML documentation showing UV calculation from specific local coordinate ranges
-- Reference standard graphics programming practices and texture mapping theory in comments
+- Use educational comments explaining coordinate system choice and its implications for effects
+- For procedural effects: Center at (0,0) enables proper distance calculation = length(UV)
+- For texture sampling: Standard [0,1] range where (0,0) = bottom-left, (1,1) = top-right
+- Provide practical examples in XML documentation showing UV calculation for the chosen coordinate system
+- Reference graphics programming best practices and explain the reasoning behind coordinate system choice
 
 ### ECS Architecture Requirements
 - Components must be readonly record structs implementing IComponent
