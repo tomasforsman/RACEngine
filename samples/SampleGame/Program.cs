@@ -24,6 +24,10 @@ public static class Program
             case "camerademo":
                 CameraDemonstration.Run(args); // Camera system demonstration
                 break;
+                
+            case "pipelinedemo":
+                RenderingPipelineDemo.Run(args); // 4-phase rendering pipeline demonstration
+                break;
 
             // ─── add more samples here ────────────────────
             // case "othersample": OtherSample.Run(args); break;
@@ -66,6 +70,7 @@ public static class Program
         Console.WriteLine("  boidsample      - Flocking simulation with visual effects demonstration");
         Console.WriteLine("  bloomtest       - HDR bloom effect demonstration (Issue #51)");
         Console.WriteLine("  camerademo      - Interactive camera system demonstration with dual-camera rendering");
+        Console.WriteLine("  pipelinedemo    - Educational 4-phase rendering pipeline demonstration");
         // … list additional samples here …
         Console.Write("Enter sample name (or press Enter for default 'boidsample'): ");
         
@@ -102,8 +107,10 @@ public static class Program
         Console.WriteLine("  dotnet run -- boidsample");
         Console.WriteLine("  dotnet run -- bloomtest");
         Console.WriteLine("  dotnet run -- camerademo");
+        Console.WriteLine("  dotnet run -- pipelinedemo");
         Console.WriteLine();
         Console.WriteLine("All samples demonstrate shader mode switching and engine features.");
         Console.WriteLine("The bloomtest specifically demonstrates HDR color bloom effects.");
+        Console.WriteLine("The pipelinedemo provides educational insight into the 4-phase rendering architecture.");
     }
 }

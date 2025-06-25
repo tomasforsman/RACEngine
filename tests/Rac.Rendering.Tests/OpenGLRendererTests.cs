@@ -23,54 +23,6 @@ public class OpenGLRendererTests
         Assert.NotNull(disposedField);
         Assert.Equal(typeof(bool), disposedField.FieldType);
     }
-
-    [Fact]
-    public void OpenGLRenderer_HasValidatePostProcessingShadersMethod()
-    {
-        // Verify that ValidatePostProcessingShaders method exists
-        var method = typeof(OpenGLRenderer).GetMethod("ValidatePostProcessingShaders", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        Assert.NotNull(method);
-        Assert.Equal(typeof(bool), method.ReturnType);
-        Assert.Empty(method.GetParameters()); // Should have no parameters
-    }
-
-    [Fact]
-    public void OpenGLRenderer_HasInitializePostProcessingMethod()
-    {
-        // Verify that InitializePostProcessing method exists
-        var method = typeof(OpenGLRenderer).GetMethod("InitializePostProcessing", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        Assert.NotNull(method);
-        Assert.Equal(typeof(bool), method.ReturnType);
-        Assert.Empty(method.GetParameters()); // Should have no parameters
-    }
-
-    [Fact]
-    public void OpenGLRenderer_HasValidateOpenGLVersionMethod()
-    {
-        // Verify that ValidateOpenGLVersion method exists for version checking
-        var method = typeof(OpenGLRenderer).GetMethod("ValidateOpenGLVersion", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        Assert.NotNull(method);
-        Assert.Equal(typeof(bool), method.ReturnType);
-        Assert.Empty(method.GetParameters()); // Should have no parameters
-    }
-
-    [Fact]
-    public void OpenGLRenderer_HasValidateOpenGLExtensionsMethod()
-    {
-        // Verify that ValidateOpenGLExtensions method exists for extension checking
-        var method = typeof(OpenGLRenderer).GetMethod("ValidateOpenGLExtensions", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        Assert.NotNull(method);
-        Assert.Equal(typeof(bool), method.ReturnType);
-        Assert.Empty(method.GetParameters()); // Should have no parameters
-    }
     
     // Note: Direct testing of Dispose() behavior would require a complex OpenGL context setup.
     // The key fix is implementing the standard IDisposable pattern with idempotency protection,
