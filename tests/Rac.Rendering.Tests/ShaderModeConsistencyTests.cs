@@ -13,6 +13,7 @@ public class ShaderModeConsistencyTests
     [InlineData(ShaderMode.Normal)]
     [InlineData(ShaderMode.SoftGlow)]
     [InlineData(ShaderMode.Bloom)]
+    [InlineData(ShaderMode.DebugUV)]
     public void ShaderMode_ShouldBeAppliedConsistentlyToAllEntities(ShaderMode selectedMode)
     {
         // Arrange - This represents the user's selected shader mode
@@ -37,7 +38,10 @@ public class ShaderModeConsistencyTests
         // Ensure each shader mode has a distinct value for proper demonstration
         Assert.NotEqual(ShaderMode.Normal, ShaderMode.SoftGlow);
         Assert.NotEqual(ShaderMode.Normal, ShaderMode.Bloom);
+        Assert.NotEqual(ShaderMode.Normal, ShaderMode.DebugUV);
         Assert.NotEqual(ShaderMode.SoftGlow, ShaderMode.Bloom);
+        Assert.NotEqual(ShaderMode.SoftGlow, ShaderMode.DebugUV);
+        Assert.NotEqual(ShaderMode.Bloom, ShaderMode.DebugUV);
     }
     
     /// <summary>

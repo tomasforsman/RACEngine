@@ -12,5 +12,8 @@ public enum ShaderMode
     SoftGlow,
     
     /// <summary>Advanced bloom effect with enhanced glow radius.</summary>
-    Bloom
+    Bloom,
+    
+    /// <summary>Visual debugging mode that displays texture coordinates as colors (U→Red, V→Green).</summary>
+    DebugUV
 }

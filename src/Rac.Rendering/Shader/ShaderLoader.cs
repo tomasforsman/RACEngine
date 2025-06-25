@@ -263,6 +263,7 @@ public static class ShaderLoader
             ShaderMode.Normal => "normal.frag",
             ShaderMode.SoftGlow => "softglow.frag",
             ShaderMode.Bloom => "bloom.frag",
+            ShaderMode.DebugUV => "debuguv.frag",
             _ => "normal.frag"
         };
     }

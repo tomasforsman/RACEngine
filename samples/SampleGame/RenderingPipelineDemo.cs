@@ -147,7 +147,7 @@ public static class RenderingPipelineDemo
         Console.WriteLine();
         Console.WriteLine("CONTROLS:");
         Console.WriteLine("  Tab   - Cycle through phase explanations");
-        Console.WriteLine("  Space - Toggle shader modes (Normal/SoftGlow/Bloom)");
+        Console.WriteLine("  Space - Toggle shader modes (Normal/SoftGlow/Bloom/DebugUV)");
         Console.WriteLine("  P     - Toggle performance metrics display");
         Console.WriteLine("  D     - Toggle detailed phase information");
         Console.WriteLine("  ESC   - Exit demonstration");
@@ -351,7 +351,8 @@ public static class RenderingPipelineDemo
         {
             ShaderMode.Normal => ShaderMode.SoftGlow,
             ShaderMode.SoftGlow => ShaderMode.Bloom,
-            ShaderMode.Bloom => ShaderMode.Normal,
+            ShaderMode.Bloom => ShaderMode.DebugUV,
+            ShaderMode.DebugUV => ShaderMode.Normal,
             _ => ShaderMode.Normal
         };
         
@@ -367,6 +368,7 @@ public static class RenderingPipelineDemo
             ShaderMode.Normal => "Standard rendering without post-processing",
             ShaderMode.SoftGlow => "Subtle luminance enhancement",
             ShaderMode.Bloom => "HDR bloom with dramatic light bleeding",
+            ShaderMode.DebugUV => "UV coordinate visualization (U→Red, V→Green)",
             _ => "Unknown shader mode"
         };
     }
