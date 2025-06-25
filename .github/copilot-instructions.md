@@ -102,6 +102,22 @@ These instructions guide GitHub Copilot to generate code following RACEngine-spe
 - Reference academic papers or standards when applicable
 - Explain coordinate systems, mathematical concepts, and graphics theory
 
+### Comprehensive Documentation Requirements
+- **MANDATORY**: Provide detailed XML documentation for all public members, properties, and methods
+- Include `<summary>` tags with clear, comprehensive descriptions of purpose and functionality
+- Use `<param>` tags for all parameters with detailed descriptions including constraints and expected ranges
+- Add `<returns>` tags explaining return value meaning and possible values
+- Include `<exception>` tags for all possible exceptions with specific conditions
+- Provide practical `<example>` sections with working code snippets for complex APIs
+- Document coordinate systems, mathematical relationships, and graphics concepts in detail
+- Explain design patterns, architectural decisions, and integration points
+- Include performance considerations and optimization notes where relevant
+- Reference academic papers, standards, or established algorithms when implementing complex logic
+- Use clear, educational language that helps developers understand both what and why
+- Provide examples showing typical usage patterns and edge cases
+- Document thread safety guarantees and concurrency considerations
+- Explain relationships between related types and their intended usage patterns
+
 ## Error Handling Patterns
 
 ### Parameter Validation Rules
@@ -162,6 +178,16 @@ These instructions guide GitHub Copilot to generate code following RACEngine-spe
 - Provide multiple overloads for vertex data upload (float[], typed arrays, explicit layout)
 - Include educational comments explaining graphics algorithms and coordinate systems
 - Cache shader programs and uniform locations for performance
+
+### UV Mapping and Texture Coordinate Guidelines
+- **CRITICAL**: Always calculate UV coordinates from original local vertex positions before any transformations
+- Normalize texture coordinates to [0,1] range using: U = (localX - minX) / (maxX - minX), V = (localY - minY) / (maxY - minY)
+- Never use final transformed positions (after rotation/translation) for texture coordinate calculation
+- Document UV coordinate ranges and expected texture space mapping in vertex structure comments
+- Ensure texture coordinates remain consistent regardless of object transformations (rotation, translation, scaling)
+- Use educational comments explaining UV mapping concepts: (0,0) = bottom-left, (1,1) = top-right of texture
+- Provide practical examples in XML documentation showing UV calculation from specific local coordinate ranges
+- Reference standard graphics programming practices and texture mapping theory in comments
 
 ### ECS Architecture Requirements
 - Components must be readonly record structs implementing IComponent
