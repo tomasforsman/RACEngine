@@ -398,22 +398,85 @@ public static class RenderingPipelineDemo
         
         var result = new FullVertex[vertices.Length / 6]; // 6 floats per vertex in input
         
+        // ───────────────────────────────────────────────────────────────────
+        // UV MAPPING CALCULATION PREPARATION
+        // ───────────────────────────────────────────────────────────────────
+        //
+        // To generate proper UV coordinates, we need to determine the bounds
+        // of the original local vertex positions and normalize them to [0,1] range.
+        // This ensures texture coordinates remain consistent regardless of 
+        // transformations (rotation, translation, scaling) applied to the geometry.
+        
+        // Find the bounds of the original vertex positions
+        float minX = float.MaxValue, maxX = float.MinValue;
+        float minY = float.MaxValue, maxY = float.MinValue;
+        
+        for (int i = 0; i < vertices.Length; i += 6)
+        {
+            var x = vertices[i];
+            var y = vertices[i + 1];
+            
+            minX = MathF.Min(minX, x);
+            maxX = MathF.Max(maxX, x);
+            minY = MathF.Min(minY, y);
+            maxY = MathF.Max(maxY, y);
+        }
+        
+        // Calculate the range for UV normalization
+        // UV mapping: Maps local vertex coordinates to [0,1] texture space
+        // U = (localX - minX) / (maxX - minX)
+        // V = (localY - minY) / (maxY - minY)
+        float rangeX = maxX - minX;
+        float rangeY = maxY - minY;
+        
+        // Handle degenerate cases where geometry has no extent in a dimension
+        if (rangeX <= 0f) rangeX = 1f;
+        if (rangeY <= 0f) rangeY = 1f;
+        
         for (int i = 0, vertexIndex = 0; i < vertices.Length; i += 6, vertexIndex++)
         {
-            // Get original position and color
-            var x = vertices[i] * scale;
-            var y = vertices[i + 1] * scale;
+            // Get original local position and color
+            var localX = vertices[i];
+            var localY = vertices[i + 1];
             var color = new Vector4D<float>(vertices[i + 2], vertices[i + 3], vertices[i + 4], vertices[i + 5]);
             
-            // Apply rotation
-            var rotX = x * cos - y * sin;
-            var rotY = x * sin + y * cos;
+            // ───────────────────────────────────────────────────────────────
+            // UV COORDINATE GENERATION (BEFORE TRANSFORMATIONS)
+            // ───────────────────────────────────────────────────────────────
+            //
+            // UV coordinates must be calculated from the original local position
+            // to ensure texture mapping remains consistent regardless of object
+            // transformations. For procedural effects, coordinates are centered
+            // around (0,0) to enable proper distance-based calculations:
+            // - (0,0) represents the center of the geometry
+            // - Distance from center = length(UV) for procedural effects
+            //
+            // Mathematical derivation:
+            // Given local position (localX, localY) and bounds [minX, maxX] × [minY, maxY]
+            // Center coordinates: centerX = (minX + maxX) / 2, centerY = (minY + maxY) / 2
+            // U-coordinate: (localX - centerX) / (maxX - minX)
+            // V-coordinate: (localY - centerY) / (maxY - minY)
             
-            // Apply translation
+            var centerX = (minX + maxX) * 0.5f;
+            var centerY = (minY + maxY) * 0.5f;
+            var texCoordU = (localX - centerX) / rangeX;
+            var texCoordV = (localY - centerY) / rangeY;
+            var texCoord = new Vector2D<float>(texCoordU, texCoordV);
+            
+            // ───────────────────────────────────────────────────────────────
+            // GEOMETRIC TRANSFORMATIONS (AFTER UV CALCULATION)
+            // ───────────────────────────────────────────────────────────────
+            
+            // Apply scaling to local position
+            var scaledX = localX * scale;
+            var scaledY = localY * scale;
+            
+            // Apply rotation using 2D rotation matrix
+            var rotX = scaledX * cos - scaledY * sin;
+            var rotY = scaledX * sin + scaledY * cos;
+            
+            // Apply translation to get final world position
             var position = new Vector2D<float>(rotX + offset.X, rotY + offset.Y);
-            
-            // Create texture coordinates (use position as simple mapping)
-            var texCoord = new Vector2D<float>(position.X, position.Y);
             
             result[vertexIndex] = new FullVertex(position, texCoord, color);
         }
