@@ -16,6 +16,7 @@ using Rac.Rendering.Shader;
 using Rac.Rendering.VFX;
 using Silk.NET.OpenGL;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Rac.Rendering.Pipeline;
 
@@ -245,6 +246,28 @@ public class RenderPreprocessor : IDisposable
                     Console.WriteLine($"   Inner: {ex.InnerException.Message}");
                 }
                 Console.WriteLine($"   Stack trace: {ex.StackTrace}");
+
+                // Special handling for DebugUV - provide fallback
+                if (mode == ShaderMode.DebugUV)
+                {
+                    try
+                    {
+                        Console.WriteLine($"  Attempting DebugUV fallback shader...");
+                        var fallbackShader = CreateFallbackDebugUVShader(vertexShaderSource);
+                        var fallbackUniforms = new ShaderUniforms(_gl, fallbackShader.Handle);
+                        
+                        _shaders[mode] = fallbackShader;
+                        _uniforms[mode] = fallbackUniforms;
+                        
+                        loadedCount++;
+                        failedCount--;
+                        Console.WriteLine($"✅ DebugUV fallback shader loaded successfully");
+                    }
+                    catch (Exception fallbackEx)
+                    {
+                        Console.WriteLine($"  ❌ DebugUV fallback also failed: {fallbackEx.Message}");
+                    }
+                }
             }
         }
 
@@ -254,6 +277,72 @@ public class RenderPreprocessor : IDisposable
         }
 
         Console.WriteLine($"✓ Shader system initialized: {loadedCount} loaded, {failedCount} failed");
+        
+        // Validate critical shader modes
+        ValidateCriticalShaderModes();
+    }
+
+    /// <summary>
+    /// Validates that critical shader modes are properly loaded and functional.
+    /// </summary>
+    private void ValidateCriticalShaderModes()
+    {
+        // Ensure Normal mode is always available (already checked above)
+        if (!_shaders.ContainsKey(ShaderMode.Normal))
+        {
+            throw new InvalidOperationException("Critical validation failed: Normal shader mode missing");
+        }
+        
+        // Validate DebugUV mode specifically due to reported issues
+        if (_shaders.ContainsKey(ShaderMode.DebugUV))
+        {
+            var debugShader = _shaders[ShaderMode.DebugUV];
+            if (debugShader != null && debugShader.Handle != 0)
+            {
+                Console.WriteLine("✓ DebugUV shader mode validated successfully");
+            }
+            else
+            {
+                Console.WriteLine("⚠️ DebugUV shader mode has invalid handle");
+            }
+        }
+        else
+        {
+            Console.WriteLine("⚠️ DebugUV shader mode not loaded - users will see fallback behavior");
+        }
+        
+        // Report final status
+        var availableModes = _shaders.Keys.ToArray();
+        Console.WriteLine($"✓ Available shader modes: {string.Join(", ", availableModes)}");
+    }
+
+    /// <summary>
+    /// Creates a minimal fallback shader for DebugUV mode when the main shader fails to compile.
+    /// This ensures DebugUV mode is always available, even if there are issues with the main shader file.
+    /// </summary>
+    private ShaderProgram CreateFallbackDebugUVShader(string vertexShaderSource)
+    {
+        // Minimal fallback fragment shader for UV debugging
+        var fallbackFragmentShader = @"#version 330 core
+
+in vec2 vTexCoord;
+in vec4 vColor;
+in float vDistance;
+
+out vec4 fragColor;
+
+void main()
+{
+    // Simple UV to color mapping
+    // U coordinate -> Red channel
+    // V coordinate -> Green channel
+    // Blue = 0.1 for contrast
+    vec3 debugColor = vec3(vTexCoord.x, vTexCoord.y, 0.1);
+    fragColor = vec4(debugColor, 1.0);
+}";
+
+        Console.WriteLine($"  Creating fallback DebugUV shader ({fallbackFragmentShader.Length} chars)");
+        return new ShaderProgram(_gl, vertexShaderSource, fallbackFragmentShader);
     }
     
     // ───────────────────────────────────────────────────────────────────────────
