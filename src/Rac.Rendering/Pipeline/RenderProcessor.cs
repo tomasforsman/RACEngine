@@ -340,6 +340,10 @@ public class RenderProcessor
                 _gl.Enable(EnableCap.Blend);
                 _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
                 break;
+            case ShaderMode.DebugUV:
+                // Disable blending for clear UV coordinate visualization
+                _gl.Disable(EnableCap.Blend);
+                break;
             default:
                 _gl.Disable(EnableCap.Blend);
                 break;

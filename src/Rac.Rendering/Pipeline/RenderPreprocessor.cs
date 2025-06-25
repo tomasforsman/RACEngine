@@ -218,9 +218,15 @@ public class RenderPreprocessor : IDisposable
         {
             try
             {
+                Console.WriteLine($"Loading shader mode: {mode}");
                 var fragmentSource = ShaderLoader.LoadFragmentShader(mode);
+                Console.WriteLine($"  Fragment shader loaded ({fragmentSource.Length} chars)");
+                
                 var shaderProgram = new ShaderProgram(_gl, vertexShaderSource, fragmentSource);
+                Console.WriteLine($"  Shader program compiled successfully");
+                
                 var uniforms = new ShaderUniforms(_gl, shaderProgram.Handle);
+                Console.WriteLine($"  Uniforms located: aspect={uniforms.AspectLocation}, color={uniforms.ColorLocation}, camera={uniforms.CameraMatrixLocation}");
 
                 _shaders[mode] = shaderProgram;
                 _uniforms[mode] = uniforms;
@@ -231,7 +237,14 @@ public class RenderPreprocessor : IDisposable
             catch (Exception ex)
             {
                 failedCount++;
-                Console.WriteLine($"⚠️ Failed to load shader mode {mode}: {ex.Message}");
+                Console.WriteLine($"⚠️ Failed to load shader mode {mode}:");
+                Console.WriteLine($"   Error: {ex.Message}");
+                Console.WriteLine($"   Type: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"   Inner: {ex.InnerException.Message}");
+                }
+                Console.WriteLine($"   Stack trace: {ex.StackTrace}");
             }
         }
 
