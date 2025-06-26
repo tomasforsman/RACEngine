@@ -229,6 +229,38 @@ These instructions guide GitHub Copilot to generate code following RACEngine-spe
 - Use consistent error handling strategies with existing code
 - Maintain compatibility with existing builder and factory patterns
 
+## Documentation Maintenance
+
+### Keeping Documentation Alive During Issue Work
+When working on any issue, always consider and update documentation to reflect the current state after changes:
+
+#### Documentation Update Guidelines
+- **Identify Impact**: After making changes, identify which documentation sections are affected by the new current state
+- **Update Architecture Docs**: If code structure, patterns, or system design changed, update relevant files in `docs/architecture/`
+- **Sync User Guides**: When API changes or new features are added, update `docs/user-guides/` to reflect current usage patterns
+- **Maintain Project Docs**: Keep `docs/projects/` current with actual project structure, dependencies, and capabilities
+- **Update Educational Material**: Ensure `docs/educational-material/` reflects current best practices and implementation approaches
+
+#### Documentation Categories to Consider
+- **System State**: Update architecture documentation to match current system design and component relationships
+- **API Surface**: Ensure user guides reflect current method signatures, parameters, and usage patterns
+- **Project Structure**: Keep project documentation synchronized with actual file organization and module dependencies
+- **Build/Setup Process**: Update installation and setup guides when build requirements or processes change
+- **Troubleshooting**: Add new common issues discovered during development to FAQ and troubleshooting guides
+
+#### Integration with Issue Workflow
+- **During Planning**: Check which documentation areas might be affected by the planned changes
+- **During Implementation**: Note discrepancies between current code and existing documentation
+- **Before Completion**: Update documentation to accurately reflect the new current state
+- **Documentation as Code**: Treat documentation updates as part of the implementation, not separate work
+
+#### Documentation Quality Standards
+- Describe the current state, not the changes made
+- Use present tense to describe how things work now
+- Include practical examples that work with the current codebase
+- Reference actual file paths, class names, and method signatures that exist
+- Ensure cross-references between documentation sections remain accurate
+
 ## Further instructions
 
 ### Files to comply with in root of repo
