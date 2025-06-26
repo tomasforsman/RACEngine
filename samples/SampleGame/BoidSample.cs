@@ -43,7 +43,10 @@
 using Rac.Core.Extension;
 using Rac.Core.Manager;
 using Rac.ECS.Component;
+using Rac.ECS.Components;
+using Rac.ECS.Core;
 using Rac.ECS.System;
+using Rac.ECS.Systems;
 using Rac.Engine;
 using Rac.Input.Service;
 using Rac.Input.State;
@@ -128,10 +131,13 @@ public static class BoidSample
         //
         // ECS World: Container for all entities, components, and systems
         // BoidSystem: Implements the core flocking algorithm
+        // TransformSystem: Handles hierarchical transformations (required for new transform architecture)
         // Settings Entity: Holds global configuration data (boundary constraints, interaction rules)
 
         var world = engine.World;
+        var transformSystem = new TransformSystem(world);
         engine.AddSystem(new BoidSystem(world));
+        engine.AddSystem(transformSystem);
         var settingsEntity = world.CreateEntity();
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -190,8 +196,8 @@ public static class BoidSample
         //
         // Initial world population with varied species counts creates realistic ecosystem
 
-        SpawnAllSpecies();
-        SpawnObstacles();
+        SpawnAllSpecies(transformSystem);
+        SpawnObstacles(transformSystem);
 
         // ═══════════════════════════════════════════════════════════════════════════
         // INPUT HANDLING FOR CAMERA CONTROLS AND SHADER MODE SWITCHING
@@ -797,7 +803,7 @@ public static class BoidSample
             world.SetComponent(settingsEntity, boidSettings);
         }
 
-        void SpawnAllSpecies()
+        void SpawnAllSpecies(TransformSystem transformSystem)
         {
             // ───────────────────────────────────────────────────────────────────────
             // ECOSYSTEM POPULATION DISTRIBUTION
@@ -824,14 +830,12 @@ public static class BoidSample
                     // Create new entity in ECS world
                     var e = world.CreateEntity();
 
-                    // Random position in NDC space (-1 to +1)
-                    world.SetComponent(
-                        e,
-                        new PositionComponent(
-                            (float)(random.NextDouble() * 2.0 - 1.0), // X: -1 to +1
-                            (float)(random.NextDouble() * 2.0 - 1.0)  // Y: -1 to +1
-                        )
+                    // Random position in NDC space (-1 to +1) using new transform system
+                    var randomPosition = new Vector2D<float>(
+                        (float)(random.NextDouble() * 2.0 - 1.0), // X: -1 to +1
+                        (float)(random.NextDouble() * 2.0 - 1.0)  // Y: -1 to +1
                     );
+                    e.SetLocalTransform(world, randomPosition, 0f, Vector2D<float>.One);
 
                     // Start with zero velocity (boids will accelerate naturally)
                     world.SetComponent(e, new VelocityComponent(0f, 0f));
@@ -842,7 +846,7 @@ public static class BoidSample
             }
         }
 
-        void SpawnObstacles()
+        void SpawnObstacles(TransformSystem transformSystem)
         {
             // ───────────────────────────────────────────────────────────────────────
             // ENVIRONMENTAL OBSTACLES
@@ -852,7 +856,7 @@ public static class BoidSample
             // They must steer around these while maintaining flocking behavior.
 
             var e = world.CreateEntity();
-            world.SetComponent(e, new PositionComponent(0f, 0f));     // Center of screen
+            e.SetLocalTransform(world, Vector2D<float>.Zero, 0f, Vector2D<float>.One);     // Center of screen
             world.SetComponent(e, new ObstacleComponent(0.2f));       // Radius in NDC units
         }
 
@@ -932,8 +936,8 @@ public static class BoidSample
             // ───────────────────────────────────────────────────────────────────────
 
             foreach (
-                var (_, pos, vel, spec) in world.Query<
-                    PositionComponent,
+                var (_, worldTransform, vel, spec) in world.Query<
+                    WorldTransformComponent,
                     VelocityComponent,
                     BoidSpeciesComponent
                 >()
@@ -947,8 +951,8 @@ public static class BoidSample
                 // 2D TRANSFORMATION MATHEMATICS
                 // ───────────────────────────────────────────────────────────────────
 
-                var wp = (Vector2D<float>)pos;                    // World position
-                var normV = ((Vector2D<float>)vel).Normalize();   // Normalized velocity (direction)
+                var wp = worldTransform.WorldPosition;                // World position from transform system
+                var normV = ((Vector2D<float>)vel).Normalize();       // Normalized velocity (direction)
 
                 // Calculate rotation angle from velocity vector
                 // atan2 gives angle from +X axis, subtract π/2 because triangle points up (+Y)
@@ -1021,9 +1025,9 @@ public static class BoidSample
                 _ => color
             };
 
-            foreach (var (_, pos, obs) in world.Query<PositionComponent, ObstacleComponent>())
+            foreach (var (_, worldTransform, obs) in world.Query<WorldTransformComponent, ObstacleComponent>())
             {
-                var center = (Vector2D<float>)pos;
+                var center = worldTransform.WorldPosition;
                 float r = obs.Radius;
 
                 for (int i = 0; i < segments; i++)

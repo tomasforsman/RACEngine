@@ -2,6 +2,7 @@
 
 using Rac.Core.Extension;
 using Rac.ECS.Component;
+using Rac.ECS.Components;
 using Rac.ECS.Core;
 using Rac.ECS.Systems;
 using Silk.NET.Maths;
@@ -25,16 +26,16 @@ public class BoidSystem : ISystem
 
         // 2) Gather all boids and obstacles
         var boidEntries = _world
-            .Query<PositionComponent, VelocityComponent, BoidSpeciesComponent>()
+            .Query<WorldTransformComponent, VelocityComponent, BoidSpeciesComponent>()
             .ToArray();
-        var obstacleEntries = _world.Query<PositionComponent, ObstacleComponent>().ToArray();
+        var obstacleEntries = _world.Query<WorldTransformComponent, ObstacleComponent>().ToArray();
 
         // 3) Process each boid
         foreach (
-            var (boidEntity, positionComponent, velocityComponent, speciesComponent) in boidEntries
+            var (boidEntity, worldTransformComponent, velocityComponent, speciesComponent) in boidEntries
         )
         {
-            Vector2D<float> currentPosition = positionComponent;
+            Vector2D<float> currentPosition = worldTransformComponent.WorldPosition;
             Vector2D<float> currentVelocity = velocityComponent;
             string speciesId = speciesComponent.SpeciesId;
 
@@ -48,13 +49,13 @@ public class BoidSystem : ISystem
             foreach (
                 var (
                     _,
-                    otherPositionComponent,
+                    otherWorldTransformComponent,
                     otherVelocityComponent,
                     otherSpeciesComponent
                 ) in boidEntries
             )
             {
-                Vector2D<float> otherPosition = otherPositionComponent;
+                Vector2D<float> otherPosition = otherWorldTransformComponent.WorldPosition;
                 Vector2D<float> otherVelocity = otherVelocityComponent;
                 string otherId = otherSpeciesComponent.SpeciesId;
 
@@ -100,9 +101,9 @@ public class BoidSystem : ISystem
             }
 
             // 3c) Avoid obstacles
-            foreach (var (_, obstaclePositionComponent, obstacleComponent) in obstacleEntries)
+            foreach (var (_, obstacleWorldTransformComponent, obstacleComponent) in obstacleEntries)
             {
-                Vector2D<float> obstaclePosition = obstaclePositionComponent;
+                Vector2D<float> obstaclePosition = obstacleWorldTransformComponent.WorldPosition;
                 float obstacleRadius = obstacleComponent.Radius;
 
                 var offsetToObstacle = obstaclePosition - currentPosition;
@@ -138,9 +139,13 @@ public class BoidSystem : ISystem
             else if (newPosition.Y < min.Y)
                 newPosition.Y = max.Y;
 
-            // 7) Commit updated components
+            // 7) Commit updated components - update local transform instead of position
             _world.SetComponent(boidEntity, (VelocityComponent)newVelocity);
-            _world.SetComponent(boidEntity, (PositionComponent)newPosition);
+            
+            // Update local transform component with new position (since these are root entities, local = world)
+            var currentLocalTransform = boidEntity.GetLocalTransform(_world) ?? new TransformComponent();
+            var updatedLocalTransform = currentLocalTransform.WithPosition(newPosition);
+            _world.SetComponent(boidEntity, updatedLocalTransform);
         }
     }
 }

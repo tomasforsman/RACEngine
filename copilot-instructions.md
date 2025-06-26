@@ -202,6 +202,11 @@ These instructions guide GitHub Copilot to generate code following RACEngine-spe
 
 ## Further instructions
 
+### Backwards Compatibility Policy
+- **NO BACKWARDS COMPATIBILITY**: The engine is in early release and breaking changes are acceptable unless explicitly stated otherwise in the issue
+- Update all samples and existing code to use new architecture patterns rather than maintaining old APIs
+- Remove deprecated components and systems when introducing new implementations
+
 ### Files to comply with in root of repo
 - For evaluating code: CopilotAgent_Code_Evaluation_Process.md
 - For code style guidance: code-style-guidelines.md
