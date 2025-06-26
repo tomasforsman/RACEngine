@@ -43,60 +43,39 @@ Establishes rendering parameters, loads shaders, and configures render state wit
 
 ### Core Responsibilities
 
-#### Shader Management
-```csharp
-/// <summary>
-/// Shader configuration and loading system
-/// Educational note: Separating shader loading from usage improves performance
-/// </summary>
-public class ShaderConfigurationPhase
-{
-    private readonly Dictionary<ShaderMode, ShaderProgram> _shaderPrograms = new();
-    
-    /// <summary>
-    /// Configures all shader programs for the frame
-    /// Academic reference: Real-Time Rendering, 4th Edition (Akenine-Möller et al.)
-    /// </summary>
-    public void ConfigureShaders()
-    {
-        // Load vertex shader (shared across all modes)
-        var vertexShader = ShaderLoader.LoadShaderFile("vertex.glsl");
-        
-        // Configure different fragment shaders for visual effects
-        ConfigureShaderProgram(ShaderMode.Normal, "normal.frag", vertexShader);
-        ConfigureShaderProgram(ShaderMode.SoftGlow, "softglow.frag", vertexShader);
-        ConfigureShaderProgram(ShaderMode.Bloom, "bloom.frag", vertexShader);
-    }
-    
-    private void ConfigureShaderProgram(ShaderMode mode, string fragmentFile, string vertexSource)
-    {
-        var fragmentShader = ShaderLoader.LoadShaderFile(fragmentFile);
-        var program = new ShaderProgram(vertexSource, fragmentShader);
-        
-        // Cache uniform locations for performance
-        program.CacheUniformLocations(new[]
-        {
-            "u_projection", "u_view", "u_model",
-            "u_color", "u_texture", "u_time"
-        });
-        
-        _shaderPrograms[mode] = program;
-    }
-}
-```
+#### Shader Management Strategy
+The configuration phase handles shader program lifecycle and optimization:
 
-#### Render State Configuration
-```csharp
-/// <summary>
-/// Global render state configuration
-/// Educational note: Batching state changes reduces GPU driver overhead
-/// </summary>
-public class RenderStateConfiguration
-{
-    public BlendMode BlendMode { get; set; } = BlendMode.Alpha;
-    public DepthTestMode DepthTest { get; set; } = DepthTestMode.LessEqual;
-    public CullMode CullMode { get; set; } = CullMode.Back;
-    public bool WireframeMode { get; set; } = false;
+**Shader Architecture:**
+- **Program Caching**: Compiled shader programs cached for reuse across frames
+- **Uniform Location Caching**: Expensive uniform lookups cached during configuration
+- **Modular Shader Design**: Vertex shaders shared across multiple fragment shader variants
+- **Hot-Reload Support**: Development-time shader reloading for rapid iteration
+
+**Configuration Benefits:**
+- **Performance Optimization**: Expensive operations front-loaded before rendering
+- **State Consolidation**: All shader state established in single configuration pass
+- **Error Handling**: Shader compilation errors caught early in frame
+- **Resource Management**: Proper cleanup and disposal of shader resources
+
+*Implementation: `src/Rac.Rendering/Shaders/` shader management classes*
+
+#### Render State Architecture  
+Global rendering parameters established before GPU operations:
+
+**State Management Design:**
+- **Batched State Changes**: Multiple state changes batched to reduce driver overhead
+- **State Validation**: Configuration validates state combinations for correctness
+- **Default Management**: Sensible defaults provided for common rendering scenarios
+- **Platform Abstraction**: State configuration abstracted from underlying graphics API
+
+**State Categories:**
+- **Blend Modes**: Alpha blending, additive, multiplicative blending configurations
+- **Depth Testing**: Z-buffer testing modes for proper depth sorting
+- **Culling Modes**: Back-face culling optimization for 3D rendering
+- **Wireframe Modes**: Debug visualization options for development
+
+*Implementation: `src/Rac.Rendering/State/` render state management*
     
     /// <summary>
     /// Applies all render state changes in optimal order
@@ -118,51 +97,22 @@ public class RenderStateConfiguration
         else
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
     }
-}
-```
+#### Camera Architecture
+Manages viewing transformations and viewport configuration:
 
-#### Camera Configuration
-```csharp
-/// <summary>
-/// Camera and viewport configuration
-/// Educational note: Projection and view matrices transform 3D world to 2D screen
-/// </summary>
-public class CameraConfiguration
-{
-    public Matrix4 ProjectionMatrix { get; private set; }
-    public Matrix4 ViewMatrix { get; private set; }
-    public Viewport Viewport { get; set; }
-    
-    /// <summary>
-    /// Configures camera matrices for rendering
-    /// Mathematical reference: Computer Graphics: Principles and Practice (Foley et al.)
-    /// </summary>
-    public void ConfigureCamera(Camera camera, int windowWidth, int windowHeight)
-    {
-        // Calculate aspect ratio for proper perspective projection
-        float aspectRatio = (float)windowWidth / windowHeight;
-        
-        // Create perspective projection matrix
-        // Parameters: field of view, aspect ratio, near plane, far plane
-        ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
-            MathHelper.DegreesToRadians(camera.FieldOfView),
-            aspectRatio,
-            camera.NearPlane,
-            camera.FarPlane
-        );
-        
-        // Create view matrix from camera position and orientation
-        ViewMatrix = Matrix4.LookAt(
-            camera.Position,           // Eye position
-            camera.Position + camera.Forward, // Target position
-            camera.Up                  // Up vector
-        );
-        
-        // Configure viewport for this camera
-        Viewport = new Viewport(0, 0, windowWidth, windowHeight);
-    }
-}
-```
+**Camera System Design:**
+- **Matrix Management**: Projection and view matrices calculated and cached efficiently
+- **Aspect Ratio Handling**: Automatic adjustment for different screen resolutions
+- **Perspective Configuration**: Field of view, near/far plane management for 3D rendering
+- **Viewport Management**: Screen space coordinate mapping and clipping region setup
+
+**Mathematical Foundations:**
+- **Projection Matrices**: Transform 3D world coordinates to 2D screen space
+- **View Matrices**: Transform world coordinates to camera-relative coordinates
+- **Coordinate Systems**: Right-handed 3D coordinate system with proper transformations
+- **Clipping Planes**: Near and far plane configuration for depth precision
+
+*Implementation: `src/Rac.Rendering/Camera/` camera and viewport management*
 
 ## Phase 2: Preprocessing
 
@@ -171,54 +121,28 @@ Prepares render data, performs culling operations, and optimizes drawing order f
 
 ### Core Responsibilities
 
-#### Frustum Culling
-```csharp
-/// <summary>
-/// Frustum culling system to eliminate off-screen objects
-/// Educational note: Reduces overdraw and improves performance significantly
-/// Academic reference: Real-Time Collision Detection (Christer Ericson)
-/// </summary>
-public class FrustumCuller
-{
-    private readonly Plane[] _frustumPlanes = new Plane[6];
-    
-    /// <summary>
-    /// Extracts frustum planes from combined projection-view matrix
-    /// Mathematical derivation based on Gribb & Hartmann method
-    /// </summary>
-    public void ExtractFrustumPlanes(Matrix4 projectionViewMatrix)
-    {
-        var m = projectionViewMatrix;
-        
-        // Left plane: m[3] + m[0]
-        _frustumPlanes[0] = new Plane(
-            m.M14 + m.M11, m.M24 + m.M21, m.M34 + m.M31, m.M44 + m.M41
-        ).Normalized();
-        
-        // Right plane: m[3] - m[0]
-        _frustumPlanes[1] = new Plane(
-            m.M14 - m.M11, m.M24 - m.M21, m.M34 - m.M31, m.M44 - m.M41
-        ).Normalized();
-        
-        // Bottom, Top, Near, Far planes calculated similarly...
-        // [Additional plane calculations omitted for brevity]
-    }
-    
-    /// <summary>
-    /// Tests if an axis-aligned bounding box intersects the view frustum
-    /// </summary>
-    public bool IsVisible(BoundingBox boundingBox)
-    {
-        foreach (var plane in _frustumPlanes)
-        {
-            // Test all 8 corners of the bounding box against the plane
-            bool allVerticesOutside = true;
-            
-            for (int i = 0; i < 8; i++)
-            {
-                var vertex = boundingBox.GetVertex(i);
-                if (plane.DistanceToPoint(vertex) >= 0)
-                {
+#### Frustum Culling Architecture
+Eliminates objects outside the viewing volume before expensive GPU operations:
+
+**Culling Strategy:**
+- **Plane Extraction**: View frustum planes computed from projection-view matrix
+- **Bounding Volume Testing**: Objects tested against frustum planes using bounding boxes
+- **Early Elimination**: Off-screen objects removed before vertex processing
+- **Hierarchical Culling**: Spatial data structures enable efficient bulk culling
+
+**Performance Benefits:**
+- **Reduced Overdraw**: Eliminates rendering of non-visible geometry
+- **Bandwidth Savings**: Less vertex data sent to GPU
+- **Fragment Shader Savings**: Fewer fragments processed for off-screen objects
+- **Memory Efficiency**: Reduced memory bandwidth usage
+
+**Mathematical Approach:**
+- **Gribb-Hartmann Method**: Industry-standard frustum plane extraction
+- **Axis-Aligned Bounding Boxes**: Fast intersection testing with simple geometry
+- **Conservative Testing**: Ensures no visible objects are incorrectly culled
+- **Sphere Culling**: Alternative bounding volume for organic shapes
+
+*Implementation: `src/Rac.Rendering/Culling/` frustum culling systems*
                     allVerticesOutside = false;
                     break;
                 }

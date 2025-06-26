@@ -24,160 +24,90 @@ RACEngine implements a modern Entity-Component-System (ECS) architecture that pr
 
 ### What is ECS?
 
-Entity-Component-System is an architectural pattern that separates data (Components) from behavior (Systems) and uses Entities as lightweight identifiers to link them together.
+Entity-Component-System is an architectural pattern that fundamentally differs from traditional object-oriented approaches by separating data (Components) from behavior (Systems) and using Entities as lightweight identifiers to link them together.
 
-**Traditional OOP vs ECS:**
-```csharp
-// Traditional OOP approach
-public class GameObject
-{
-    public Vector2 Position { get; set; }
-    public float Health { get; set; }
-    public void Update() { /* mixed data and behavior */ }
-    public void Render() { /* inheritance issues */ }
-}
+**Conceptual Differences:**
 
-// ECS approach
-public readonly record struct Entity(int Id, bool IsAlive = true);
-public readonly record struct PositionComponent(Vector2 Position) : IComponent;
-public readonly record struct HealthComponent(float Health) : IComponent;
-public class MovementSystem : ISystem { /* pure behavior */ }
-public class RenderSystem : ISystem { /* focused responsibility */ }
-```
+**Traditional OOP Approach:**
+- Objects contain both data and behavior
+- Inheritance creates rigid hierarchies
+- Difficult to compose functionality
+- Performance issues due to cache misses
 
-## Core Components
+**ECS Approach:**
+- Pure data separation in components
+- Behavior isolated in systems
+- Flexible composition through component combinations
+- Cache-friendly data layout for performance
 
-### Entity
+*Implementation Details: See `src/Rac.ECS/Core/Entity.cs` and related files*
 
-Entities are lightweight identifiers that represent game objects:
+## Core Architecture
 
-```csharp
-/// <summary>
-/// Represents a unique entity in the game world.
-/// Entities are immutable identifiers that link components together.
-/// </summary>
-/// <param name="Id">Unique identifier for this entity</param>
-/// <param name="IsAlive">Whether this entity is active in the world</param>
-public readonly record struct Entity(int Id, bool IsAlive = true)
-{
-    /// <summary>
-    /// Invalid entity constant for null checks and initialization
-    /// </summary>
-    public static readonly Entity Invalid = new(-1, false);
-    
-    /// <summary>
-    /// Checks if this entity is valid and alive
-    /// </summary>
-    public bool IsValid => Id >= 0 && IsAlive;
-}
-```
+### Entity Structure
 
-**Entity Design Principles:**
-- **Immutable**: Entities never change once created
-- **Lightweight**: Only an ID and alive flag
-- **Type-safe**: Strong typing prevents invalid operations
-- **Efficient**: Value type semantics for performance
+Entities in RACEngine serve as unique identifiers that link components together:
 
-### Components
+**Design Characteristics:**
+- **Immutable Value Types**: Entities never change once created for thread safety
+- **Minimal Memory Footprint**: Contains only essential identification data
+- **Type Safety**: Strong typing prevents invalid entity operations
+- **Performance Optimized**: Value type semantics avoid heap allocations
 
-Components are pure data containers that implement the `IComponent` marker interface:
+**Structural Role:**
+- Acts as a key to look up associated components
+- Provides lifecycle management (alive/dead state)
+- Enables efficient batch operations across entity collections
 
-```csharp
-/// <summary>
-/// Marker interface for all ECS components.
-/// Components must be readonly record structs for immutability and performance.
-/// </summary>
-public interface IComponent { }
+*Implementation: `src/Rac.ECS/Core/Entity.cs`*
 
-/// <summary>
-/// Position component storing 2D coordinates
-/// </summary>
-/// <param name="Position">World position coordinates</param>
-public readonly record struct PositionComponent(Vector2 Position) : IComponent;
+### Component Architecture
 
-/// <summary>
-/// Velocity component for movement calculations
-/// </summary>
-/// <param name="Velocity">Velocity vector in units per second</param>
-public readonly record struct VelocityComponent(Vector2 Velocity) : IComponent;
+Components represent pure data containers that define what an entity is:
 
-/// <summary>
-/// Health component for destructible entities
-/// </summary>
-/// <param name="Current">Current health points</param>
-/// <param name="Maximum">Maximum health points</param>
-public readonly record struct HealthComponent(float Current, float Maximum) : IComponent;
-```
+**Design Principles:**
+- **Data-Only Structures**: No behavior, only state information
+- **Immutable Records**: Prevent accidental state mutations
+- **Single Responsibility**: Each component represents one aspect of an entity
+- **Compositional**: Multiple components combine to create complex entities
 
-**Component Design Rules:**
-- **readonly record struct**: Immutable, efficient value types
-- **Pure data**: No behavior, only data storage
-- **Single responsibility**: Each component has one clear purpose
-- **Composable**: Components can be combined freely
+**Common Component Categories:**
+- **Transform Components**: Position, rotation, scale information
+- **Physics Components**: Velocity, acceleration, collision data
+- **Rendering Components**: Sprite, color, visibility information
+- **Game Logic Components**: Health, inventory, AI state
 
-### Systems
+*Implementation: `src/Rac.ECS/Components/` directory*
 
-Systems contain pure logic and operate on World data:
+### System Architecture
 
-```csharp
-/// <summary>
-/// Base interface for all ECS systems
-/// </summary>
-public interface ISystem
-{
-    /// <summary>
-    /// Update system logic for current frame
-    /// </summary>
-    /// <param name="world">World containing entity and component data</param>
-    /// <param name="deltaTime">Time elapsed since last frame in seconds</param>
-    void Update(World world, float deltaTime);
-}
+Systems contain all game logic and operate on component data:
 
-/// <summary>
-/// Movement system that applies velocity to position
-/// Educational example of physics integration in game engines
-/// </summary>
-public class MovementSystem : ISystem
-{
-    public void Update(World world, float deltaTime)
-    {
-        // Query entities with both Position and Velocity components
-        foreach (var (entity, position, velocity) in world.Query<PositionComponent, VelocityComponent>())
-        {
-            // Calculate new position using basic physics: position = position + velocity * time
-            var newPosition = position.Position + velocity.Velocity * deltaTime;
-            
-            // Update component with new position
-            world.SetComponent(entity, new PositionComponent(newPosition));
-        }
-    }
-}
-```
+**System Processing Patterns:**
+- **Update Loop Integration**: Systems execute within the main game loop
+- **Component Querying**: Systems filter entities by required components
+- **Batch Processing**: Operations applied efficiently across entity collections
+- **Data Transformation**: Pure functions that transform component data
 
-**System Design Principles:**
-- **Stateless**: Systems don't store data between frames
-- **Pure functions**: Same input always produces same output
-- **Single purpose**: Each system handles one specific concern
-- **Testable**: Easy to unit test with mock World data
+*Implementation: `src/Rac.ECS/Systems/` directory*
 
-### World
+### World Management Architecture
 
-The World manages entity creation, component storage, and querying:
+The World serves as the central data coordinator and storage manager:
 
-```csharp
-/// <summary>
-/// Central repository for entities and components in the ECS architecture.
-/// Provides efficient storage and querying capabilities.
-/// </summary>
-public class World
-{
-    /// <summary>
-    /// Creates a new entity with unique ID
-    /// </summary>
-    /// <returns>New entity ready for component assignment</returns>
-    public Entity CreateEntity();
-    
-    /// <summary>
+**World Responsibilities:**
+- **Entity Lifecycle**: Creation, destruction, and state management
+- **Component Storage**: Efficient storage and retrieval of component data
+- **Query Processing**: Filtering entities by component composition
+- **System Coordination**: Providing data access for system operations
+
+**Key Design Features:**
+- **Type-Safe Operations**: Generic methods ensure component type safety
+- **Efficient Queries**: Fast lookups using optimized data structures
+- **Memory Management**: Handles component allocation and deallocation
+- **Thread Safety**: Designed for concurrent access where appropriate
+
+*Implementation: `src/Rac.ECS/Core/World.cs`*
     /// Destroys an entity and removes all its components
     /// </summary>
     /// <param name="entity">Entity to destroy</param>
@@ -222,142 +152,93 @@ public class World
 }
 ```
 
-## Implementation Details
+## Implementation Strategy
 
-### Component Storage
+### Data Storage Approach
 
-RACEngine uses sparse arrays for efficient component storage:
+RACEngine employs optimized data structures for component management:
 
-```csharp
-/// <summary>
-/// Sparse array storage for components of type T
-/// Provides O(1) access while minimizing memory usage
-/// </summary>
-internal class ComponentArray<T> where T : struct, IComponent
-{
-    private T[] _components;
-    private bool[] _hasComponent;
-    private int _capacity;
-    
-    /// <summary>
-    /// Sets component for entity, growing array if necessary
-    /// Educational note: Sparse arrays trade memory for access speed
-    /// </summary>
-    public void SetComponent(int entityId, T component)
-    {
-        EnsureCapacity(entityId + 1);
-        _components[entityId] = component;
-        _hasComponent[entityId] = true;
-    }
-    
-    /// <summary>
-    /// Gets component for entity with O(1) access time
-    /// </summary>
-    public T? GetComponent(int entityId)
-    {
-        if (entityId >= _capacity || !_hasComponent[entityId])
-            return null;
-        return _components[entityId];
-    }
-}
-```
+**Storage Design Principles:**
+- **Sparse Array Architecture**: Provides O(1) component access while minimizing memory waste
+- **Type-Specific Storage**: Each component type has dedicated storage for cache efficiency
+- **Dynamic Capacity**: Storage grows as needed to accommodate new entities
+- **Memory Locality**: Components of the same type stored contiguously for better performance
 
-### Query Implementation
+**Trade-offs and Rationale:**
+- Memory usage vs. access speed: Sparse arrays chosen for optimal access patterns
+- Flexibility vs. performance: Generic storage allows for any component type
+- Growth strategy: Balanced approach between memory waste and reallocation frequency
 
-Efficient querying using component masks and iteration:
+*Implementation: Component storage classes in `src/Rac.ECS/Core/`*
 
-```csharp
-/// <summary>
-/// Query implementation for entities with specific component combinations
-/// Uses bit masks for efficient filtering
-/// </summary>
-public IEnumerable<(Entity, T1, T2)> Query<T1, T2>() 
-    where T1 : struct, IComponent 
-    where T2 : struct, IComponent
-{
-    var componentArray1 = GetComponentArray<T1>();
-    var componentArray2 = GetComponentArray<T2>();
-    
-    // Iterate through all entities
-    for (int i = 0; i < _entityCount; i++)
-    {
-        if (!_entities[i].IsAlive)
-            continue;
-            
-        var component1 = componentArray1.GetComponent(i);
-        var component2 = componentArray2.GetComponent(i);
-        
-        // Yield entity only if it has both required components
-        if (component1.HasValue && component2.HasValue)
-        {
-            yield return (_entities[i], component1.Value, component2.Value);
-        }
-    }
-}
-```
+### Query Processing Strategy
 
-## Common Patterns
+Efficient entity filtering and component retrieval:
 
-### Component Composition
+**Query Architecture:**
+- **Component Filtering**: Entities matched based on required component combinations
+- **Lazy Evaluation**: Queries use iterator patterns for memory efficiency
+- **Type Safety**: Generic constraints ensure compile-time component validation
+- **Performance Optimization**: Bit masks and efficient iteration for fast queries
 
-Building complex entities through component combination:
+**Query Pattern Benefits:**
+- **Composability**: Multiple component requirements can be combined
+- **Safety**: Type system prevents invalid component access
+- **Performance**: Optimized iteration minimizes allocation overhead
+- **Flexibility**: Supports single and multi-component queries
 
-```csharp
-/// <summary>
-/// Creates a player entity with all necessary components
-/// Demonstrates composition over inheritance principle
-/// </summary>
-public Entity CreatePlayer(World world, Vector2 position)
-{
-    var player = world.CreateEntity();
-    
-    // Core components
-    world.SetComponent(player, new PositionComponent(position));
-    world.SetComponent(player, new VelocityComponent(Vector2.Zero));
-    
-    // Gameplay components
-    world.SetComponent(player, new HealthComponent(100f, 100f));
-    world.SetComponent(player, new PlayerInputComponent());
-    
-    // Visual components
-    world.SetComponent(player, new SpriteComponent("player.png"));
-    world.SetComponent(player, new AnimationComponent("idle"));
-    
-    // Audio components
-    world.SetComponent(player, new AudioSourceComponent());
-    
-    return player;
-}
-```
+*Implementation: Query methods in `src/Rac.ECS/Core/World.cs`*
 
-### System Dependencies
+## Design Patterns and Best Practices
 
-Managing system execution order and dependencies:
+### Entity Composition Patterns
 
-```csharp
-/// <summary>
-/// System scheduler that manages execution order
-/// Educational example of dependency management in game engines
-/// </summary>
-public class SystemScheduler
-{
-    private readonly List<ISystem> _systems = new();
-    
-    /// <summary>
-    /// Registers systems in dependency order
-    /// Order matters: Input → Logic → Physics → Rendering
-    /// </summary>
-    public void RegisterSystems()
-    {
-        // 1. Input systems (process user input)
-        _systems.Add(new InputSystem());
-        
-        // 2. Logic systems (game rules and AI)
-        _systems.Add(new PlayerMovementSystem());
-        _systems.Add(new AIBehaviorSystem());
-        
-        // 3. Physics systems (collision and movement)
-        _systems.Add(new PhysicsSystem());
+RACEngine promotes composition over inheritance through flexible component combinations:
+
+**Composition Strategy:**
+- **Modular Design**: Entities built by combining independent components
+- **Flexible Combinations**: Any component can be added to any entity
+- **Single Responsibility**: Each component represents one specific aspect
+- **Runtime Modification**: Components can be added/removed during gameplay
+
+**Common Entity Archetypes:**
+- **Player Characters**: Input, movement, health, rendering components
+- **Projectiles**: Position, velocity, collision, lifetime components  
+- **Static Objects**: Position, rendering, collision components
+- **UI Elements**: Position, rendering, input handling components
+
+**Benefits of Composition:**
+- **Reusability**: Components shared across different entity types
+- **Maintainability**: Changes to one component don't affect others
+- **Testability**: Individual components can be tested in isolation
+- **Flexibility**: Easy to create new entity types by mixing components
+
+*Examples: Entity creation patterns in game systems and factories*
+
+### System Architecture Patterns
+
+Effective system design follows established patterns for maintainability and performance:
+
+**System Execution Patterns:**
+- **Update Loop Integration**: Systems execute in specific phases of the game loop
+- **Dependency Ordering**: Systems execute in logical dependency order
+- **Batch Processing**: Systems process all relevant entities in single passes
+- **State Isolation**: Systems remain stateless between update cycles
+
+**Common System Categories:**
+- **Input Systems**: Process user input and update input components
+- **Logic Systems**: Implement game rules, AI behavior, and state management
+- **Physics Systems**: Handle movement, collision detection, and response
+- **Rendering Systems**: Process visual components and send data to GPU
+- **Audio Systems**: Manage sound effects and music based on entity states
+
+**System Communication Patterns:**
+- **Component-Mediated**: Systems communicate through shared component data
+- **Event Systems**: Decoupled communication using event publishing/subscription  
+- **Service Dependencies**: Systems can depend on external services for complex operations
+- **World Queries**: Systems discover relevant entities through component queries
+
+*Implementation: `src/Rac.ECS/Systems/` and scheduler implementations*
         _systems.Add(new CollisionSystem());
         
         // 4. Rendering systems (visual output)
@@ -406,127 +287,73 @@ public class HealthSystem : ISystem
                 TriggerDeathEffects(world, entity);
             }
         }
-        
-        // Destroy dead entities
-        foreach (var entity in entitiesToDestroy)
-        {
-            world.DestroyEntity(entity);
-        }
-    }
-    
-    private void TriggerDeathEffects(World world, Entity entity)
-    {
-        // Add particle effects
-        if (world.GetComponent<PositionComponent>(entity) is var pos)
-        {
-            world.SetComponent(entity, new ParticleEffectComponent("death_explosion"));
-        }
-        
-        // Play death sound
-        if (world.GetComponent<AudioSourceComponent>(entity) is var audio)
-        {
-            world.SetComponent(entity, new PlaySoundComponent("death_sound"));
-        }
-    }
-}
-```
+## Performance Architecture
 
-## Performance Considerations
+### Memory Layout Optimization
 
-### Memory Layout
+RACEngine's ECS design prioritizes cache-friendly memory patterns:
 
-Components are stored contiguously for cache efficiency:
+**Data-Oriented Design Principles:**
+- **Component Locality**: Components of the same type stored contiguously in memory
+- **Cache Efficiency**: Systems iterate through tightly packed component arrays
+- **Reduced Pointer Chasing**: Direct array access rather than object graph traversal
+- **Vectorization Friendly**: Memory layout supports SIMD operations where applicable
 
-```csharp
-/// <summary>
-/// Memory layout optimization for component iteration
-/// Educational note: Data-oriented design principles in practice
-/// </summary>
-public void OptimizedSystemUpdate(World world, float deltaTime)
-{
-    // Bad: Object-oriented approach with poor cache locality
-    // foreach (var gameObject in gameObjects)
-    //     gameObject.UpdatePhysics(deltaTime);
-    
-    // Good: Data-oriented approach with excellent cache locality
-    foreach (var (entity, position, velocity) in world.Query<PositionComponent, VelocityComponent>())
-    {
-        // All position components are stored contiguously in memory
-        // All velocity components are stored contiguously in memory
-        // CPU cache can efficiently prefetch data for next iterations
-        var newPosition = position.Position + velocity.Velocity * deltaTime;
-        world.SetComponent(entity, new PositionComponent(newPosition));
-    }
-}
-```
+**Performance Benefits:**
+- **CPU Cache Utilization**: Better cache hit rates during component iteration
+- **Memory Bandwidth**: More efficient use of memory bus bandwidth
+- **Branch Prediction**: Predictable iteration patterns improve CPU performance
+- **Thermal Efficiency**: Reduced memory stalls lead to lower power consumption
 
-### Component Pooling
+**Design Trade-offs:**
+- **Memory Overhead**: Sparse arrays may waste memory for sparse entity IDs
+- **Insertion Cost**: Adding components may require array resizing
+- **Complexity**: More complex than simple object-oriented approaches
+- **Debugging**: Component data distributed across multiple arrays
 
-Reusing component arrays to reduce garbage collection:
+*Implementation: Memory layout optimizations in component storage classes*
 
-```csharp
-/// <summary>
-/// Component array pooling to reduce allocations
-/// Educational example of memory management in high-performance systems
-/// </summary>
-public class ComponentPool<T> where T : struct, IComponent
-{
-    private readonly Stack<T[]> _arrayPool = new();
-    private readonly int _arraySize;
-    
-    public T[] RentArray()
-    {
-        if (_arrayPool.Count > 0)
-            return _arrayPool.Pop();
-        
-        return new T[_arraySize];
-    }
-    
-    public void ReturnArray(T[] array)
-    {
-        // Clear array before returning to pool
-        Array.Clear(array, 0, array.Length);
-        _arrayPool.Push(array);
-    }
-}
-```
+### Resource Management Strategy
 
-## Testing Strategies
+Efficient handling of component lifecycle and memory allocation:
 
-### Unit Testing Systems
+**Allocation Patterns:**
+- **Component Pooling**: Reuse component storage to reduce garbage collection pressure
+- **Array Reuse**: Pool component arrays for temporary operations
+- **Lazy Allocation**: Allocate component storage only when first component is added
+- **Capacity Growth**: Exponential growth strategies balance memory and performance
 
-Testing systems in isolation:
+**Garbage Collection Optimization:**
+- **Value Type Components**: Components are structs to avoid heap allocations
+- **Immutable Data**: Reduces object mutation and GC tracking overhead
+- **Array Pooling**: Reuse temporary arrays to minimize allocation pressure
+- **Batch Operations**: Group operations to reduce allocation frequency
 
-```csharp
-[Test]
-public void MovementSystem_AppliesVelocityToPosition()
-{
-    // Arrange
-    var world = new World();
-    var system = new MovementSystem();
-    var entity = world.CreateEntity();
-    
-    var initialPosition = new Vector2(0, 0);
-    var velocity = new Vector2(10, 5);
-    var deltaTime = 0.1f;
-    
-    world.SetComponent(entity, new PositionComponent(initialPosition));
-    world.SetComponent(entity, new VelocityComponent(velocity));
-    
-    // Act
-    system.Update(world, deltaTime);
-    
-    // Assert
-    var finalPosition = world.GetComponent<PositionComponent>(entity);
-    var expectedPosition = initialPosition + velocity * deltaTime;
-    
-    Assert.That(finalPosition.Value.Position, Is.EqualTo(expectedPosition).Within(0.001f));
-}
-```
+*Implementation: Resource management in `src/Rac.ECS/Core/` storage classes*
 
-### Integration Testing
+## Testing Architecture
 
-Testing system interactions:
+ECS design enables comprehensive testing strategies:
+
+**System Testing Approach:**
+- **Isolated Testing**: Systems can be tested independently with mock world data
+- **Behavioral Verification**: Test system behavior through component state changes
+- **Integration Testing**: Multiple systems tested together for interaction validation
+- **Performance Testing**: Benchmark system performance with large entity collections
+
+**Testing Benefits:**
+- **Deterministic Behavior**: Pure functions produce predictable, testable outcomes
+- **Dependency Isolation**: Systems depend only on component data, not external state
+- **Scenario Creation**: Easy to create specific test scenarios by configuring components
+- **State Verification**: Component states provide clear verification points
+
+**Test Strategy Categories:**
+- **Unit Tests**: Individual system logic with controlled component data
+- **Integration Tests**: Multiple systems working together in realistic scenarios
+- **Performance Tests**: System behavior under various entity counts and configurations
+- **Stress Tests**: Edge cases like massive entity counts or complex component combinations
+
+*Testing Implementation: Test projects demonstrate testing patterns for ECS systems*
 
 ```csharp
 [Test]

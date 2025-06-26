@@ -45,39 +45,29 @@ Hardware Audio Device
 
 ## Core Components
 
-### Audio Service Interface
+### Audio Service Architecture
 
-```csharp
-/// <summary>
-/// Main interface for audio operations in RACEngine
-/// Educational note: Interface segregation principle applied to audio functionality
-/// </summary>
-public interface IAudioService
-{
-    /// <summary>
-    /// Plays a 2D sound effect at specified volume
-    /// </summary>
-    /// <param name="soundId">Identifier for the sound asset</param>
-    /// <param name="volume">Volume level (0.0 to 1.0)</param>
-    /// <param name="pitch">Pitch multiplier (1.0 = normal pitch)</param>
-    void PlaySound(string soundId, float volume = 1.0f, float pitch = 1.0f);
-    
-    /// <summary>
-    /// Plays a 3D positioned sound with spatial audio effects
-    /// Educational note: 3D audio uses HRTF (Head-Related Transfer Function) for realistic positioning
-    /// </summary>
-    /// <param name="soundId">Identifier for the sound asset</param>
-    /// <param name="position">3D world position of the sound source</param>
-    /// <param name="volume">Base volume before distance attenuation</param>
-    void PlaySound3D(string soundId, Vector3 position, float volume = 1.0f);
-    
-    /// <summary>
-    /// Plays background music with loop and fade options
-    /// </summary>
-    /// <param name="musicId">Identifier for the music asset</param>
-    /// <param name="loop">Whether to loop the music</param>
-    /// <param name="fadeInTime">Fade-in duration in seconds</param>
-    void PlayMusic(string musicId, bool loop = true, float fadeInTime = 0.0f);
+The central audio interface provides unified access to audio functionality:
+
+**Service Interface Design:**
+- **Simple Operations**: Basic sound playback with minimal parameters
+- **Advanced Features**: 3D spatial audio with complex positioning
+- **Resource Management**: Efficient loading and caching of audio assets
+- **Platform Abstraction**: Unified API across different audio backends
+
+**Service Responsibilities:**
+- **2D Audio Playback**: Traditional stereo sound effects and music
+- **3D Spatial Audio**: Positioned sounds with distance attenuation and direction
+- **Music Management**: Background music with looping and crossfading
+- **Audio Asset Loading**: Efficient loading and caching of sound files
+
+**Design Patterns:**
+- **Interface Segregation**: Separate interfaces for simple vs. advanced audio features
+- **Factory Pattern**: Audio source creation through centralized factory methods
+- **Observer Pattern**: Audio event notifications for game systems
+- **Command Pattern**: Queued audio operations for thread-safe execution
+
+*Implementation: `src/Rac.Audio/Services/` audio service interfaces and implementations*
     
     /// <summary>
     /// Updates 3D audio listener position and orientation

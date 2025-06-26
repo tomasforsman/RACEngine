@@ -153,50 +153,41 @@ Events → Components → Forces → Transforms → Visuals → Sound
 
 ## Integration Patterns
 
-### Dependency Injection
-```csharp
-// Systems receive dependencies through constructors
-public class RenderingSystem : ISystem
-{
-    private readonly IRenderer _renderer;
-    private readonly IShaderManager _shaderManager;
-    
-    public RenderingSystem(IRenderer renderer, IShaderManager shaderManager)
-    {
-        _renderer = renderer;
-        _shaderManager = shaderManager;
-    }
-}
-```
+### Dependency Management Architecture
 
-### Event-Driven Communication
-```csharp
-// Loose coupling through events
-public class GameEventSystem
-{
-    public event Action<EntityDestroyedEvent> EntityDestroyed;
-    public event Action<ComponentAddedEvent> ComponentAdded;
-    
-    // Systems subscribe to relevant events
-}
-```
+RACEngine employs established patterns for managing system dependencies:
 
-### Service Locator Pattern
-```csharp
-// Optional services with null object implementations
-public interface IAudioService
-{
-    void PlaySound(string soundId, Vector3 position);
-}
+**Dependency Injection Strategy:**
+- **Constructor Injection**: Systems receive required dependencies during initialization
+- **Interface Abstraction**: Systems depend on interfaces rather than concrete implementations
+- **Lifecycle Management**: Dependencies managed by container for proper initialization order
+- **Testing Support**: Easy mock injection for unit testing scenarios
 
-public class NullAudioService : IAudioService
-{
-    public void PlaySound(string soundId, Vector3 position) 
-    {
-        // No-op implementation for headless scenarios
-    }
-}
-```
+**Service Location Pattern:**
+- **Optional Services**: Non-critical services provided through service locator
+- **Null Object Implementation**: Graceful degradation when optional services unavailable
+- **Plugin Architecture**: External systems can register services dynamically
+- **Runtime Discovery**: Services can be discovered and registered at runtime
+
+*Implementation: `src/Rac.Core/DependencyInjection/` and service management classes*
+
+### Communication Architecture
+
+Systems communicate through established patterns that maintain loose coupling:
+
+**Event-Driven Design:**
+- **Publisher-Subscriber**: Systems publish events, others subscribe to relevant notifications
+- **Decoupled Communication**: Systems don't need direct references to each other
+- **Async Processing**: Events can be processed asynchronously for performance
+- **Event Sourcing**: Complete event history available for debugging and replay
+
+**Shared Data Communication:**
+- **Component-Mediated**: Systems communicate by modifying shared component data
+- **World Queries**: Systems discover relevant entities through component filtering
+- **Data-Driven Behavior**: System behavior determined by component data rather than events
+- **Cache-Friendly**: Component-based communication supports data-oriented design
+
+*Implementation: Event systems in `src/Rac.Core/Events/` and component communication patterns*
 
 ## Extensibility Points
 
