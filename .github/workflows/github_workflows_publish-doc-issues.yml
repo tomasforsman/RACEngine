@@ -21,29 +21,29 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           python3 <<'EOF'
-import yaml
-import subprocess
-import re
-
-# Load project list
-with open('.github/project-list.yaml') as f:
-    projects = yaml.safe_load(f)['projects']
-
-# Load template
-with open('.github/issue-template.yaml') as f:
-    template = yaml.safe_load(f)
-
-def feature_name(project):
-    # Remove Rac. prefix and make lower case
-    return re.sub(r'^Rac\\.', '', project).lower()
-
-for project in projects:
-    feature = feature_name(project)
-    title = template['title'].replace('{project}', project)
-    body = template['body'].replace('{project}', project).replace('{feature}', feature)
-    labels = ','.join(template['labels'])
-    cmd = ['gh', 'issue', 'create', '--title', title, '--body', body]
-    if labels:
-        cmd += ['--label', labels]
-    subprocess.run(cmd)
-EOF
+          import yaml
+          import subprocess
+          import re
+          
+          # Load project list
+          with open('.github/project-list.yaml') as f:
+              projects = yaml.safe_load(f)['projects']
+          
+          # Load template
+          with open('.github/issue-template.yaml') as f:
+              template = yaml.safe_load(f)
+          
+          def feature_name(project):
+              # Remove Rac. prefix and make lower case
+              return re.sub(r'^Rac\\.', '', project).lower()
+          
+          for project in projects:
+              feature = feature_name(project)
+              title = template['title'].replace('{project}', project)
+              body = template['body'].replace('{project}', project).replace('{feature}', feature)
+              labels = ','.join(template['labels'])
+              cmd = ['gh', 'issue', 'create', '--title', title, '--body', body]
+              if labels:
+                  cmd += ['--label', labels]
+              subprocess.run(cmd)
+          EOF
