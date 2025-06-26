@@ -294,8 +294,24 @@ public class RenderProcessor
     
     private ShaderProgram? GetCurrentShader()
     {
-        _preprocessor.Shaders.TryGetValue(_currentShaderMode, out var shader);
-        return shader;
+        // Try to get the requested shader mode
+        if (_preprocessor.Shaders.TryGetValue(_currentShaderMode, out var shader))
+        {
+            return shader;
+        }
+        
+        // If DebugUV is not available, fall back to Normal mode for graceful degradation
+        if (_currentShaderMode == ShaderMode.DebugUV)
+        {
+            Console.WriteLine("Warning: DebugUV shader not available, falling back to Normal mode");
+            if (_preprocessor.Shaders.TryGetValue(ShaderMode.Normal, out var fallbackShader))
+            {
+                return fallbackShader;
+            }
+        }
+        
+        // Return null if no suitable shader found (original behavior)
+        return null;
     }
     
     private void UpdateShaderUniforms()
@@ -339,6 +355,10 @@ public class RenderProcessor
             case ShaderMode.Bloom:
                 _gl.Enable(EnableCap.Blend);
                 _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
+                break;
+            case ShaderMode.DebugUV:
+                // Disable blending for clear UV coordinate visualization
+                _gl.Disable(EnableCap.Blend);
                 break;
             default:
                 _gl.Disable(EnableCap.Blend);
