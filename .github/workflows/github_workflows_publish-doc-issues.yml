@@ -10,10 +10,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up GitHub CLI
-        uses: cli/cli-action@v2
-
-      - name: Install PyYAML (for parsing YAML in Python)
+      - name: Install PyYAML
         run: pip install pyyaml
 
       - name: Publish documentation issues using template
@@ -24,19 +21,18 @@ jobs:
           import yaml
           import subprocess
           import re
-          
+
           # Load project list
           with open('.github/project-list.yaml') as f:
               projects = yaml.safe_load(f)['projects']
-          
+
           # Load template
           with open('.github/issue-template.yaml') as f:
               template = yaml.safe_load(f)
-          
+
           def feature_name(project):
-              # Remove Rac. prefix and make lower case
               return re.sub(r'^Rac\\.', '', project).lower()
-          
+
           for project in projects:
               feature = feature_name(project)
               title = template['title'].replace('{project}', project)
