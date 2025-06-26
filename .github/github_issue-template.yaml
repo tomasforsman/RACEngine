@@ -1,0 +1,68 @@
+title: "Create Project Documentation for {project}"
+labels: ["documentation"]
+body: |
+  Create comprehensive project documentation for the {project} project following the established documentation template and format.
+
+  Requirements
+  Create a new documentation file at docs/projects/{project}.md that follows the same structure and approach as the existing documentation in docs/projects/.
+
+  Required Documentation Sections
+  Project Overview
+  - Purpose and role of the {feature} system within the game engine
+  - Key design principles and architectural decisions
+  - Performance characteristics and optimization goals
+
+  Architecture Overview
+  - High-level {feature} system description
+  - Core architectural decisions
+  - Integration with ECS system and other engine components
+
+  Namespace Organization
+  - Document each namespace in the {project} project
+  - Explain the functionality and purpose of each namespace
+  - Describe key classes/interfaces and their roles (without copying code)
+
+  Core Concepts and Workflows
+  - {feature}-specific pipeline and data flow
+  - Resource management ({feature} assets, etc.)
+  - {feature} workflow
+  - Integration with ECS
+
+  Integration Points
+  - Dependencies on other engine projects
+  - How other systems interact with {feature}
+  - Data consumed from ECS
+
+  Usage Patterns
+  - Common {feature} setup patterns
+  - How to use {feature} for entities from ECS
+  - Resource loading and management workflows
+  - Performance optimization patterns
+
+  Extension Points
+  - How to add new {feature} features
+  - Extensibility points
+  - Future enhancement opportunities
+
+  Guidelines
+  - Do not copy code from source files into the documentation
+  - Focus on architectural understanding rather than implementation details
+  - Write for developer onboarding - assume the reader needs to understand how the system works and how to use it
+  - Be descriptive but concise - more detailed than a README, less granular than code comments
+  - Explain design decisions and trade-offs where relevant
+  - Reference the existing ECS documentation as an example of the expected style and depth
+
+  Acceptance Criteria
+  - Documentation file created at docs/projects/{project}.md
+  - All required sections are present and complete
+  - Documentation follows the same structure and style as existing project docs
+  - Content focuses on architecture and usage rather than implementation details
+  - No source code is copied into the documentation
+  - Document explains how {feature} integrates with other engine systems
+  - Writing is clear and suitable for developer onboarding
+
+  Reference Materials
+  - Review existing documentation in docs/projects/ for style and structure examples
+  - Examine the {project} project source code to understand architecture and functionality
+  - Consider the ECS integration points when documenting {feature} system workflows
+  - Other relevant documentation in the docs/ folder and the ReadMe.md in the project root

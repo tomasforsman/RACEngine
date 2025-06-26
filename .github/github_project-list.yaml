@@ -1,0 +1,14 @@
+projects:
+  - Rac.Core
+  - Rac.Tools
+  - Rac.Animation
+  - Rac.Scripting
+  - Rac.Physics
+  - Rac.AI
+  - Rac.Input
+  - Rac.Networking
+  - Rac.Audio
+  - Rac.Assets
+  - Rac.Rendering
+  - Rac.GameEngine
+  - Rac.Engine
