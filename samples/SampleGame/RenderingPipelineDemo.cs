@@ -368,7 +368,7 @@ public static class RenderingPipelineDemo
             ShaderMode.Normal => "Standard rendering without post-processing",
             ShaderMode.SoftGlow => "Subtle luminance enhancement",
             ShaderMode.Bloom => "HDR bloom with dramatic light bleeding",
-            ShaderMode.DebugUV => "UV coordinate visualization (U→Red, V→Green)",
+            ShaderMode.DebugUV => "UV coordinate visualization (converts centered coords to color-coded display)",
             _ => "Unknown shader mode"
         };
     }

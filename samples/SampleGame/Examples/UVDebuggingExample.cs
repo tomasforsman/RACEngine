@@ -37,10 +37,13 @@ public static class UVDebuggingExample
     ///    - Expected patterns validate correct UV mapping
     /// 
     /// INTERPRETATION GUIDE:
-    /// - Black (0,0) = Bottom-left UV coordinate
-    /// - Red (1,0) = Bottom-right UV coordinate  
-    /// - Green (0,1) = Top-left UV coordinate
-    /// - Yellow (1,1) = Top-right UV coordinate
+    /// - Black (0,0) = Bottom-left corner of geometry (centered coord -0.5, -0.5)
+    /// - Red (1,0) = Bottom-right corner of geometry (centered coord +0.5, -0.5)  
+    /// - Green (0,1) = Top-left corner of geometry (centered coord -0.5, +0.5)
+    /// - Yellow (1,1) = Top-right corner of geometry (centered coord +0.5, +0.5)
+    /// 
+    /// NOTE: RACEngine uses centered coordinates around (0,0) for procedural effects.
+    /// The DebugUV shader automatically converts these to [0,1] range for visualization.
     /// </summary>
     /// <param name="renderer">Active renderer instance</param>
     public static void EnableUVDebugging(IRenderer renderer)
@@ -54,10 +57,13 @@ public static class UVDebuggingExample
         Console.WriteLine("  V Coordinate → Green Channel");
         Console.WriteLine();
         Console.WriteLine("EXPECTED COLOR PATTERNS:");
-        Console.WriteLine("  (0,0) Bottom-Left  → Black");
-        Console.WriteLine("  (1,0) Bottom-Right → Red");
-        Console.WriteLine("  (0,1) Top-Left     → Green");
-        Console.WriteLine("  (1,1) Top-Right    → Yellow (Red + Green)");
+        Console.WriteLine("  (0,0) Bottom-Left  → Black   (centered coord -0.5, -0.5)");
+        Console.WriteLine("  (1,0) Bottom-Right → Red     (centered coord +0.5, -0.5)");
+        Console.WriteLine("  (0,1) Top-Left     → Green   (centered coord -0.5, +0.5)");
+        Console.WriteLine("  (1,1) Top-Right    → Yellow  (centered coord +0.5, +0.5)");
+        Console.WriteLine();
+        Console.WriteLine("NOTE: RACEngine uses centered UV coordinates for procedural effects.");
+        Console.WriteLine("The DebugUV shader converts these to [0,1] range for visualization.");
         Console.WriteLine();
         Console.WriteLine("Press Space to cycle back to normal rendering");
         Console.WriteLine("═══════════════════════════════════════════════════════════════");

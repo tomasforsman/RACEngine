@@ -38,10 +38,11 @@ public class DebugUVShaderTests
         var fragmentShader = ShaderLoader.LoadFragmentShader(ShaderMode.DebugUV);
         
         // Assert
-        Assert.Contains("vTexCoord.x", fragmentShader, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("vTexCoord.y", fragmentShader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("vTexCoord", fragmentShader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("debugUV", fragmentShader, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Red channel", fragmentShader, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Green channel", fragmentShader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("0.5", fragmentShader, StringComparison.OrdinalIgnoreCase); // Coordinate conversion
     }
     
     [Fact]
@@ -52,5 +53,17 @@ public class DebugUVShaderTests
         
         // Assert
         Assert.Contains(ShaderMode.DebugUV, availableModes);
+    }
+    
+    [Fact]
+    public void DebugUV_ShaderContent_ShouldContainCoordinateConversion()
+    {
+        // Arrange & Act
+        var fragmentShader = ShaderLoader.LoadFragmentShader(ShaderMode.DebugUV);
+        
+        // Assert - Verify the shader converts centered coordinates to [0,1] range
+        Assert.Contains("debugUV = vTexCoord + vec2(0.5, 0.5)", fragmentShader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("centered coordinates", fragmentShader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("COORDINATE SYSTEM CONVERSION", fragmentShader, StringComparison.OrdinalIgnoreCase);
     }
 }
