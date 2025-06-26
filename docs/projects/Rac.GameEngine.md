@@ -1,193 +1,117 @@
-# Rac.GameEngine Project Documentation
-
-## Project Overview
-
-The `Rac.GameEngine` project provides a high-level game orchestration layer that coordinates application lifecycle, system integration, and game loop management for the RACEngine. This project serves as the primary entry point for game applications, abstracting the complexity of windowing, rendering, input handling, and ECS coordination into a cohesive, event-driven architecture.
-
-### Key Design Principles
-
-- **Complete Abstraction**: Hides windowing and rendering complexity behind clean, intuitive APIs
-- **Event-Driven Architecture**: Structured lifecycle events enable clean separation between engine and game logic
-- **Configuration-Driven Setup**: Minimal boilerplate with sensible defaults for rapid development
-- **Type-Safe Operations**: Strongly-typed vertex management and renderer interfaces prevent common errors
-- **Resource Management**: Deterministic initialization and cleanup with graceful error handling
-- **ECS Integration**: Seamless coordination with Entity-Component-System architecture for game logic
-
-### Performance Characteristics
-
-The GameEngine prioritizes frame-rate stability through buffered vertex management, efficient event propagation, and minimal allocation patterns. The system supports both immediate-mode rendering for simple scenarios and advanced rendering features for sophisticated graphics applications.
-
-## Architecture Overview
-
-The GameEngine follows a centralized orchestration pattern where the `Engine` class acts as the primary coordinator for all subsystems. The architecture emphasizes clear lifecycle phases, event-driven communication, and loose coupling between game logic and engine internals.
-
-### Core Architectural Decisions
-
-- **Single Engine Instance**: Centralized coordination through a single Engine object that manages all subsystems
-- **Three-Phase Rendering**: Clear separation between game logic updates, rendering operations, and finalization
-- **Event-Based Communication**: Application logic integrates through events rather than direct system coupling
-- **Buffered Resource Management**: Vertex data and other resources can be prepared before full initialization
-- **Typed Renderer Access**: Both simplified and advanced renderer interfaces available based on application needs
-
-### Integration with ECS System and Other Engine Components
-
-The GameEngine serves as the bridge between low-level engine systems and high-level game logic implemented through ECS. During each frame, the engine coordinates ECS system updates through the `OnEcsUpdate` event, ensuring proper timing and delta time propagation. The rendering phase integrates with the ECS through world transform queries and component-based rendering systems.
-
-## Namespace Organization
-
-### Rac.GameEngine
-
-Contains the core `Engine` class that provides comprehensive application lifecycle management and system coordination.
-
-**Engine**: Central game loop orchestrator that manages window lifecycle, rendering pipeline coordination, input event propagation, and ECS update timing. Provides both simple and advanced renderer interfaces, supports buffered vertex loading, and maintains clean separation between engine concerns and application logic. Features configuration-driven setup with automatic resource management and graceful cleanup.
-
-### Rac.GameEngine.GameObject
-
-Defines the foundation for game object abstractions within the engine ecosystem.
-
-**IGameObject**: Marker interface establishing the contract for interactive game world elements. Serves as a foundation for future GameObject system architecture, providing a common type for all game entities that exist beyond the pure ECS data model. Reserved for game objects that require additional behavioral abstractions while maintaining ECS compatibility.
-
-### Rac.GameEngine.Pooling
-
-Provides object pooling system interfaces for performance optimization in resource-intensive scenarios.
-
-**IPooling**: Contract for object pooling implementations that improve performance by reusing objects instead of constant allocation and destruction. Essential for high-frequency scenarios like bullet systems, particle effects, temporary game objects, and other short-lived entities. Designed to integrate with both ECS entities and traditional object-oriented game components.
-
-### Rac.GameEngine.Prefab
-
-Establishes prefab system architecture for reusable game object templates and configurations.
-
-**IPrefab**: Interface for prefab objects that serve as reusable templates for creating game objects with predefined configurations. Enables efficient instantiation of complex game objects with predetermined component sets, properties, and hierarchical relationships. Designed to work seamlessly with ECS entity creation and component attachment workflows.
-
-### Rac.GameEngine.Serialization
-
-Defines serialization service contracts for game state persistence and data management.
-
-**ISerialization**: Contract for serialization services that enable saving and loading of game state, including scene data, configuration settings, save files, and other persistent data. Provides abstraction over different serialization formats (JSON, binary, XML) while maintaining type safety and performance characteristics suitable for game development scenarios.
-
-## Core Concepts and Workflows
-
-### Game Loop Architecture
-
-The GameEngine implements a structured three-phase game loop that separates concerns and provides predictable execution order:
-
-1. **ECS Update Phase**: Game logic systems process entities, update components, and handle game state changes through the `OnEcsUpdate` event
-2. **Rendering Phase**: Visual representation is updated through `OnRenderFrame` event, including vertex uploads, draw calls, and shader operations  
-3. **Finalization Phase**: Frame completion, buffer swapping, and preparation for the next frame cycle
-
-This architecture ensures consistent frame timing, proper resource synchronization, and clean separation between logic and presentation layers.
-
-### Event System and Lifecycle Management
-
-The event-driven architecture provides clear integration points for application code:
-
-- **OnLoadEvent**: Fires once after complete initialization, enabling resource loading and initial game state setup
-- **OnEcsUpdate**: Frame-based game logic updates with delta time for frame-rate independence
-- **OnRenderFrame**: Rendering operations with access to both simple and advanced renderer interfaces
-- **OnLeftClick** / **OnMouseScroll**: Input event propagation with appropriate coordinate transformations
-
-### Vertex Management System
-
-The GameEngine provides flexible vertex data management supporting multiple upload patterns:
-
-- **Float Array Support**: Compatible with existing rendering code using raw float arrays
-- **Typed Vertex Structures**: Type-safe vertex definitions with automatic layout detection
-- **Buffered Loading**: Vertex data can be prepared before renderer initialization
-- **Dynamic Updates**: Runtime vertex modifications with efficient buffer management
-
-### Resource Management Workflow
-
-Initialization and cleanup follow a deterministic pattern:
-
-1. **Configuration Loading**: Engine reads configuration settings and applies window/rendering parameters
-2. **System Initialization**: Windowing, OpenGL context, input services, and renderer setup
-3. **Resource Loading**: Application-specific resources loaded through OnLoadEvent
-4. **Runtime Operations**: Game loop execution with proper error handling and state management
-5. **Graceful Shutdown**: Deterministic cleanup of all resources and system deinitialization
-
-### Integration with ECS
-
-The GameEngine coordinates with ECS through well-defined integration points:
-
-- **System Registration**: ECS systems can be registered for automatic update coordination
-- **Delta Time Propagation**: Consistent frame timing provided to all ECS systems
-- **Transform Integration**: World transform data flows from ECS to rendering systems
-- **Component Queries**: Rendering systems can query ECS for relevant entities and components
-
-## Integration Points
-
-### Engine Dependencies
-
-- **Rac.Core.Manager**: Configuration management and core utility services
-- **Rac.Input.Service**: Cross-platform input handling and event management  
-- **Rac.Input.State**: Input state tracking and keyboard/mouse interaction
-- **Rac.Rendering**: Complete rendering pipeline with shader management and vertex processing
-- **Silk.NET Libraries**: Windowing, OpenGL context management, and mathematical operations
-
-### Rendering System Integration
-
-The GameEngine provides dual interfaces to the rendering system: a simplified `IRenderer` interface for basic operations and an advanced `OpenGLRenderer` interface for sophisticated graphics features. The rendering integration supports shader mode switching, post-processing effects, and direct OpenGL state management while maintaining automatic frame synchronization.
-
-### Input System Integration
-
-Input handling flows through the GameEngine's event system, providing cleaned and processed input data to application code. Mouse coordinates are provided in screen space with proper viewport consideration, and keyboard events include key state tracking with appropriate debouncing and repeat handling.
-
-### Audio System Integration
-
-Through the broader engine architecture, the GameEngine coordinates with audio systems for 3D spatial audio that responds to ECS transform data and scene hierarchy changes. Audio events can be triggered through the same event system used for rendering and input.
-
-### Asset Management Integration
-
-The GameEngine coordinates with asset loading systems to ensure proper timing of resource initialization relative to OpenGL context creation and other system dependencies. Asset loading can be deferred until the OnLoadEvent to guarantee full system readiness.
-
-## Usage Patterns
-
-### Basic Engine Setup
-
-Typical engine initialization involves creating an Engine instance, registering event handlers for game logic, and initiating the game loop. The configuration system allows customization of window properties, rendering settings, and other engine parameters through external configuration files or programmatic setup.
-
-### ECS Integration Workflow
-
-Applications using ECS architecture register systems with the engine, implement game logic through component updates during OnEcsUpdate events, and handle rendering through component queries during OnRenderFrame events. The engine manages system execution order and provides consistent delta timing for frame-rate independence.
-
-### Rendering Implementation Patterns
-
-Simple rendering uses the IRenderer interface with basic vertex upload and draw operations. Advanced scenarios leverage the OpenGLRenderer interface for shader management, post-processing effects, and direct OpenGL state manipulation. Both patterns support efficient vertex buffer management and automatic state synchronization.
-
-### Input Handling Workflows
-
-Input events are processed through engine event handlers that provide cleaned coordinate data and appropriate state information. Applications can implement click handling, keyboard shortcuts, and mouse interaction through the provided event interfaces without directly managing input system complexity.
-
-### Resource Loading and Management
-
-Resource initialization should occur during the OnLoadEvent to ensure all engine systems are fully initialized. Runtime resource updates can occur during the game loop, with the engine providing appropriate synchronization and error handling for resource state changes.
-
-### Performance Optimization Patterns
-
-High-performance applications should minimize event handler complexity, batch vertex updates when possible, and leverage the engine's buffered resource management. The engine supports efficient frame-rate monitoring and provides timing information for application-level performance optimization.
-
-## Extension Points
-
-### Custom System Integration
-
-The GameEngine architecture supports integration of additional engine systems through the event system and dependency injection patterns. New systems can register for lifecycle events and coordinate with existing engine infrastructure while maintaining clean separation of concerns.
-
-### Enhanced Rendering Features
-
-The dual-interface rendering architecture enables both simple applications and sophisticated graphics implementations. Future rendering enhancements can be added through the advanced renderer interface while maintaining backward compatibility with simple rendering patterns.
-
-### Input System Extensions
-
-Additional input devices and interaction patterns can be integrated through the existing input service architecture. The event system can be extended to support new input types while maintaining consistent API patterns and coordinate system handling.
-
-### Serialization and Persistence
-
-The serialization interface provides extensibility for different data formats and persistence strategies. Future implementations can support binary serialization, JSON persistence, cloud save integration, and other data management patterns while maintaining type safety and performance characteristics.
-
-### Asset Pipeline Integration
-
-Future asset management enhancements can integrate with the engine's resource loading patterns to support advanced asset streaming, hot-reloading during development, and optimized asset bundling for distribution builds.
-
-### Debugging and Development Tools
-
-The engine architecture supports integration of debugging interfaces, performance profilers, and development tools through the event system and system coordination patterns. These tools can access engine state and coordinate with game logic without requiring engine core modifications.
+Rac.GameEngine Project Documentation
+Project Overview
+The Rac.GameEngine project implements the central game loop orchestrator that provides complete application lifecycle management with integrated rendering pipeline, input handling, and system coordination. This implementation serves as the core foundation for game applications, coordinating complex interactions between windowing, rendering, input processing, and game logic through a clean, event-driven architecture.
+Key Design Principles
+
+Central Orchestration: Single point of coordination for all engine subsystems and lifecycle management
+Event-Driven Architecture: Structured event system enabling clean separation between engine infrastructure and game logic
+Configuration-Driven Setup: Flexible initialization through configuration management with sensible defaults
+Type-Safe Vertex Management: Support for both raw float arrays and strongly-typed vertex structures
+Multi-Phase Rendering: Clear separation of rendering stages with automatic state management
+Resource Lifecycle Management: Deterministic initialization and cleanup across all engine components
+
+Performance Characteristics and Optimization Goals
+The game engine achieves optimal performance through several key strategies: buffered vertex management enabling early data upload before renderer initialization, efficient event propagation minimizing callback overhead, automatic resource cleanup preventing memory leaks, and configuration-driven setup reducing runtime decisions. The engine supports both immediate rendering for simple cases and advanced multi-pass rendering for sophisticated visual effects.
+Architecture Overview
+The Rac.GameEngine system implements a comprehensive orchestration architecture that coordinates the complete game application lifecycle. The engine manages complex interactions between windowing systems, rendering pipelines, input processing, and game logic while presenting a simplified interface for game development.
+Core Architectural Decisions
+
+Single Entry Point: Unified game loop coordination eliminating manual subsystem management
+Event Hub Pattern: Centralized event coordination with structured lifecycle and input event propagation
+Buffered Operations: Early vertex upload support with automatic processing when renderer becomes available
+Configuration Integration: ConfigManager-driven setup enabling runtime customization without code changes
+Advanced Renderer Access: Direct access to OpenGL renderer for sophisticated graphics programming
+Input Service Abstraction: Pluggable input handling supporting different input backends and device types
+
+Integration with Engine Infrastructure
+The game engine coordinates four major infrastructure layers through well-defined interfaces. Window management provides application lifecycle and rendering context creation. The rendering system consumes vertex data and provides visual output through multiple rendering passes. Input services capture user interaction and propagate events to game logic. Configuration management enables runtime customization of window properties, rendering settings, and application behavior.
+Namespace Organization
+Rac.GameEngine
+The root namespace contains the primary engine implementation and core orchestration infrastructure.
+Engine: Central game loop orchestrator providing complete application lifecycle management. Coordinates window creation and configuration, multi-phase rendering pipeline execution, input service integration with event propagation, ECS update timing, and resource management with graceful cleanup. Supports both basic rendering through IRenderer interface and advanced graphics through direct OpenGL renderer access.
+Placeholder Namespaces
+The following namespaces are reserved for future functionality and currently contain interface definitions for planned features:
+Rac.GameEngine.GameObject: Reserved for game object system implementation. Currently contains IGameObject marker interface for future interactive game world elements.
+Rac.GameEngine.Pooling: Reserved for object pooling system implementation. Currently contains IPooling interface for future performance optimization through object reuse patterns.
+Rac.GameEngine.Prefab: Reserved for prefab system implementation. Currently contains IPrefab interface for future reusable game object template functionality.
+Rac.GameEngine.Serialization: Reserved for serialization system implementation. Currently contains ISerialization interface for future save/load functionality supporting multiple data formats.
+Core Concepts and Workflows
+Game Loop Orchestration
+The engine implements a comprehensive game loop that coordinates all subsystem operations through structured phases. Window creation and configuration occur during initialization using ConfigManager settings for title, size, and rendering options. The rendering pipeline executes in clear phases: Clear sets up the frame buffer, OnRenderFrame allows game logic to issue rendering commands, Draw executes pending operations, and FinalizeFrame applies post-processing effects.
+Event-Driven Application Architecture
+Engine operation follows a structured event-driven pattern enabling clean separation between infrastructure and game logic. OnLoadEvent fires once after complete initialization, providing opportunity for game state setup. OnEcsUpdate executes each frame before rendering, enabling ECS system processing and game logic updates. OnRenderFrame provides the rendering window where game code issues SetColor, UpdateVertices, and Draw operations.
+Vertex Management System
+The engine provides flexible vertex data management supporting multiple data formats and upload patterns. Raw float array support maintains compatibility with existing rendering code that uses basic position formats. Typed vertex support enables compile-time safety through BasicVertex, TexturedVertex, FullVertex, and custom vertex structures. Buffered upload capability allows vertex data specification before renderer initialization, with automatic processing when the graphics context becomes available.
+Input Event Propagation
+Input handling operates through service abstraction with automatic event propagation to game logic. Mouse events include OnLeftClick with screen coordinates and OnMouseScroll with wheel delta values. Keyboard events provide OnKeyEvent with key identification and event type information. The input service abstraction enables support for different input backends while maintaining consistent event interfaces.
+Integration Points
+Dependencies on Other Engine Projects
+
+Rac.Core: Foundation services including WindowManager for window lifecycle and ConfigManager for application configuration
+Rac.Input: Input service abstraction providing keyboard and mouse event handling with multiple backend support
+Rac.Rendering: Complete rendering pipeline including IRenderer interface and OpenGLRenderer for advanced graphics operations
+
+Window System Integration
+The engine coordinates window management through configuration-driven setup and automatic event handling. WindowBuilder provides fluent configuration of window properties including title, size, and V-Sync settings based on ConfigManager values. Window resize events automatically propagate to the renderer for viewport updates and camera matrix recalculation. Window lifecycle events trigger appropriate initialization and cleanup sequences across all subsystems.
+Rendering Pipeline Coordination
+The engine orchestrates the complete rendering pipeline through automatic state management and frame coordination. Renderer initialization occurs in phases: Initialize establishes OpenGL context, InitializePreprocessing compiles shaders and creates GPU resources, InitializeProcessing sets up vertex buffers, and InitializePostProcessing enables advanced effects. Frame rendering follows a strict sequence ensuring proper state transitions and resource synchronization.
+Usage Patterns
+Basic Engine Setup and Execution
+Standard engine initialization involves constructing required infrastructure services and configuring the engine through dependency injection. WindowManager provides window lifecycle management, InputService handles user interaction, and ConfigManager enables runtime configuration customization.
+csharp// Basic engine setup pattern
+var windowManager = new WindowManager();
+var inputService = new SilkInputService();
+var configManager = new ConfigManager();
+
+var engine = new Engine(windowManager, inputService, configManager);
+engine.Run(); // Blocks until application terminates
+Event-Driven Game Development
+Game logic integrates through event handlers that provide structured access to engine lifecycle and user interaction. Event handlers receive appropriate context including delta time for frame-rate independent behavior and input coordinates for interaction processing.
+csharp// Event-driven game development pattern
+engine.OnLoadEvent += () => {
+// One-time game initialization
+};
+
+engine.OnEcsUpdate += deltaTime => {
+// Frame-based game logic and ECS system updates
+};
+
+engine.OnRenderFrame += deltaTime => {
+// Rendering commands and visual state updates
+};
+Vertex Data Management
+The engine supports multiple vertex upload patterns accommodating different development approaches and performance requirements. Raw float arrays provide direct compatibility with existing rendering code, while typed vertex structures enable compile-time safety and clear data organization.
+csharp// Raw float array vertex upload
+float[] vertices = { -0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f };
+engine.UpdateVertices(vertices);
+
+// Typed vertex structure upload
+var typedVertices = new FullVertex[] {
+new(position1, texCoord1, color1),
+new(position2, texCoord2, color2),
+new(position3, texCoord3, color3)
+};
+engine.UpdateVertices(typedVertices);
+Advanced Rendering Features
+The engine provides direct access to advanced rendering capabilities through both standard interface methods and specialized OpenGL renderer features. Shader mode switching enables different visual effects, while uniform parameter setting allows dynamic shader customization.
+csharp// Shader mode and uniform management
+engine.SetShaderMode(ShaderMode.Bloom);
+engine.SetUniform("glowIntensity", 2.5f);
+engine.SetUniform("glowColor", new Vector4D<float>(1.0f, 0.8f, 0.6f, 1.0f));
+
+// Advanced renderer access for specialized features
+engine.AdvancedRenderer.SetPrimitiveType(PrimitiveType.LineStrip);
+Extension Points
+Event System Extensions
+The engine's event-driven architecture supports extension through additional event types and custom coordination patterns. New lifecycle events can be added to the Engine class for specialized initialization or cleanup requirements. Input event extensions can provide support for additional input devices, gesture recognition, or custom interaction patterns.
+Custom event coordination can be implemented through event handler chaining or specialized event aggregation patterns. The structured event timing ensures that extensions maintain proper ordering with respect to ECS updates and rendering operations.
+Configuration System Integration
+The configuration-driven setup pattern enables extensive customization through ConfigManager extensions. New configuration categories can be added for specialized engine features, rendering pipeline settings, or game-specific parameters. Configuration validation and default value handling can be extended to support complex setup scenarios.
+Runtime configuration updates can be implemented through configuration change notification patterns, enabling dynamic adjustment of engine behavior without application restart.
+Input Service Extensibility
+The input service abstraction enables support for specialized input devices and interaction patterns through the IInputService interface. Custom input services can provide support for game controllers, touch interfaces, motion controllers, or specialized input hardware while maintaining consistent event propagation.
+Input event filtering and processing can be extended through service composition patterns, enabling features like input recording, gesture recognition, or accessibility adaptations.
+Future Enhancement Opportunities
+The placeholder namespaces indicate substantial planned expansions that will build upon the current engine foundation. GameObject system implementation will provide entity management and component coordination. Object pooling will enable performance optimization through efficient resource reuse. Prefab systems will support template-based game object creation with configuration management.
+Serialization capabilities will enable save/load functionality with support for multiple data formats and versioning strategies. These systems will integrate with the existing event-driven architecture while maintaining clean separation of concerns and modular design principles.
+The engine's orchestration patterns provide a solid foundation for these enhancements, ensuring that new features integrate seamlessly with existing game development workflows while expanding the platform's capabilities for sophisticated game development scenarios.

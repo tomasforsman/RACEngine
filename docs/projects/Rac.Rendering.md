@@ -29,9 +29,9 @@ The Rac.Rendering system implements a sophisticated pipeline architecture that t
 - **Matrix-Based Transformations**: Modern OpenGL pipeline with view/projection matrix separation for camera systems
 - **Vertex Type Hierarchy**: BasicVertex, TexturedVertex, and FullVertex provide increasing complexity with automatic conversions
 
-### Integration with ECS System and Other Engine Components
+### Integration with Game Systems
 
-The rendering system consumes WorldTransformComponent data from the ECS to position and orient visual elements. Transform hierarchies from the ECS automatically propagate to rendering through matrix composition, ensuring visual consistency with logical scene structure. The system operates as a pure consumer of ECS data, reading component information without modifying entity state, maintaining clean separation between logical and visual representations.
+The rendering system consumes transformation data from external systems through standard matrix operations. The camera system provides bidirectional coordinate transformations essential for input handling and world-to-screen positioning. The system operates as a pure consumer of game data, reading transformation information without modifying external state, maintaining clean separation between logical and visual representations.
 
 ## Namespace Organization
 
@@ -97,35 +97,19 @@ Procedural geometry generation utilities for common shapes and patterns.
 
 **GeometryGenerators**: Static utility class providing generation methods for triangles, rectangles, circles, and complex polygons. Includes UV coordinate calculation for texture mapping and normal generation for lighting effects.
 
-### Rac.Rendering.Text
+### Placeholder Namespaces
 
-Text rendering capabilities with font management and typography support.
+The following namespaces are reserved for future functionality and currently contain placeholder interfaces or empty implementations:
 
-**TextRenderer**: Handles text rasterization, glyph caching, and text layout operations. Supports multiple fonts, Unicode text, and advanced typography features including kerning and line spacing.
+**Rac.Rendering.Text**: Reserved for text rendering capabilities with font management and typography support.
 
-### Rac.Rendering.GUI
+**Rac.Rendering.GUI**: Reserved for immediate-mode GUI systems integration.
 
-Integration layer for immediate-mode GUI systems.
+**Rac.Rendering.Particles**: Reserved for particle system implementation.
 
-**ImGuiRenderer**: Provides ImGui integration for debug interfaces and development tools. Handles ImGui frame lifecycle, input processing, and render data conversion for OpenGL rendering.
+**Rac.Rendering.Mesh**: Reserved for future 3D mesh support and advanced geometry handling.
 
-### Rac.Rendering.Particles
-
-Particle system implementation for dynamic visual effects.
-
-**ParticleSystem**: Manages particle lifecycle, physics simulation, and rendering. Supports various emitter types, force systems, and visual properties including color animation and size scaling.
-
-### Rac.Rendering.Mesh
-
-Reserved namespace for future 3D mesh support and advanced geometry handling.
-
-**Mesh**: Placeholder for future mesh data structures and manipulation utilities. Intended to support vertex indexing, normal calculation, and mesh optimization operations.
-
-### Rac.Rendering.FrameGraph
-
-Advanced render pass management and dependency tracking system.
-
-**RenderPassBase**: Foundation for complex rendering workflows with automatic dependency resolution and resource management. Supports parallel execution and conditional rendering based on scene complexity.
+**Rac.Rendering.FrameGraph**: Reserved for advanced render pass management and dependency tracking system.
 
 ## Core Concepts and Workflows
 
@@ -166,21 +150,16 @@ Shader programs are automatically compiled during preprocessing with comprehensi
 - **Silk.NET.OpenGL**: Core OpenGL API bindings providing low-level graphics functionality
 - **Silk.NET.Windowing.Common**: Window management integration for render context creation
 - **Silk.NET.Maths**: Mathematical types including vectors, matrices, and transformation utilities
-- **Rac.Core**: Foundation types and utilities (referenced through interface contracts)
 
 ### How Other Systems Interact with Rac.Rendering
 
-The ECS system provides WorldTransformComponent data that the rendering system consumes for spatial positioning and hierarchy representation. Transform data flows unidirectionally from ECS to rendering, ensuring visual consistency with logical scene structure without circular dependencies.
-
-Input systems utilize camera coordinate transformation methods to convert between screen coordinates and world coordinates for mouse picking and touch interaction. The rendering system provides these transformations without depending on input system state.
+Game systems provide transformation data through standard matrix operations that the rendering system consumes for spatial positioning. Input systems utilize camera coordinate transformation methods to convert between screen coordinates and world coordinates for mouse picking and touch interaction. The rendering system provides these transformations through the camera system without depending on specific input system implementations.
 
 Physics systems may query rendered object bounds for collision detection optimization, though the rendering system operates independently of physics calculations to maintain clean separation of concerns.
 
-### Data Consumed from ECS
+### Data Consumed from External Systems
 
-The rendering system primarily consumes WorldTransformComponent data for entity positioning and orientation. This includes position vectors, rotation angles, and scale factors that determine final vertex transformations. Hierarchy relationships from ParentHierarchyComponent affect transform inheritance through matrix composition.
-
-Color components, when present, override default vertex colors for entity-specific visual appearance. Visibility components control rendering participation without affecting other game logic systems.
+The rendering system primarily consumes transformation data in the form of matrices for entity positioning and orientation. This includes position vectors, rotation angles, and scale factors that determine final vertex transformations. Color data, when provided, overrides default vertex colors for entity-specific visual appearance.
 
 ## Usage Patterns
 
@@ -188,32 +167,9 @@ Color components, when present, override default vertex colors for entity-specif
 
 Typical rendering initialization involves creating a RenderConfiguration with appropriate viewport size and quality settings, initializing the renderer with window context, and setting up initial camera configuration. The preprocessing phase automatically handles shader compilation and GPU resource creation.
 
-```csharp
-// Basic renderer setup pattern
-var config = new RenderConfiguration(new Vector2D<int>(1920, 1080));
-var renderer = new OpenGLRenderer();
-renderer.Initialize(window);
+### How to Render Game Objects
 
-// Camera setup for game world
-var gameCamera = new GameCamera();
-gameCamera.SetPosition(new Vector2D<float>(0, 0));
-gameCamera.SetZoom(1.0f);
-renderer.SetActiveCamera(gameCamera);
-```
-
-### How to Use Rendering for Entities from ECS
-
-Entity rendering follows a query-and-render pattern where systems query for entities with renderable components and submit vertex data to the renderer. Transform data from WorldTransformComponent determines vertex positioning while other components provide visual properties.
-
-```csharp
-// Entity rendering pattern
-foreach (var (entity, transform) in world.Query<WorldTransformComponent>())
-{
-    var vertices = CreateVerticesForEntity(entity, transform);
-    renderer.UpdateVertices(vertices);
-    renderer.Draw();
-}
-```
+Game object rendering follows a query-and-render pattern where systems query for objects with transformation data and submit vertex data to the renderer. Transform data determines vertex positioning while other properties provide visual characteristics.
 
 ### Resource Loading and Management Workflows
 
@@ -235,18 +191,16 @@ The rendering system supports extension through several well-defined patterns. N
 
 Post-processing effects extend through the PostProcessing class by adding new effect methods and shader programs. Complex effects can chain multiple passes through framebuffer operations.
 
-### Extensibility Points
+### Shader System Extensibility
 
-The IRenderer interface provides the primary extensibility point for alternative rendering backends. New implementations can support different graphics APIs or specialized rendering techniques while maintaining compatibility with existing game code.
+The shader system supports new visual effects through file-based shader organization. New fragment shaders can be added to the shader directory and automatically discovered by the ShaderLoader system. Custom uniform parameters can be passed through the shader system for specialized effects.
 
-Camera implementations can extend ICamera to support advanced features like camera shake, smooth following, or complex projection effects. The camera manager supports multiple camera types simultaneously.
+### Camera System Extension
 
-Pipeline phases can be extended through inheritance and composition patterns. Custom preprocessing steps can handle specialized asset types while processing extensions can support advanced rendering techniques.
+Camera implementations can extend ICamera to support advanced features like camera shake, smooth following, or complex projection effects. The camera manager supports multiple camera types simultaneously and provides smooth transitions between camera states.
 
 ### Future Enhancement Opportunities
 
-Planned enhancements include 3D mesh support through the Mesh namespace, advanced lighting systems with normal mapping and shadows, texture atlas management for sprite batching, and frame graph optimization for complex rendering workflows.
+The modular architecture enables numerous enhancements without fundamental changes to existing code. The placeholder namespaces indicate planned expansions including text rendering, GUI integration, particle systems, 3D mesh support, and advanced frame graph optimization.
 
 Performance improvements may include instanced rendering for repeated geometry, compute shader support for particle systems, and multi-threaded command buffer generation. Quality enhancements could add temporal anti-aliasing, advanced post-processing effects, and HDR rendering support.
-
-The modular architecture enables these enhancements without fundamental changes to existing code, ensuring backward compatibility while expanding rendering capabilities.
