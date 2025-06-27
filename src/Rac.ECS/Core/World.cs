@@ -23,6 +23,7 @@ public sealed class World : IWorld
     // This allows for efficient component queries and storage.
     
     private readonly Dictionary<Type, Dictionary<int, IComponent>> _components = new();
+    private readonly HashSet<int> _livingEntities = new(); // Track living entities for counting and destruction
     private int _nextEntityId = 1;
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -36,7 +37,39 @@ public sealed class World : IWorld
     /// <returns>A new Entity with a unique ID.</returns>
     public Entity CreateEntity()
     {
-        return new Entity(_nextEntityId++);
+        var entity = new Entity(_nextEntityId++);
+        _livingEntities.Add(entity.Id);
+        return entity;
+    }
+
+    /// <summary>
+    /// Destroys an entity and removes all its components from the world.
+    /// This efficiently removes the entity from all component pools and tracking structures.
+    /// </summary>
+    /// <param name="entity">The entity to destroy.</param>
+    public void DestroyEntity(Entity entity)
+    {
+        if (!_livingEntities.Remove(entity.Id))
+        {
+            // Entity was already destroyed or never existed
+            return;
+        }
+
+        // Remove entity from all component pools
+        foreach (var pool in _components.Values)
+        {
+            pool.Remove(entity.Id);
+        }
+    }
+
+    /// <summary>
+    /// Gets all entities currently in the world.
+    /// Returns all living entities that have been created but not destroyed.
+    /// </summary>
+    /// <returns>Collection of all living entities.</returns>
+    public IEnumerable<Entity> GetAllEntities()
+    {
+        return _livingEntities.Select(id => new Entity(id));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

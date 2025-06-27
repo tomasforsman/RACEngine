@@ -32,6 +32,20 @@ public interface IWorld
     /// <returns>A new Entity with a unique ID.</returns>
     Entity CreateEntity();
 
+    /// <summary>
+    /// Destroys an entity and removes all its components from the world.
+    /// This is a convenience method that efficiently removes an entity from all component pools.
+    /// </summary>
+    /// <param name="entity">The entity to destroy.</param>
+    void DestroyEntity(Entity entity);
+
+    /// <summary>
+    /// Gets all entities currently in the world.
+    /// Useful for counting entities and performing broad queries.
+    /// </summary>
+    /// <returns>Collection of all living entities.</returns>
+    IEnumerable<Entity> GetAllEntities();
+
     // ═══════════════════════════════════════════════════════════════════════════
     // COMPONENT MANAGEMENT
     // ═══════════════════════════════════════════════════════════════════════════

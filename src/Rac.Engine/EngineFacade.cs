@@ -3,6 +3,7 @@
 using Rac.Audio;
 using Rac.Core.Manager;
 using Rac.ECS.Core;
+using Rac.ECS.Components;
 using Rac.ECS.Systems;
 using Rac.Input.Service;
 using Rac.Input.State;
@@ -112,34 +113,63 @@ public class EngineFacade : IEngineFacade
     }
 
     /// <summary>
+    /// Creates a new entity with a specified name.
+    /// Convenience method that creates an entity and assigns a NameComponent.
+    /// </summary>
+    /// <param name="name">Human-readable name for the entity</param>
+    /// <returns>A new Entity with a unique ID and the specified name</returns>
+    public Entity CreateEntity(string name)
+    {
+        var entity = World.CreateEntity();
+        World.SetComponent(entity, new NameComponent(name));
+        return entity;
+    }
+
+    /// <summary>
     /// Destroys an entity by removing all its components.
-    /// Note: This implementation removes all components as entity destruction will be enhanced in future versions.
+    /// This implementation now properly destroys the entity using the enhanced World API.
     /// </summary>
     /// <param name="entity">The entity to destroy.</param>
     public void DestroyEntity(Entity entity)
     {
-        // For now, we'll need to remove all components manually
-        // In a future enhancement, this could be optimized with a dedicated DestroyEntity method in IWorld
-        // This is a simple implementation that works with the current World API
-        
-        // We can't easily remove all components without knowing their types in the current World design
-        // For now, this is a placeholder that demonstrates the interface
-        // A full implementation would require enhancing the World class with entity tracking
+        World.DestroyEntity(entity);
     }
 
     /// <summary>
     /// Gets the total number of entities currently in the world.
-    /// Note: This is a convenience property - requires enhancement to World for accurate counting.
+    /// This now returns the actual count of living entities.
     /// </summary>
     public int EntityCount 
     { 
         get 
         {
-            // Current World implementation doesn't track entity count directly
-            // This would need to be enhanced in the World class
-            // For now, return 0 as a placeholder
-            return 0;
+            return World.GetAllEntities().Count();
         } 
+    }
+
+    /// <summary>
+    /// Finds entities that have the specified tag.
+    /// </summary>
+    /// <param name="tag">Tag to search for</param>
+    /// <returns>Entities that have the specified tag</returns>
+    public IEnumerable<Entity> GetEntitiesWithTag(string tag)
+    {
+        return World.Query<TagComponent>()
+            .Where(result => result.Component1.HasTag(tag))
+            .Select(result => result.Entity);
+    }
+
+    /// <summary>
+    /// Finds the first entity with the specified name.
+    /// </summary>
+    /// <param name="name">Name to search for</param>
+    /// <returns>Entity with the specified name, or null if not found</returns>
+    public Entity? FindEntityByName(string name)
+    {
+        var result = World.Query<NameComponent>()
+            .FirstOrDefault(result => result.Component1.Name == name);
+        
+        return result.Entity.Id != 0 ? result.Entity : null;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

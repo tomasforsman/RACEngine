@@ -137,7 +137,64 @@ Entity-Component-System is a design pattern that separates:
 
 > **Developer Tip**: RACEngine provides both direct ECS access (`engine.World.CreateEntity()`) for fine-grained control and convenience methods (`engine.CreateEntity()`) for simpler scenarios. This tutorial uses direct access to demonstrate ECS concepts, but you can use either approach based on your needs.
 
-### 3.2 Define Game Components
+### 3.2 Direct ECS vs. Convenience Methods
+
+RACEngine provides two approaches for entity management:
+
+#### Direct ECS Access (Fine-grained Control)
+```csharp
+// Direct world access for full ECS control
+var entity = world.CreateEntity();
+world.SetComponent(entity, new PositionComponent(Vector2D.Zero));
+world.SetComponent(entity, new NameComponent("Player"));
+world.SetComponent(entity, new TagComponent("PlayerCharacter"));
+
+// Query entities directly
+var playerEntities = world.Query<NameComponent>()
+    .Where(result => result.Component1.Name == "Player");
+```
+
+#### Engine Facade Convenience Methods (Simplified API)
+```csharp
+// Simplified entity creation with automatic naming
+var player = engine.CreateEntity("Player");
+engine.World.SetComponent(player, new PositionComponent(Vector2D.Zero));
+
+// Convenient entity queries
+var allEnemies = engine.GetEntitiesWithTag("Enemy");
+var mainCamera = engine.FindEntityByName("MainCamera");
+var totalEntities = engine.EntityCount;
+
+// Clean entity destruction
+engine.DestroyEntity(player);
+```
+
+> **Developer Tip**: Use direct ECS access when you need fine-grained control or are building reusable systems. Use convenience methods for simpler game logic and rapid prototyping. This tutorial demonstrates both approaches - feel free to choose based on your needs.
+
+#### Named Entities and Tags Example
+```csharp
+// Create named entities for easy lookup
+var player = engine.CreateEntity("Player");
+var mainCamera = engine.CreateEntity("MainCamera");
+var inventoryUI = engine.CreateEntity("InventoryPanel");
+
+// Add tags for categorization
+engine.World.SetComponent(player, new TagComponent(new[] { "PlayerCharacter", "Controllable" }));
+
+// Query by tags
+var allControllableEntities = engine.GetEntitiesWithTag("Controllable");
+var allUIElements = engine.GetEntitiesWithTag("UI");
+
+// Find specific entities by name
+var cameraEntity = engine.FindEntityByName("MainCamera");
+if (cameraEntity.HasValue)
+{
+    // Update camera position
+    engine.World.SetComponent(cameraEntity.Value, new PositionComponent(newPos));
+}
+```
+
+### 3.3 Define Game Components
 
 Create `Components.cs`:
 
@@ -489,33 +546,36 @@ public class AsteroidDodgeGame : GameWindow
     
     /// <summary>
     /// Create the player entity with all necessary components
-    /// Educational note: Component composition defines entity behavior
+    /// Educational note: Using engine convenience methods for simplified entity management
     /// </summary>
     private void CreatePlayer()
     {
-        _playerEntity = _world.CreateEntity();
+        // Use convenience method to create named entity
+        _playerEntity = engine.CreateEntity("Player");
         
         // Position at center of screen
-        _world.SetComponent(_playerEntity, new PositionComponent(
+        engine.World.SetComponent(_playerEntity, new PositionComponent(
             new Vector2D<float>(Size.X / 2.0f, Size.Y / 2.0f)));
         
         // Initially stationary
-        _world.SetComponent(_playerEntity, new VelocityComponent(Vector2D<float>.Zero));
+        engine.World.SetComponent(_playerEntity, new VelocityComponent(Vector2D<float>.Zero));
         
         // Blue square sprite
-        _world.SetComponent(_playerEntity, new SpriteComponent(
+        engine.World.SetComponent(_playerEntity, new SpriteComponent(
             new Vector2D<float>(30, 30),
             new Vector4D<float>(0.0f, 0.5f, 1.0f, 1.0f))); // Blue
         
-        // Player tag
-        _world.SetComponent(_playerEntity, new PlayerComponent());
+        // Add tags for easy querying
+        engine.World.SetComponent(_playerEntity, new TagComponent(new[] { "Player", "Controllable" }));
         
         // Collision detection
-        _world.SetComponent(_playerEntity, new CollisionComponent(
+        engine.World.SetComponent(_playerEntity, new CollisionComponent(
             new Vector2D<float>(30, 30)));
         
         // Health
-        _world.SetComponent(_playerEntity, new HealthComponent(3, 3));
+        engine.World.SetComponent(_playerEntity, new HealthComponent(3, 3));
+        
+        Console.WriteLine($"✅ Created player entity (ID: {_playerEntity.Id}) with name 'Player'");
     }
     
     /// <summary>
@@ -872,7 +932,136 @@ public readonly record struct AIComponent(AIBehavior Behavior, Entity Target) : 
 public readonly record struct PathfindingComponent(Vector2[] Waypoints, int CurrentWaypoint) : IComponent;
 ```
 
-### 9.4 Performance Optimization
+### 9.4 Engine Convenience Methods
+
+The engine facade provides helpful convenience methods that simplify common entity management tasks:
+
+#### Entity Creation and Naming
+```csharp
+// Create unnamed entities (traditional approach)
+var bullet = engine.CreateEntity();
+
+// Create named entities for easy lookup
+var player = engine.CreateEntity("Player");
+var boss = engine.CreateEntity("BossEnemy");
+var healthBar = engine.CreateEntity("HealthUI");
+
+// Find entities by name later
+var playerEntity = engine.FindEntityByName("Player");
+if (playerEntity.HasValue)
+{
+    // Update player position
+    engine.World.SetComponent(playerEntity.Value, new PositionComponent(newPosition));
+}
+```
+
+#### Tag-Based Entity Management
+```csharp
+// Add tags to entities for categorization
+engine.World.SetComponent(enemy1, new TagComponent("Enemy"));
+engine.World.SetComponent(enemy2, new TagComponent(new[] { "Enemy", "Fast" }));
+engine.World.SetComponent(collectible, new TagComponent("Powerup"));
+
+// Query entities by tags
+var allEnemies = engine.GetEntitiesWithTag("Enemy");
+var fastEnemies = engine.GetEntitiesWithTag("Fast");
+var powerups = engine.GetEntitiesWithTag("Powerup");
+
+// Perform operations on tagged entities
+foreach (var enemy in allEnemies)
+{
+    // Apply damage to all enemies
+    var health = engine.World.GetComponent<HealthComponent>(enemy);
+    if (health.HasValue)
+    {
+        var newHealth = health.Value with { Current = health.Value.Current - damage };
+        engine.World.SetComponent(enemy, newHealth);
+    }
+}
+```
+
+#### Entity Counting and Management
+```csharp
+// Get total entity count for debugging/UI
+Console.WriteLine($"Total entities: {engine.EntityCount}");
+
+// Clean entity destruction (removes from all systems and components)
+engine.DestroyEntity(expiredBullet);
+
+// Bulk operations
+var expiredEntities = engine.GetEntitiesWithTag("Temporary")
+    .Where(entity => ShouldExpire(entity));
+    
+foreach (var entity in expiredEntities)
+{
+    engine.DestroyEntity(entity);
+}
+
+Console.WriteLine($"Cleaned up {expiredEntities.Count()} expired entities");
+Console.WriteLine($"Remaining entities: {engine.EntityCount}");
+```
+
+#### Practical Usage Patterns
+```csharp
+/// <summary>
+/// Example system that demonstrates practical convenience method usage
+/// </summary>
+public class GameManagerSystem : ISystem
+{
+    private readonly IEngineFacade _engine;
+    
+    public GameManagerSystem(IEngineFacade engine)
+    {
+        _engine = engine;
+    }
+    
+    public void Update(World world, float deltaTime)
+    {
+        // Find player for camera following
+        var player = _engine.FindEntityByName("Player");
+        if (player.HasValue)
+        {
+            UpdateCameraTarget(player.Value);
+        }
+        
+        // Spawn enemies based on current count
+        var currentEnemies = _engine.GetEntitiesWithTag("Enemy").Count();
+        if (currentEnemies < 5)
+        {
+            SpawnEnemy();
+        }
+        
+        // Check if boss exists
+        var boss = _engine.FindEntityByName("Boss");
+        if (boss == null && ShouldSpawnBoss())
+        {
+            SpawnBoss();
+        }
+        
+        // Display entity count for debugging
+        if (Time.frameCount % 60 == 0) // Every second at 60 FPS
+        {
+            Console.WriteLine($"Entities: {_engine.EntityCount}");
+        }
+    }
+    
+    private void SpawnEnemy()
+    {
+        var enemy = _engine.CreateEntity($"Enemy_{Random.Next(1000, 9999)}");
+        _engine.World.SetComponent(enemy, new TagComponent("Enemy"));
+        // ... add other components
+    }
+    
+    private void SpawnBoss()
+    {
+        var boss = _engine.CreateEntity("Boss");
+        _engine.World.SetComponent(boss, new TagComponent(new[] { "Enemy", "Boss" }));
+        // ... add boss-specific components
+    }
+}
+```
+
+### 9.5 Performance Optimization
 
 **Spatial Partitioning for Collision Detection**:
 ```csharp
