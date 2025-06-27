@@ -12,9 +12,9 @@ namespace Rac.ECS.System;
 public class BoidSystem : ISystem
 {
     private readonly Random _random = new();
-    private readonly World _world;
+    private readonly IWorld _world;
 
-    public BoidSystem(World world)
+    public BoidSystem(IWorld world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }

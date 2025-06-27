@@ -50,7 +50,7 @@ public class TransformSystem : ISystem
     // SYSTEM STATE AND CONFIGURATION
     // ═══════════════════════════════════════════════════════════════════════════
     
-    private readonly World _world;
+    private readonly IWorld _world;
     private readonly HashSet<int> _processedEntities = new();
     
     /// <summary>
@@ -58,7 +58,7 @@ public class TransformSystem : ISystem
     /// </summary>
     /// <param name="world">The ECS world containing entities and components</param>
     /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public TransformSystem(World world)
+    public TransformSystem(IWorld world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }

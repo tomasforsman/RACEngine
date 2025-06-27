@@ -11,7 +11,7 @@ namespace Rac.ECS.Core;
 /// architectural pattern in game development that favors composition over inheritance.
 /// The World acts as the database for all game objects (entities) and their data (components).
 /// </summary>
-public sealed class World
+public sealed class World : IWorld
 {
     // ═══════════════════════════════════════════════════════════════════════════
     // CORE STORAGE AND STATE
