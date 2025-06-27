@@ -69,6 +69,14 @@ public interface IEngineFacade
     Entity CreateEntity();
 
     /// <summary>
+    /// Creates a new entity with a specified name.
+    /// Convenience method that creates an entity and assigns a NameComponent.
+    /// </summary>
+    /// <param name="name">Human-readable name for the entity</param>
+    /// <returns>A new Entity with a unique ID and the specified name</returns>
+    Entity CreateEntity(string name);
+
+    /// <summary>
     /// Destroys an entity and removes it from the world.
     /// Note: Current implementation removes all components - entity destruction will be enhanced in future versions.
     /// </summary>
@@ -80,4 +88,18 @@ public interface IEngineFacade
     /// Note: This is a convenience property - actual count may vary based on implementation.
     /// </summary>
     int EntityCount { get; }
+
+    /// <summary>
+    /// Finds entities that have the specified tag.
+    /// </summary>
+    /// <param name="tag">Tag to search for</param>
+    /// <returns>Entities that have the specified tag</returns>
+    IEnumerable<Entity> GetEntitiesWithTag(string tag);
+
+    /// <summary>
+    /// Finds the first entity with the specified name.
+    /// </summary>
+    /// <param name="name">Name to search for</param>
+    /// <returns>Entity with the specified name, or null if not found</returns>
+    Entity? FindEntityByName(string name);
 }
