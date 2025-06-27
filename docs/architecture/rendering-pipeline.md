@@ -866,7 +866,6 @@ public class RenderingSystem : ISystem
 - [System Overview](system-overview.md) - High-level architecture context
 - [Performance Considerations](performance-considerations.md) - Optimization strategies
 - [Rac.Rendering Project Documentation](../projects/Rac.Rendering.md) - Implementation details
-- [Shader Programming Guide](../educational-material/shader-programming-guide.md) - Shader development
 
 ## Changelog
 

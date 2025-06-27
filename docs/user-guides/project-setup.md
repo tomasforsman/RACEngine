@@ -887,7 +887,6 @@ See [Common Issues](../faq/common-issues.md) for detailed troubleshooting.
 - [Installation Guide](installation-guide.md) - Setting up development environment
 - [Getting Started Tutorial](../educational-material/getting-started-tutorial.md) - Step-by-step first game
 - [Architecture Overview](../architecture/system-overview.md) - Understanding engine design
-- [Component Reference](component-reference.md) - Available ECS components
 
 ## Changelog
 

@@ -480,7 +480,6 @@ List any breaking changes and migration steps
 
 ### Updating Changelogs
 - Add entries to [changelog.md](../changelogs/changelog.md)
-- Follow [Changelog Guidelines](../changelogs/changelog-guidelines.md)
 - Include impact description and educational value
 - Link to relevant issues and pull requests
 

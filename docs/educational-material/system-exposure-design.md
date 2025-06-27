@@ -595,6 +595,6 @@ The goal is not just to expose functionality, but to create an architecture that
 
 ## See Also
 
-- [System Exposure Architecture Patterns](../architecture/system-exposure-patterns.md) - Implementation guidelines
+- [System Exposure Architecture Patterns](../architecture/system-exposure-architecture-patterns.md) - Implementation guidelines
 - [Engine Access Patterns Guide](../code-guides/engine-access-patterns.md) - Usage guidance
 - [Design Patterns](../architecture/design-patterns.md) - Engine-wide pattern usage
