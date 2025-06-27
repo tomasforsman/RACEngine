@@ -47,7 +47,7 @@ public static class EntityHierarchyExtensions
     /// weapon.SetParent(world, character, transformSystem);
     /// </code>
     /// </example>
-    public static void SetParent(this Entity entity, World world, Entity parent, TransformSystem transformSystem)
+    public static void SetParent(this Entity entity, IWorld world, Entity parent, TransformSystem transformSystem)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
         if (transformSystem == null) throw new ArgumentNullException(nameof(transformSystem));
@@ -68,7 +68,7 @@ public static class EntityHierarchyExtensions
     /// // Weapon is now independent of character
     /// </code>
     /// </example>
-    public static void RemoveParent(this Entity entity, World world, TransformSystem transformSystem)
+    public static void RemoveParent(this Entity entity, IWorld world, TransformSystem transformSystem)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
         if (transformSystem == null) throw new ArgumentNullException(nameof(transformSystem));
@@ -93,7 +93,7 @@ public static class EntityHierarchyExtensions
     /// character.AddChild(world, weapon, transformSystem);
     /// </code>
     /// </example>
-    public static void AddChild(this Entity entity, World world, Entity child, TransformSystem transformSystem)
+    public static void AddChild(this Entity entity, IWorld world, Entity child, TransformSystem transformSystem)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
         if (transformSystem == null) throw new ArgumentNullException(nameof(transformSystem));
@@ -121,7 +121,7 @@ public static class EntityHierarchyExtensions
     /// }
     /// </code>
     /// </example>
-    public static Entity? GetParent(this Entity entity, World world)
+    public static Entity? GetParent(this Entity entity, IWorld world)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
@@ -152,7 +152,7 @@ public static class EntityHierarchyExtensions
     /// }
     /// </code>
     /// </example>
-    public static IEnumerable<Entity> GetChildren(this Entity entity, World world)
+    public static IEnumerable<Entity> GetChildren(this Entity entity, IWorld world)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
@@ -175,7 +175,7 @@ public static class EntityHierarchyExtensions
     /// <param name="world">The ECS world containing components</param>
     /// <returns>True if the entity is a root, false otherwise</returns>
     /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public static bool IsRoot(this Entity entity, World world)
+    public static bool IsRoot(this Entity entity, IWorld world)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
@@ -192,7 +192,7 @@ public static class EntityHierarchyExtensions
     /// <param name="world">The ECS world containing components</param>
     /// <returns>True if the entity is a leaf, false otherwise</returns>
     /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public static bool IsLeaf(this Entity entity, World world)
+    public static bool IsLeaf(this Entity entity, IWorld world)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
@@ -209,7 +209,7 @@ public static class EntityHierarchyExtensions
     /// <param name="world">The ECS world containing components</param>
     /// <returns>Number of direct children</returns>
     /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public static int GetChildCount(this Entity entity, World world)
+    public static int GetChildCount(this Entity entity, IWorld world)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
@@ -240,7 +240,7 @@ public static class EntityHierarchyExtensions
     ///     Vector2D&lt;float&gt;.One);         // Normal size
     /// </code>
     /// </example>
-    public static void SetLocalTransform(this Entity entity, World world, 
+    public static void SetLocalTransform(this Entity entity, IWorld world, 
         Silk.NET.Maths.Vector2D<float> localPosition, 
         float localRotation = 0f, 
         Silk.NET.Maths.Vector2D<float>? localScale = null)
@@ -259,7 +259,7 @@ public static class EntityHierarchyExtensions
     /// <param name="world">The ECS world containing components</param>
     /// <returns>The local transform component, or null if not present</returns>
     /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public static TransformComponent? GetLocalTransform(this Entity entity, World world)
+    public static TransformComponent? GetLocalTransform(this Entity entity, IWorld world)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
@@ -286,7 +286,7 @@ public static class EntityHierarchyExtensions
     /// }
     /// </code>
     /// </example>
-    public static WorldTransformComponent? GetWorldTransform(this Entity entity, World world)
+    public static WorldTransformComponent? GetWorldTransform(this Entity entity, IWorld world)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
@@ -303,7 +303,7 @@ public static class EntityHierarchyExtensions
     /// <param name="world">The ECS world containing components</param>
     /// <returns>The world position, or Vector2D.Zero if no world transform</returns>
     /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public static Silk.NET.Maths.Vector2D<float> GetWorldPosition(this Entity entity, World world)
+    public static Silk.NET.Maths.Vector2D<float> GetWorldPosition(this Entity entity, IWorld world)
     {
         var worldTransform = entity.GetWorldTransform(world);
         return worldTransform?.WorldPosition ?? Silk.NET.Maths.Vector2D<float>.Zero;
@@ -316,7 +316,7 @@ public static class EntityHierarchyExtensions
     /// <param name="world">The ECS world containing components</param>
     /// <returns>The world rotation in radians, or 0 if no world transform</returns>
     /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public static float GetWorldRotation(this Entity entity, World world)
+    public static float GetWorldRotation(this Entity entity, IWorld world)
     {
         var worldTransform = entity.GetWorldTransform(world);
         return worldTransform?.WorldRotation ?? 0f;
@@ -329,7 +329,7 @@ public static class EntityHierarchyExtensions
     /// <param name="world">The ECS world containing components</param>
     /// <returns>The world scale, or Vector2D.One if no world transform</returns>
     /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public static Silk.NET.Maths.Vector2D<float> GetWorldScale(this Entity entity, World world)
+    public static Silk.NET.Maths.Vector2D<float> GetWorldScale(this Entity entity, IWorld world)
     {
         var worldTransform = entity.GetWorldTransform(world);
         return worldTransform?.WorldScale ?? Silk.NET.Maths.Vector2D<float>.One;

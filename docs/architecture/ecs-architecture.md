@@ -108,6 +108,28 @@ The World serves as the central data coordinator and storage manager:
 - **Thread Safety**: Designed for concurrent access where appropriate
 
 *Implementation: `src/Rac.ECS/Core/World.cs`*
+
+### IWorld Interface and Service Integration
+
+RACEngine provides interface-based access to World functionality following engine service patterns:
+
+**IWorld Interface Benefits:**
+- **Testability**: Mock implementations enable comprehensive unit testing
+- **Dependency Injection**: Consistent service registration patterns throughout engine
+- **Architecture Consistency**: Matches other engine services (IAudioService, IRenderer)
+- **Headless Operation**: NullWorld implementation for server/testing scenarios
+
+**Service Patterns:**
+- **Interface Abstraction**: `IWorld` defines contracts for all world operations
+- **Concrete Implementation**: `World` class provides full ECS functionality
+- **Null Object Pattern**: `NullWorld` provides safe no-op behavior for testing
+
+**Integration Points:**
+- **Engine Facade**: Exposes `IWorld` interface instead of concrete class
+- **System Dependencies**: Systems accept `IWorld` for improved testability
+- **Extension Methods**: Entity operations work with both interface and concrete types
+
+*Implementation: `src/Rac.ECS/Core/IWorld.cs`, `src/Rac.ECS/Core/NullWorld.cs`*
     /// Destroys an entity and removes all its components
     /// </summary>
     /// <param name="entity">Entity to destroy</param>

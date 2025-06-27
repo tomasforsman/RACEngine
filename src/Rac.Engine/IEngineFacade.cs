@@ -16,7 +16,7 @@ namespace Rac.Engine;
 public interface IEngineFacade
 {
     /// <summary>Gets the ECS world instance.</summary>
-    World World { get; }
+    IWorld World { get; }
 
     /// <summary>Gets the system scheduler for managing ECS systems.</summary>
     SystemScheduler Systems { get; }
@@ -56,4 +56,28 @@ public interface IEngineFacade
 
     /// <summary>Start the engine loop.</summary>
     void Run();
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ENTITY MANAGEMENT CONVENIENCE METHODS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Creates a new entity in the world.
+    /// Convenience method that delegates to the underlying IWorld.
+    /// </summary>
+    /// <returns>A new Entity with a unique ID.</returns>
+    Entity CreateEntity();
+
+    /// <summary>
+    /// Destroys an entity and removes it from the world.
+    /// Note: Current implementation removes all components - entity destruction will be enhanced in future versions.
+    /// </summary>
+    /// <param name="entity">The entity to destroy.</param>
+    void DestroyEntity(Entity entity);
+
+    /// <summary>
+    /// Gets the total number of entities currently in the world.
+    /// Note: This is a convenience property - actual count may vary based on implementation.
+    /// </summary>
+    int EntityCount { get; }
 }

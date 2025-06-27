@@ -135,6 +135,8 @@ Entity-Component-System is a design pattern that separates:
 - **Components**: Data containers (position, velocity, sprite, etc.)
 - **Systems**: Logic that operates on components
 
+> **Developer Tip**: RACEngine provides both direct ECS access (`engine.World.CreateEntity()`) for fine-grained control and convenience methods (`engine.CreateEntity()`) for simpler scenarios. This tutorial uses direct access to demonstrate ECS concepts, but you can use either approach based on your needs.
+
 ### 3.2 Define Game Components
 
 Create `Components.cs`:

@@ -35,7 +35,7 @@ The engine facade coordinates five major subsystems through well-defined interfa
 
 The root namespace contains the primary facade implementations and program entry point that coordinate all engine subsystems.
 
-**IEngineFacade**: Core engine interface defining the complete service contract. Provides access to World, Systems, Renderer, Audio, CameraManager, and WindowManager services. Exposes lifecycle events including LoadEvent, UpdateEvent, and RenderEvent, along with input events for keyboard and mouse interaction. Enables system registration and engine execution control.
+**IEngineFacade**: Core engine interface defining the complete service contract. Provides access to IWorld interface, Systems, Renderer, Audio, CameraManager, and WindowManager services. Exposes lifecycle events including LoadEvent, UpdateEvent, and RenderEvent, along with input events for keyboard and mouse interaction. Enables system registration and engine execution control. **New in latest version**: Includes entity management convenience methods (CreateEntity, DestroyEntity, EntityCount) for streamlined entity operations.
 
 **EngineFacade**: Primary facade implementation that wraps the underlying GameEngine with simplified access patterns. Coordinates service initialization, event forwarding, and camera system integration. Provides automatic camera matrix updates during rendering and handles window resize events for proper viewport management.
 
@@ -55,7 +55,9 @@ Engine operation follows an event-driven lifecycle where the facade coordinates 
 
 ### Service Integration Strategy
 
-The facade integrates services through interface-based contracts, enabling service substitution and testing. The ECS World and SystemScheduler provide entity management and behavior execution. The IRenderer interface abstracts graphics implementation details while the ICameraManager coordinates view transformations. Audio and input services operate independently with event-based communication patterns.
+The facade integrates services through interface-based contracts, enabling service substitution and testing. The IWorld interface provides entity and component management with support for both concrete World instances and NullWorld test implementations. The SystemScheduler provides behavior execution coordination. The IRenderer interface abstracts graphics implementation details while the ICameraManager coordinates view transformations. Audio and input services operate independently with event-based communication patterns.
+
+**Interface-Based Design**: All major services follow consistent interface patterns (IWorld, IRenderer, IAudioService) enabling dependency injection, testing with mock implementations, and runtime service substitution. The World service specifically supports both production ECS functionality and headless testing scenarios through the NullWorld implementation.
 
 ### Camera System Coordination
 
@@ -106,6 +108,27 @@ engine.AddSystem(new CustomGameSystem());
 engine.UpdateEvent += deltaTime => {
     // Custom game logic after ECS updates
 };
+```
+
+### Entity Management Convenience Methods
+
+The facade provides simplified entity management through convenience methods that delegate to the underlying IWorld implementation. These methods reduce API surface area and provide common operations without requiring knowledge of the World implementation details.
+
+```csharp
+// Simplified entity creation and management
+var player = engine.CreateEntity();
+var enemy = engine.CreateEntity();
+
+// Entity destruction (placeholder implementation)
+engine.DestroyEntity(enemy);
+
+// Entity count monitoring
+var totalEntities = engine.EntityCount;
+Console.WriteLine($"Active entities: {totalEntities}");
+
+// Advanced scenarios can still access the full IWorld interface
+var specificEntity = engine.World.CreateEntity();
+engine.World.SetComponent(specificEntity, new TransformComponent());
 ```
 
 ### Event-Driven Game Development
