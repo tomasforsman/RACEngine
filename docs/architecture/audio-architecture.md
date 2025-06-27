@@ -801,7 +801,7 @@ public class AudioCache
 - [System Overview](system-overview.md) - High-level architecture context
 - [Audio Integration Guide](../user-guides/AUDIO_INTEGRATION_GUIDE.md) - Practical usage examples
 - [Rac.Audio Project Documentation](../projects/Rac.Audio.md) - Implementation details
-- [Performance Considerations](performance-considerations.md) - Audio optimization strategies
+
 
 ## Changelog
 

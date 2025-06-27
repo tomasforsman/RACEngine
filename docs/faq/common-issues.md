@@ -590,8 +590,6 @@ git log --oneline -10 >> git-status.txt
 ## See Also
 
 - [Installation Guide](../user-guides/installation-guide.md) - Initial setup instructions
-- [Platform-Specific Notes](platform-specific-notes.md) - Platform-specific considerations
-- [Performance Troubleshooting](performance-troubleshooting.md) - Performance optimization
 - [Problem Solving](problem-solving.md) - Systematic debugging approach
 
 ## Changelog

@@ -255,8 +255,7 @@ public class CustomShaderEffect : IShaderEffect
 
 - [ECS Architecture](ecs-architecture.md) - Detailed ECS implementation
 - [Rendering Pipeline](rendering-pipeline.md) - 4-phase rendering system
-- [Design Patterns](design-patterns.md) - Patterns used throughout engine
-- [Performance Considerations](performance-considerations.md) - Optimization strategies
+
 - [Dependency Diagram](dependency-diagram.md) - Visual module relationships
 
 ## Changelog

@@ -913,7 +913,7 @@ public class SpatialHashGrid
 
 ### Getting Help
 
-- Review [Architecture Documentation](../architecture/) for design concepts
+- Review [Architecture Documentation](../architecture/index.md) for design concepts
 - Check [Code Style Guidelines](../code-guides/code-style-guidelines.md) for best practices
 - Explore existing [Sample Games](../../samples/) for more examples
 - Open issues on GitHub for specific problems
@@ -943,10 +943,10 @@ Welcome to the RACEngine community! Happy game development! 🎮
 
 ## See Also
 
-- [Architecture Documentation](../architecture/) - Deep dive into engine design
-- [User Guides](../user-guides/) - Detailed feature documentation
+- [Architecture Documentation](../architecture/index.md) - Deep dive into engine design
+- [User Guides](../user-guides/index.md) - Detailed feature documentation
 - [Sample Games](../../samples/) - More complete examples
-- [Educational Material](../educational-material/) - Game engine concepts and theory
+- [Educational Material](../educational-material/index.md) - Game engine concepts and theory
 
 ## Changelog
 
