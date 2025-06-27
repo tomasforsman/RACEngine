@@ -20,7 +20,7 @@ New to RACEngine? Start here:
 
 ## 📚 Documentation Categories
 
-### 🏗️ [Architecture Documentation](architecture/)
+### 🏗️ [Architecture Documentation](architecture/index.md)
 Deep dive into RACEngine's system design and architectural decisions:
 - [System Overview](architecture/system-overview.md) - High-level architecture overview
 - [ECS Architecture](architecture/ecs-architecture.md) - Entity-Component-System design
@@ -30,7 +30,7 @@ Deep dive into RACEngine's system design and architectural decisions:
 - [Performance Considerations](architecture/performance-considerations.md) - Architecture performance decisions
 - [Dependency Diagram](architecture/dependency-diagram.md) - Visual module dependencies
 
-### 💻 [Code Guides](code-guides/)
+### 💻 [Code Guides](code-guides/index.md)
 Essential guides for developers working with RACEngine:
 - [Code Style Guidelines](code-guides/code-style-guidelines.md) - Coding standards and conventions
 - [C# XML Comments Guide](code-guides/csharp_xml_comments_guide.md) - Documentation standards
@@ -40,7 +40,7 @@ Essential guides for developers working with RACEngine:
 - [Performance Profiling Guide](code-guides/performance-profiling-guide.md) - Optimization techniques
 - [Debugging Techniques](code-guides/debugging-techniques.md) - Engine-specific debugging
 
-### 🤖 [Copilot Documentation](copilot/)
+### 🤖 [Copilot Documentation](copilot/index.md)
 AI-assisted development resources and patterns:
 - [Copilot Instructions](copilot/copilot-instructions.md) - AI coding guidelines for RACEngine
 - [AI Coding Patterns](copilot/ai-coding-patterns.md) - Patterns for AI-assisted development
@@ -48,7 +48,7 @@ AI-assisted development resources and patterns:
 - [Sample Project](copilot/sample-project.md) - Complete example demonstrating features
 - [Common Prompts](copilot/common-prompts.md) - Effective prompts for development tasks
 
-### 🎓 [Educational Material](educational-material/)
+### 🎓 [Educational Material](educational-material/index.md)
 Learning resources for game engine concepts and implementation:
 - [Getting Started Tutorial](educational-material/getting-started-tutorial.md) - Step-by-step first project
 - [Graphics Programming Basics](educational-material/graphics-programming-basics.md) - Graphics concepts
@@ -58,7 +58,7 @@ Learning resources for game engine concepts and implementation:
 - [Optimization Techniques](educational-material/optimization-techniques.md) - Performance strategies
 - [Educational Principles](educational-material/educational-principles.md) - Learning philosophy
 
-### 📦 [Project Documentation](projects/)
+### 📦 [Project Documentation](projects/index.md)
 Detailed documentation for each RACEngine module:
 - [Rac.Core](projects/Rac.Core.md) - Core engine functionality
 - [Rac.ECS](projects/Rac.ECS.md) - Entity-Component-System implementation
@@ -69,7 +69,7 @@ Detailed documentation for each RACEngine module:
 - [Rac.Windowing](projects/Rac.Windowing.md) - Window management
 - [Rac.Utilities](projects/Rac.Utilities.md) - Utility classes and helpers
 
-### 👤 [User Guides](user-guides/)
+### 👤 [User Guides](user-guides/index.md)
 Comprehensive guides for RACEngine users:
 - [Installation Guide](user-guides/installation-guide.md) - Setting up the engine
 - [Project Setup](user-guides/project-setup.md) - Creating new projects
@@ -80,14 +80,14 @@ Comprehensive guides for RACEngine users:
 - [Hierarchical Transform System](user-guides/HierarchicalTransformSystemUsage.md) - Transform relationships
 - [Audio Integration Guide](user-guides/AUDIO_INTEGRATION_GUIDE.md) - Audio system usage
 
-### ❓ [FAQ and Troubleshooting](faq/)
+### ❓ [FAQ and Troubleshooting](faq/index.md)
 Solutions to common problems and frequently asked questions:
 - [Common Issues](faq/common-issues.md) - Frequently encountered problems
 - [Platform-Specific Notes](faq/platform-specific-notes.md) - Platform considerations
 - [Performance Troubleshooting](faq/performance-troubleshooting.md) - Performance issues
 - [Problem Solving](faq/problem-solving.md) - Systematic debugging approach
 
-### 📋 [Changelogs](changelogs/)
+### 📋 [Changelogs](changelogs/index.md)
 Track changes and updates to RACEngine:
 - [Current Changelog](changelogs/changelog.md) - Latest changes
 - [Version 0.0.1](changelogs/changelog_0.0.1.md) - Initial release notes
@@ -98,7 +98,7 @@ Track changes and updates to RACEngine:
 ### I want to...
 
 **Learn RACEngine from scratch**
-→ Start with [Educational Material](educational-material/) and [Getting Started Tutorial](educational-material/getting-started-tutorial.md)
+→ Start with [Educational Material](educational-material/index.md) and [Getting Started Tutorial](educational-material/getting-started-tutorial.md)
 
 **Build my first game**
 → Follow [Installation Guide](user-guides/installation-guide.md) → [Project Setup](user-guides/project-setup.md) → [Getting Started Tutorial](educational-material/getting-started-tutorial.md)
@@ -113,10 +113,10 @@ Track changes and updates to RACEngine:
 → Check [Copilot Instructions](copilot/copilot-instructions.md) → [AI Coding Patterns](copilot/ai-coding-patterns.md) → [Common Prompts](copilot/common-prompts.md)
 
 **Solve a specific problem**
-→ Search [FAQ](faq/) → [Common Issues](faq/common-issues.md) → [Problem Solving](faq/problem-solving.md)
+→ Search [FAQ](faq/index.md) → [Common Issues](faq/common-issues.md) → [Problem Solving](faq/problem-solving.md)
 
 **Understand a specific module**
-→ Browse [Project Documentation](projects/) for detailed module information
+→ Browse [Project Documentation](projects/index.md) for detailed module information
 
 ## 📖 Documentation Standards
 

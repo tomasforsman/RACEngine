@@ -852,8 +852,8 @@ Built with RACEngine - Educational Game Engine
 ### Study Advanced Examples
 
 - Examine the sample games in `samples/` directory
-- Read the [Architecture Documentation](../architecture/) for deeper understanding
-- Explore the [Educational Materials](../educational-material/) for game engine concepts
+- Read the [Architecture Documentation](../architecture/index.md) for deeper understanding
+- Explore the [Educational Materials](../educational-material/index.md) for game engine concepts
 
 ### Contributing Back
 

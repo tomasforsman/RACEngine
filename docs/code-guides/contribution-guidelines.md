@@ -427,9 +427,9 @@ List any breaking changes and migration steps
 
 ### Resources
 - [Documentation Hub](../README.md) - Complete documentation system
-- [Architecture Guides](../architecture/) - System design documentation
-- [Educational Material](../educational-material/) - Learning resources
-- [Code Guides](../code-guides/) - Development best practices
+- [Architecture Guides](../architecture/index.md) - System design documentation
+- [Educational Material](../educational-material/index.md) - Learning resources
+- [Code Guides](../code-guides/index.md) - Development best practices
 
 ### Support Channels
 - **GitHub Issues**: Bug reports and feature requests
