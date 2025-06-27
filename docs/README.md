@@ -55,9 +55,6 @@ Detailed documentation for each RACEngine module:
 - [Rac.Rendering](projects/Rac.Rendering.md) - Rendering system and pipeline
 - [Rac.Audio](projects/Rac.Audio.md) - Audio system implementation
 - [Rac.Physics](projects/Rac.Physics.md) - Physics engine integration
-- [Rac.Input](projects/Rac.Input.md) - Input handling system
-- [Rac.Windowing](projects/Rac.Windowing.md) - Window management
-- [Rac.Utilities](projects/Rac.Utilities.md) - Utility classes and helpers
 
 ### 👤 [User Guides](user-guides/index.md)
 Comprehensive guides for RACEngine users:

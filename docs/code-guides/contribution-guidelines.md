@@ -398,7 +398,6 @@ List any breaking changes and migration steps
 - Provide practical usage examples
 
 ### 3. Testing Standards
-- Follow [Testing Standards](testing-standards.md)
 - Aim for high test coverage
 - Include performance tests for critical paths
 - Test edge cases and error conditions
