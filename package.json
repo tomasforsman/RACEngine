@@ -1,0 +1,32 @@
+{
+  "name": "racengine-docs-builder",
+  "version": "1.0.0",
+  "description": "Documentation builder for RACEngine game engine",
+  "main": "scripts/build-unified-docs.js",
+  "scripts": {
+    "build-docs": "node scripts/build-unified-docs.js",
+    "build-docs-watch": "node scripts/build-unified-docs.js --watch",
+    "build-docs-production": "node scripts/build-unified-docs.js --output ./public/docs.json --no-content",
+    "validate-docs": "node scripts/validate-docs.js",
+    "serve-docs": "npx http-server public -p 8080 -c-1"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "chokidar": "^3.5.3",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "keywords": [
+    "documentation",
+    "game-engine",
+    "markdown",
+    "api-docs"
+  ],
+  "author": "RACEngine Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
