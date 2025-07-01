@@ -33,6 +33,8 @@ Contains the fundamental building blocks of the ECS architecture and primary int
 
 **World**: Central component database and query engine. Manages all component storage, entity creation, and provides the query interface that systems use to discover relevant entities. Implements optimized multi-component queries with performance considerations for varying component pool sizes.
 
+**EntityFluentExtensions**: Modern fluent interface API for entity component assignment. Implements Martin Fowler's "Fluent Interface" pattern using C# extension methods, providing chainable component assignment operations. This is the **recommended approach** for entity creation, offering superior readability, IDE discoverability, and reduced error potential compared to traditional verbose component assignment patterns.
+
 **EntityHierarchyExtensions**: Convenience layer that provides intuitive hierarchy management operations. Encapsulates complex parent-child relationship logic while maintaining the underlying ECS data model. Enables natural game object manipulation patterns while preserving ECS architectural integrity.
 
 ### Rac.ECS.Components
@@ -100,9 +102,92 @@ Input systems can query for entities with input-related components and update th
 
 ## Usage Patterns
 
-### Entity Creation and Setup
+### Modern Entity Creation (Recommended)
 
-Typical entity creation involves calling `World.CreateEntity()` followed by component attachment through `World.SetComponent()`. Entities requiring hierarchical relationships use the extension methods to establish parent-child connections and set local transforms.
+The fluent API is the recommended approach for entity creation, providing clean, readable, and chainable component assignment:
+
+```csharp
+// ✅ RECOMMENDED: Fluent API approach
+var player = world.CreateEntity()
+    .WithName(world, "Player")
+    .WithPosition(world, new Vector2D<float>(100, 200))
+    .WithTags(world, "Player", "Controllable")
+    .WithComponent(world, new HealthComponent(100))
+    .WithComponent(world, new VelocityComponent(Vector2D<float>.Zero));
+
+// Complex entities with transforms
+var boss = world.CreateEntity()
+    .WithName(world, "BossEnemy")
+    .WithTransform(world, x: 400, y: 300, rotation: 0f, scaleX: 2f, scaleY: 2f)
+    .WithTags(world, "Enemy", "Boss", "Elite")
+    .WithComponent(world, new HealthComponent(500))
+    .WithComponent(world, new BossAIComponent());
+
+// Batch entity creation for procedural content
+var bullets = Enumerable.Range(0, 10)
+    .Select(i => world.CreateEntity()
+        .WithName(world, $"Bullet_{i}")
+        .WithPosition(world, GetBulletSpawnPosition(i))
+        .WithTags(world, "Projectile", "PlayerBullet")
+        .WithComponent(world, new VelocityComponent(GetBulletVelocity(i))))
+    .ToList();
+```
+
+### Traditional Entity Creation (Alternative)
+
+The traditional approach remains supported for scenarios requiring explicit control:
+
+```csharp
+// ⚠️ VERBOSE: Traditional approach - more error-prone
+var entity = world.CreateEntity();
+world.SetComponent(entity, new NameComponent("Player"));
+world.SetComponent(entity, new TransformComponent(new Vector2D<float>(100, 200)));
+world.SetComponent(entity, new TagComponent(new[] { "Player", "Controllable" }));
+world.SetComponent(entity, new HealthComponent(100));
+```
+
+### Available Fluent Methods
+
+**Core Identity Methods:**
+- `WithName(world, string)` - Assigns NameComponent for entity identification
+- `WithTag(world, string)` - Assigns single tag via TagComponent
+- `WithTags(world, params string[])` - Assigns multiple tags via TagComponent
+
+**Spatial Methods:**
+- `WithPosition(world, Vector2D<float>)` - Sets entity position via TransformComponent
+- `WithPosition(world, float x, float y)` - Convenience overload for position
+- `WithTransform(world, Vector2D<float>, float, Vector2D<float>)` - Full transform setup
+- `WithTransform(world, float x, float y, float rotation, float scaleX, float scaleY)` - Convenience overload
+
+**Generic Method:**
+- `WithComponent<T>(world, T component)` - Assigns any component type implementing IComponent
+
+### Batch Operations and Performance
+
+The ECS API provides efficient batch operations for managing multiple entities:
+
+```csharp
+// Batch entity destruction for better performance
+var expiredEntities = world.Query<LifetimeComponent>()
+    .Where(q => q.Component1.TimeRemaining <= 0)
+    .Select(q => q.Entity);
+
+world.DestroyEntities(expiredEntities); // More efficient than individual DestroyEntity calls
+
+// Named entity creation with batch setup
+var enemies = new[] { "Grunt", "Elite", "Boss" }
+    .Select(name => world.CreateEntity()
+        .WithName(world, name)
+        .WithTags(world, "Enemy", "AI")
+        .WithPosition(world, GetSpawnPosition(name))
+        .WithComponent(world, GetEnemyStats(name)))
+    .ToList();
+```
+
+**Performance Benefits:**
+- **Batch Destruction**: `DestroyEntities(IEnumerable<Entity>)` reduces component storage overhead
+- **Fluent API**: Zero performance overhead compared to traditional component assignment
+- **Method Chaining**: Enables efficient entity setup without temporary variables
 
 ### System Implementation
 
