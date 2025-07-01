@@ -827,21 +827,16 @@ public static class BoidSample
 
                 for (int i = 0; i < count; i++)
                 {
-                    // Create new entity in ECS world
-                    var e = world.CreateEntity();
-
-                    // Random position in NDC space (-1 to +1) using new transform system
+                    // Create new entity using NEW FLUENT API for readable entity composition
                     var randomPosition = new Vector2D<float>(
                         (float)(random.NextDouble() * 2.0 - 1.0), // X: -1 to +1
                         (float)(random.NextDouble() * 2.0 - 1.0)  // Y: -1 to +1
                     );
-                    e.SetLocalTransform(world, randomPosition, 0f, Vector2D<float>.One);
 
-                    // Start with zero velocity (boids will accelerate naturally)
-                    world.SetComponent(e, new VelocityComponent(0f, 0f));
-
-                    // Species identifier and visual scale
-                    world.SetComponent(e, new BoidSpeciesComponent(id, scale));
+                    var e = world.CreateEntity()
+                        .WithTransform(randomPosition, 0f, Vector2D<float>.One) // Position, rotation, scale in one call
+                        .WithComponent(new VelocityComponent(0f, 0f))           // Start with zero velocity
+                        .WithComponent(new BoidSpeciesComponent(id, scale));    // Species and visual scale
                 }
             }
         }
@@ -855,9 +850,9 @@ public static class BoidSample
             // Static obstacles create interesting navigation challenges for boids.
             // They must steer around these while maintaining flocking behavior.
 
-            var e = world.CreateEntity();
-            e.SetLocalTransform(world, Vector2D<float>.Zero, 0f, Vector2D<float>.One);     // Center of screen
-            world.SetComponent(e, new ObstacleComponent(0.2f));       // Radius in NDC units
+            var e = world.CreateEntity()
+                .WithTransform(Vector2D<float>.Zero, 0f, Vector2D<float>.One)  // Center of screen
+                .WithComponent(new ObstacleComponent(0.2f));                   // Radius in NDC units
         }
 
         void DrawSpecies(string filterId, EngineFacade engine)
