@@ -258,20 +258,25 @@ public class GameApplication : GameWindow
     /// </summary>
     private void CreateGameEntities()
     {
-        // Create a simple test entity
-        var testEntity = _world.CreateEntity();
-        
-        _world.SetComponent(testEntity, new PositionComponent(
-            new Vector2D<float>(Size.X / 2.0f, Size.Y / 2.0f)));
-        
-        _world.SetComponent(testEntity, new VelocityComponent(
-            new Vector2D<float>(50.0f, 30.0f))); // Slow movement for testing
-        
-        _world.SetComponent(testEntity, new RenderComponent(
-            new Vector2D<float>(50, 50),           // Size
-            new Vector4D<float>(1.0f, 0.5f, 0.0f, 1.0f))); // Orange color
+        // ✅ MODERN: Create entity using fluent API for clean composition
+        var testEntity = _world.CreateEntity()
+            .WithName(_world, "TestEntity")
+            .WithPosition(_world, new Vector2D<float>(Size.X / 2.0f, Size.Y / 2.0f))
+            .WithComponent(_world, new VelocityComponent(new Vector2D<float>(50.0f, 30.0f))) // Slow movement
+            .WithComponent(_world, new RenderComponent(
+                new Vector2D<float>(50, 50),           // Size
+                new Vector4D<float>(1.0f, 0.5f, 0.0f, 1.0f))); // Orange color
 
-        Console.WriteLine($"   ✓ Created {1} game entities");
+        Console.WriteLine($"   ✓ Created {1} game entities using fluent API");
+        
+        // 📚 TRADITIONAL COMPARISON: Old verbose approach
+        /*
+        // ⚠️ VERBOSE: Traditional approach - more lines, easier to miss components
+        var testEntity = _world.CreateEntity();
+        _world.SetComponent(testEntity, new PositionComponent(new Vector2D<float>(Size.X / 2.0f, Size.Y / 2.0f)));
+        _world.SetComponent(testEntity, new VelocityComponent(new Vector2D<float>(50.0f, 30.0f)));
+        _world.SetComponent(testEntity, new RenderComponent(new Vector2D<float>(50, 50), new Vector4D<float>(1.0f, 0.5f, 0.0f, 1.0f)));
+        */
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args)
