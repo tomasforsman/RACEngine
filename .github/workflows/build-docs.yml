@@ -1,18 +1,21 @@
-# .github/workflows/build-docs-simple.yml
-name: Build Documentation (Simple)
+# .github/workflows/build-docs.yml
+# Component 1: Build docs.json and commit to repo root
+name: Build Documentation JSON
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-commit:
     runs-on: ubuntu-latest
     
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
@@ -27,19 +30,25 @@ jobs:
             npm install gray-matter chokidar xml2js
           fi
 
-      - name: 🔨 Build documentation
+      - name: 🔨 Build documentation JSON
         run: |
-          mkdir -p public
-          node scripts/build-unified-docs.js --output ./public/docs.json --root ./
+          echo "🔨 Building documentation..."
+          node scripts/build-unified-docs.js --output ./docs.json --root ./
+          
+          echo "✅ Build complete!"
+          ls -lh ./docs.json
 
-      - name: ✅ Success
+      - name: 💾 Commit to repo root
         run: |
-          echo "🎉 Documentation built successfully!"
-          ls -lh ./public/docs.json
-
-      - name: 📤 Upload JSON artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-json
-          path: ./public/docs.json
-          retention-days: 90
+          echo "💾 Checking for changes..."
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if ! git diff --quiet docs.json 2>/dev/null || [ ! -f docs.json ]; then
+            git add docs.json
+            git commit -m "docs: update documentation JSON [skip ci]"
+            git push
+            echo "✅ docs.json committed to repo root"
+          else
+            echo "📝 docs.json unchanged, no commit needed"
+          fi
