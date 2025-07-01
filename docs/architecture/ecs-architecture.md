@@ -309,6 +309,115 @@ public class HealthSystem : ISystem
                 TriggerDeathEffects(world, entity);
             }
         }
+        
+        // Batch destroy all dead entities
+        foreach (var entity in entitiesToDestroy)
+        {
+            world.DestroyEntity(entity);
+        }
+    }
+}
+```
+
+*Implementation Example: `src/Rac.ECS/Systems/` directory*
+
+## Fluent Interface Architecture
+
+### Fluent Entity API Design
+
+RACEngine implements a comprehensive fluent interface for entity creation and component assignment, following Martin Fowler's "Fluent Interface" pattern design principles. This architectural decision significantly improves developer experience and code maintainability.
+
+**Educational Reference**: [Fluent Interface by Martin Fowler](https://martinfowler.com/bliki/FluentInterface.html)
+
+### Design Principles and Benefits
+
+**Core Design Principles:**
+- **Method Chaining**: Each fluent method returns the entity for continued chaining
+- **Extension Methods**: Fluent API implemented through C# extension methods to avoid polluting core Entity struct
+- **Type Safety**: All fluent operations maintain compile-time type safety
+- **IDE Discoverability**: IntelliSense shows available With* methods after entity creation
+
+**Architectural Benefits:**
+- **Readability**: Clear, English-like syntax for entity composition
+- **Maintainability**: Reduced boilerplate code decreases maintenance burden
+- **Error Reduction**: Method chaining reduces chance of forgetting essential components
+- **Extensibility**: New component types can add their own fluent methods without modifying core API
+
+### Implementation Architecture
+
+**Extension Method Pattern:**
+```csharp
+/// <summary>
+/// Extension methods that provide a fluent API for entity component assignment.
+/// Educational note: Demonstrates clean separation of concerns through extension methods
+/// </summary>
+public static class EntityFluentExtensions
+{
+    public static Entity WithName(this Entity entity, IWorld world, string name)
+    {
+        world.SetComponent(entity, new NameComponent(name));
+        return entity; // Enable method chaining
+    }
+    
+    public static Entity WithPosition(this Entity entity, IWorld world, Vector2D<float> position)
+    {
+        world.SetComponent(entity, new TransformComponent(position));
+        return entity;
+    }
+    
+    // Additional fluent methods...
+}
+```
+
+**Usage Patterns:**
+```csharp
+// ✅ RECOMMENDED: Modern fluent approach
+var player = world.CreateEntity()
+    .WithName(world, "Player")
+    .WithPosition(world, 100, 200)
+    .WithTags(world, "Player", "Controllable")
+    .WithComponent(world, new HealthComponent(100));
+
+// ⚠️ TRADITIONAL: Verbose alternative approach
+var entity = world.CreateEntity();
+world.SetComponent(entity, new NameComponent("Player"));
+world.SetComponent(entity, new TransformComponent(new Vector2D<float>(100, 200)));
+world.SetComponent(entity, new TagComponent(new[] { "Player", "Controllable" }));
+world.SetComponent(entity, new HealthComponent(100));
+```
+
+### Architectural Integration
+
+**Component Type Coverage:**
+- **Core Components**: WithName, WithTag, WithTags for entity identification
+- **Spatial Components**: WithPosition, WithTransform for world positioning
+- **Generic Components**: WithComponent<T> for any component type
+- **Composite Operations**: WithTransform overloads for complex spatial setup
+
+**Performance Considerations:**
+- **Zero Overhead**: Fluent API compiles to identical IL as direct component assignment
+- **Memory Efficiency**: No wrapper objects or additional allocations
+- **Cache Friendly**: Same memory access patterns as traditional approach
+
+**Extension Point Architecture:**
+```csharp
+// Example: Game-specific fluent extensions
+public static class GameEntityExtensions
+{
+    public static Entity WithWeapon(this Entity entity, IWorld world, WeaponType weaponType)
+    {
+        return entity.WithComponent(world, new WeaponComponent(weaponType));
+    }
+    
+    public static Entity WithAI(this Entity entity, IWorld world, AIBehavior behavior)
+    {
+        return entity.WithComponent(world, new AIComponent(behavior));
+    }
+}
+```
+
+*Implementation: `src/Rac.ECS/Core/EntityFluentExtensions.cs`*
+
 ## Performance Architecture
 
 ### Memory Layout Optimization
