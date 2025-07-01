@@ -45,6 +45,24 @@ public sealed class NullWorld : IWorld
         return InvalidEntity;
     }
 
+    /// <summary>
+    /// No-op entity destruction. Entity is ignored.
+    /// </summary>
+    /// <param name="entity">The entity to destroy (ignored).</param>
+    public void DestroyEntity(Entity entity)
+    {
+        // No-op: Entity destruction is ignored
+    }
+
+    /// <summary>
+    /// Returns empty enumerable as no entities exist.
+    /// </summary>
+    /// <returns>Empty enumerable.</returns>
+    public IEnumerable<Entity> GetAllEntities()
+    {
+        return Enumerable.Empty<Entity>();
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // COMPONENT MANAGEMENT
     // ═══════════════════════════════════════════════════════════════════════════
