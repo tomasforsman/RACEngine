@@ -43,6 +43,19 @@ public sealed class World : IWorld
     }
 
     /// <summary>
+    /// Creates a new entity with a name component assigned.
+    /// Convenience method equivalent to CreateEntity().WithName(this, name).
+    /// </summary>
+    /// <param name="name">Human-readable name for the entity</param>
+    /// <returns>A new Entity with a NameComponent already assigned</returns>
+    public Entity CreateEntity(string name)
+    {
+        var entity = CreateEntity();
+        SetComponent(entity, new NameComponent(name ?? string.Empty));
+        return entity;
+    }
+
+    /// <summary>
     /// Destroys an entity and removes all its components from the world.
     /// This efficiently removes the entity from all component pools and tracking structures.
     /// </summary>
@@ -59,6 +72,41 @@ public sealed class World : IWorld
         foreach (var pool in _components.Values)
         {
             pool.Remove(entity.Id);
+        }
+    }
+
+    /// <summary>
+    /// Destroys multiple entities in a single batch operation for improved performance.
+    /// Educational note: Batch operations reduce overhead when destroying many entities at once.
+    /// </summary>
+    /// <param name="entities">Collection of entities to destroy</param>
+    /// <remarks>
+    /// Batch operations are an important optimization in game engines where hundreds or thousands
+    /// of entities might need to be destroyed simultaneously (e.g., clearing a level, despawning
+    /// a large group of enemies). This approach is more efficient than calling DestroyEntity
+    /// repeatedly due to reduced method call overhead and potential memory allocation optimizations.
+    /// </remarks>
+    public void DestroyEntities(IEnumerable<Entity> entities)
+    {
+        if (entities == null) return;
+
+        // Convert to list to avoid multiple enumeration and enable efficient iteration
+        var entityList = entities.ToList();
+        if (entityList.Count == 0) return;
+
+        // Remove from living entities tracking in batch
+        foreach (var entity in entityList)
+        {
+            _livingEntities.Remove(entity.Id);
+        }
+
+        // Remove components from all pools efficiently
+        foreach (var pool in _components.Values)
+        {
+            foreach (var entity in entityList)
+            {
+                pool.Remove(entity.Id);
+            }
         }
     }
 

@@ -46,12 +46,33 @@ public sealed class NullWorld : IWorld
     }
 
     /// <summary>
+    /// Creates an invalid named entity for safe no-op behavior.
+    /// Returns a dead entity that won't be processed by systems.
+    /// </summary>
+    /// <param name="name">The name for the entity (ignored in null implementation)</param>
+    /// <returns>An invalid Entity that systems should ignore.</returns>
+    public Entity CreateEntity(string name)
+    {
+        return InvalidEntity;
+    }
+
+    /// <summary>
     /// No-op entity destruction. Entity is ignored.
     /// </summary>
     /// <param name="entity">The entity to destroy (ignored).</param>
     public void DestroyEntity(Entity entity)
     {
         // No-op: Entity destruction is ignored
+    }
+
+    /// <summary>
+    /// No-op batch entity destruction. Entities are ignored.
+    /// Educational note: Even null implementations should maintain consistent interface.
+    /// </summary>
+    /// <param name="entities">The entities to destroy (ignored).</param>
+    public void DestroyEntities(IEnumerable<Entity> entities)
+    {
+        // No-op: Batch entity destruction is ignored
     }
 
     /// <summary>

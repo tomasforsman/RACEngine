@@ -33,11 +33,26 @@ public interface IWorld
     Entity CreateEntity();
 
     /// <summary>
+    /// Creates a new entity with a name component assigned.
+    /// Convenience method equivalent to CreateEntity().WithName(this, name).
+    /// </summary>
+    /// <param name="name">Human-readable name for the entity</param>
+    /// <returns>A new Entity with a NameComponent already assigned</returns>
+    Entity CreateEntity(string name);
+
+    /// <summary>
     /// Destroys an entity and removes all its components from the world.
     /// This is a convenience method that efficiently removes an entity from all component pools.
     /// </summary>
     /// <param name="entity">The entity to destroy.</param>
     void DestroyEntity(Entity entity);
+
+    /// <summary>
+    /// Destroys multiple entities in a single batch operation for improved performance.
+    /// Educational note: Batch operations reduce overhead when destroying many entities at once.
+    /// </summary>
+    /// <param name="entities">Collection of entities to destroy</param>
+    void DestroyEntities(IEnumerable<Entity> entities);
 
     /// <summary>
     /// Gets all entities currently in the world.
