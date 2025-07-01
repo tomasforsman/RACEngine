@@ -509,45 +509,104 @@ class UnifiedDocumentationBuilder {
         const breadcrumbs = [];
 
         Object.values(this.unifiedDocument.documents).forEach(doc => {
-            // Add breadcrumb
-            breadcrumbs.push(doc.key);
+            try {
+                // Add breadcrumb
+                breadcrumbs.push(doc.key);
 
-            // Index search terms
-            doc.searchTerms.forEach(term => {
-                const termLower = term.toLowerCase();
-                if (!termIndex[termLower]) {
-                    termIndex[termLower] = [];
-                }
-                termIndex[termLower].push({
-                    documentKey: doc.key,
-                    score: this.calculateTermScore(term, doc)
-                });
-            });
+                // Ensure searchTerms is an array
+                const searchTerms = Array.isArray(doc.searchTerms) ? doc.searchTerms : [];
 
-            // Index title words
-            doc.title.split(/\s+/).forEach(word => {
-                const wordLower = word.toLowerCase();
-                if (wordLower.length > 2) {
-                    if (!termIndex[wordLower]) {
-                        termIndex[wordLower] = [];
+                // Index search terms
+                searchTerms.forEach(term => {
+                    if (term && typeof term === 'string') {
+                        const termLower = term.toLowerCase().trim();
+                        if (termLower.length > 0) {
+                            this.addToTermIndex(termIndex, termLower, doc.key, this.calculateTermScore(term, doc));
+                        }
                     }
-                    termIndex[wordLower].push({
-                        documentKey: doc.key,
-                        score: 50 // Title words get high score
+                });
+
+                // Index title words
+                if (doc.title && typeof doc.title === 'string') {
+                    doc.title.split(/\s+/).forEach(word => {
+                        const wordLower = word.toLowerCase().trim();
+                        if (wordLower.length > 2 && /^[a-zA-Z0-9]+$/.test(wordLower)) {
+                            this.addToTermIndex(termIndex, wordLower, doc.key, 50);
+                        }
                     });
                 }
-            });
+
+                // Index API references
+                if (doc.apiReferences && Array.isArray(doc.apiReferences)) {
+                    doc.apiReferences.forEach(apiRef => {
+                        if (apiRef && typeof apiRef === 'string') {
+                            const apiLower = apiRef.toLowerCase().trim();
+                            if (apiLower.length > 0) {
+                                this.addToTermIndex(termIndex, apiLower, doc.key, 40);
+
+                                // Also index parts of the API reference
+                                const parts = apiRef.split('.');
+                                parts.forEach(part => {
+                                    const partLower = part.toLowerCase().trim();
+                                    if (partLower.length > 2) {
+                                        this.addToTermIndex(termIndex, partLower, doc.key, 30);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+
+            } catch (error) {
+                console.error(`❌ Error indexing document ${doc.key}:`, error.message);
+            }
         });
 
-        // Sort term references by score
+        // Sort term references by score and remove duplicates
         Object.keys(termIndex).forEach(term => {
-            termIndex[term].sort((a, b) => b.score - a.score);
+            if (Array.isArray(termIndex[term])) {
+                // Remove duplicate document references
+                const seen = new Set();
+                termIndex[term] = termIndex[term].filter(item => {
+                    const key = item.documentKey;
+                    if (seen.has(key)) {
+                        return false;
+                    }
+                    seen.add(key);
+                    return true;
+                });
+
+                // Sort by score
+                termIndex[term].sort((a, b) => b.score - a.score);
+            } else {
+                console.warn(`⚠️  Term index for '${term}' is not an array:`, termIndex[term]);
+                termIndex[term] = [];
+            }
         });
 
         this.unifiedDocument.searchIndex = {
             terms: termIndex,
             breadcrumbs: breadcrumbs.sort()
         };
+
+        console.log(`✅ Search index built: ${Object.keys(termIndex).length} terms, ${breadcrumbs.length} breadcrumbs`);
+    }
+
+    addToTermIndex(termIndex, term, documentKey, score) {
+        if (!termIndex[term]) {
+            termIndex[term] = [];
+        }
+
+        // Ensure it's an array
+        if (!Array.isArray(termIndex[term])) {
+            console.warn(`⚠️  Fixing non-array term index for '${term}'`);
+            termIndex[term] = [];
+        }
+
+        termIndex[term].push({
+            documentKey: documentKey,
+            score: score
+        });
     }
 
     calculateTermScore(term, doc) {
