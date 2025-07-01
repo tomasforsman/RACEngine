@@ -28,33 +28,17 @@ public interface IWorld
     /// <summary>
     /// Creates a new entity with a unique identifier.
     /// Entities are lightweight containers that exist to group components together.
-    /// Returns FluentEntity which provides fluent component addition API and can be used as Entity.
     /// </summary>
-    /// <returns>A new FluentEntity with a unique ID that supports fluent component addition.</returns>
-    FluentEntity CreateEntity();
+    /// <returns>A new Entity with a unique ID.</returns>
+    Entity CreateEntity();
 
     /// <summary>
-    /// Creates a new named entity with fluent component addition API.
-    /// Convenience method that creates an entity and assigns a NameComponent.
+    /// Creates a new entity with a name component assigned.
+    /// Convenience method equivalent to CreateEntity().WithName(this, name).
     /// </summary>
     /// <param name="name">Human-readable name for the entity</param>
-    /// <returns>FluentEntity with name already assigned</returns>
-    FluentEntity CreateEntity(string name);
-
-    /// <summary>
-    /// Creates a new entity with fluent builder API for adding components.
-    /// Educational note: Enables readable entity composition with method chaining.
-    /// </summary>
-    /// <returns>EntityBuilder for fluent component addition</returns>
-    EntityBuilder CreateEntityBuilder();
-
-    /// <summary>
-    /// Creates a new named entity with fluent builder API.
-    /// Convenience method that creates an entity and assigns a NameComponent.
-    /// </summary>
-    /// <param name="name">Human-readable name for the entity</param>
-    /// <returns>EntityBuilder with name already assigned</returns>
-    EntityBuilder CreateEntityBuilder(string name);
+    /// <returns>A new Entity with a NameComponent already assigned</returns>
+    Entity CreateEntity(string name);
 
     /// <summary>
     /// Destroys an entity and removes all its components from the world.
@@ -64,8 +48,8 @@ public interface IWorld
     void DestroyEntity(Entity entity);
 
     /// <summary>
-    /// Destroys multiple entities in a single batch operation.
-    /// Educational note: Batch operations improve performance for bulk operations.
+    /// Destroys multiple entities in a single batch operation for improved performance.
+    /// Educational note: Batch operations reduce overhead when destroying many entities at once.
     /// </summary>
     /// <param name="entities">Collection of entities to destroy</param>
     void DestroyEntities(IEnumerable<Entity> entities);

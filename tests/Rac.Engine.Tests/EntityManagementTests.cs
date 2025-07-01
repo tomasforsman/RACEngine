@@ -254,7 +254,7 @@ public class EntityManagementTests
         var world = new World();
 
         // Act
-        var entity = world.CreateEntity().WithName("TestEntity");
+        var entity = world.CreateEntity().WithName(world, "TestEntity");
 
         // Assert
         var nameQuery = world.Query<NameComponent>().FirstOrDefault();
@@ -269,7 +269,7 @@ public class EntityManagementTests
         var world = new World();
 
         // Act
-        var entity = world.CreateEntity().WithTag("Enemy");
+        var entity = world.CreateEntity().WithTag(world, "Enemy");
 
         // Assert
         var tagQuery = world.Query<TagComponent>().FirstOrDefault();
@@ -284,7 +284,7 @@ public class EntityManagementTests
         var world = new World();
 
         // Act
-        var entity = world.CreateEntity().WithTags("Enemy", "Fast", "Dangerous");
+        var entity = world.CreateEntity().WithTags(world, "Enemy", "Fast", "Dangerous");
 
         // Assert
         var tagQuery = world.Query<TagComponent>().FirstOrDefault();
@@ -302,7 +302,7 @@ public class EntityManagementTests
         var expectedPosition = new Vector2D<float>(100, 200);
 
         // Act
-        var entity = world.CreateEntity().WithPosition(expectedPosition);
+        var entity = world.CreateEntity().WithPosition(world, expectedPosition);
 
         // Assert
         var transformQuery = world.Query<TransformComponent>().FirstOrDefault();
@@ -319,7 +319,7 @@ public class EntityManagementTests
         var world = new World();
 
         // Act
-        var entity = world.CreateEntity().WithPosition(50f, 75f);
+        var entity = world.CreateEntity().WithPosition(world, 50f, 75f);
 
         // Assert
         var transformQuery = world.Query<TransformComponent>().FirstOrDefault();
@@ -337,7 +337,7 @@ public class EntityManagementTests
         var scale = new Vector2D<float>(2f, 3f);
 
         // Act
-        var entity = world.CreateEntity().WithTransform(position, rotation, scale);
+        var entity = world.CreateEntity().WithTransform(world, position, rotation, scale);
 
         // Assert
         var transformQuery = world.Query<TransformComponent>().FirstOrDefault();
@@ -355,9 +355,9 @@ public class EntityManagementTests
 
         // Act
         var entity = world.CreateEntity()
-            .WithName("Player")
-            .WithPosition(100, 200)
-            .WithTags("Controllable", "Player");
+            .WithName(world, "Player")
+            .WithPosition(world, 100, 200)
+            .WithTags(world, "Controllable", "Player");
 
         // Assert
         // Check name component
@@ -385,7 +385,7 @@ public class EntityManagementTests
         var customTag = new TagComponent("CustomTag");
 
         // Act
-        var entity = world.CreateEntity().WithComponent(customTag);
+        var entity = world.CreateEntity().WithComponent(world, customTag);
 
         // Assert
         var tagQuery = world.Query<TagComponent>().FirstOrDefault();
@@ -398,9 +398,9 @@ public class EntityManagementTests
     {
         // Arrange
         var world = new World();
-        var entity1 = world.CreateEntity().WithName("Entity1");
-        var entity2 = world.CreateEntity().WithName("Entity2");
-        var entity3 = world.CreateEntity().WithName("Entity3");
+        var entity1 = world.CreateEntity().WithName(world, "Entity1");
+        var entity2 = world.CreateEntity().WithName(world, "Entity2");
+        var entity3 = world.CreateEntity().WithName(world, "Entity3");
         var entitiesToDestroy = new Entity[] { entity1, entity2 }; // Cast to Entity
 
         // Act

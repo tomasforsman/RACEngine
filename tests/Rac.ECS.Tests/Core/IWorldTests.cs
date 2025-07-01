@@ -53,7 +53,8 @@ public class IWorldTests
         var interfaceType = typeof(IWorld);
 
         // Act & Assert - Check for required methods
-        Assert.NotNull(interfaceType.GetMethod("CreateEntity"));
+        Assert.NotNull(interfaceType.GetMethod("CreateEntity", Type.EmptyTypes)); // No parameters
+        Assert.NotNull(interfaceType.GetMethod("CreateEntity", new[] { typeof(string) })); // String parameter
         Assert.NotNull(interfaceType.GetMethod("SetComponent"));
         Assert.NotNull(interfaceType.GetMethod("GetSingleton"));
         Assert.NotNull(interfaceType.GetMethod("RemoveComponent"));

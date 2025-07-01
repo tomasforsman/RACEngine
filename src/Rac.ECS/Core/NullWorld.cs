@@ -36,45 +36,24 @@ public sealed class NullWorld : IWorld
     // ═══════════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Creates an invalid fluent entity for safe no-op behavior.
-    /// Returns a FluentEntity that wraps an invalid entity.
+    /// Creates an invalid entity for safe no-op behavior.
+    /// Returns a dead entity that won't be processed by systems.
     /// </summary>
-    /// <returns>A FluentEntity wrapping an invalid entity.</returns>
-    public FluentEntity CreateEntity()
+    /// <returns>An invalid Entity that systems should ignore.</returns>
+    public Entity CreateEntity()
     {
-        return new FluentEntity(this, InvalidEntity);
+        return InvalidEntity;
     }
 
     /// <summary>
-    /// Creates an invalid named fluent entity for safe no-op behavior.
-    /// Returns a FluentEntity that wraps an invalid entity.
+    /// Creates an invalid named entity for safe no-op behavior.
+    /// Returns a dead entity that won't be processed by systems.
     /// </summary>
-    /// <param name="name">Name to assign (ignored)</param>
-    /// <returns>A FluentEntity wrapping an invalid entity.</returns>
-    public FluentEntity CreateEntity(string name)
+    /// <param name="name">The name for the entity (ignored in null implementation)</param>
+    /// <returns>An invalid Entity that systems should ignore.</returns>
+    public Entity CreateEntity(string name)
     {
-        return new FluentEntity(this, InvalidEntity);
-    }
-
-    /// <summary>
-    /// Creates an invalid entity builder for safe no-op behavior.
-    /// Returns a builder that operates on an invalid entity.
-    /// </summary>
-    /// <returns>EntityBuilder for an invalid entity.</returns>
-    public EntityBuilder CreateEntityBuilder()
-    {
-        return new EntityBuilder(this, InvalidEntity);
-    }
-
-    /// <summary>
-    /// Creates an invalid named entity builder for safe no-op behavior.
-    /// Returns a builder that operates on an invalid entity.
-    /// </summary>
-    /// <param name="name">Name to assign (ignored)</param>
-    /// <returns>EntityBuilder for an invalid entity.</returns>
-    public EntityBuilder CreateEntityBuilder(string name)
-    {
-        return new EntityBuilder(this, InvalidEntity);
+        return InvalidEntity;
     }
 
     /// <summary>
@@ -88,11 +67,12 @@ public sealed class NullWorld : IWorld
 
     /// <summary>
     /// No-op batch entity destruction. Entities are ignored.
+    /// Educational note: Even null implementations should maintain consistent interface.
     /// </summary>
     /// <param name="entities">The entities to destroy (ignored).</param>
     public void DestroyEntities(IEnumerable<Entity> entities)
     {
-        // No-op: Entity destruction is ignored
+        // No-op: Batch entity destruction is ignored
     }
 
     /// <summary>

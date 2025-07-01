@@ -834,9 +834,9 @@ public static class BoidSample
                     );
 
                     var e = world.CreateEntity()
-                        .WithTransform(randomPosition, 0f, Vector2D<float>.One) // Position, rotation, scale in one call
-                        .WithComponent(new VelocityComponent(0f, 0f))           // Start with zero velocity
-                        .WithComponent(new BoidSpeciesComponent(id, scale));    // Species and visual scale
+                        .WithTransform(world, randomPosition, 0f, Vector2D<float>.One) // Position, rotation, scale in one call
+                        .WithComponent(world, new VelocityComponent(0f, 0f))           // Start with zero velocity
+                        .WithComponent(world, new BoidSpeciesComponent(id, scale));    // Species and visual scale
                 }
             }
         }
@@ -851,8 +851,8 @@ public static class BoidSample
             // They must steer around these while maintaining flocking behavior.
 
             var e = world.CreateEntity()
-                .WithTransform(Vector2D<float>.Zero, 0f, Vector2D<float>.One)  // Center of screen
-                .WithComponent(new ObstacleComponent(0.2f));                   // Radius in NDC units
+                .WithTransform(world, Vector2D<float>.Zero, 0f, Vector2D<float>.One)  // Center of screen
+                .WithComponent(world, new ObstacleComponent(0.2f));                   // Radius in NDC units
         }
 
         void DrawSpecies(string filterId, EngineFacade engine)
