@@ -36,13 +36,45 @@ public sealed class NullWorld : IWorld
     // ═══════════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Creates an invalid entity for safe no-op behavior.
-    /// Returns a dead entity that won't be processed by systems.
+    /// Creates an invalid fluent entity for safe no-op behavior.
+    /// Returns a FluentEntity that wraps an invalid entity.
     /// </summary>
-    /// <returns>An invalid Entity that systems should ignore.</returns>
-    public Entity CreateEntity()
+    /// <returns>A FluentEntity wrapping an invalid entity.</returns>
+    public FluentEntity CreateEntity()
     {
-        return InvalidEntity;
+        return new FluentEntity(this, InvalidEntity);
+    }
+
+    /// <summary>
+    /// Creates an invalid named fluent entity for safe no-op behavior.
+    /// Returns a FluentEntity that wraps an invalid entity.
+    /// </summary>
+    /// <param name="name">Name to assign (ignored)</param>
+    /// <returns>A FluentEntity wrapping an invalid entity.</returns>
+    public FluentEntity CreateEntity(string name)
+    {
+        return new FluentEntity(this, InvalidEntity);
+    }
+
+    /// <summary>
+    /// Creates an invalid entity builder for safe no-op behavior.
+    /// Returns a builder that operates on an invalid entity.
+    /// </summary>
+    /// <returns>EntityBuilder for an invalid entity.</returns>
+    public EntityBuilder CreateEntityBuilder()
+    {
+        return new EntityBuilder(this, InvalidEntity);
+    }
+
+    /// <summary>
+    /// Creates an invalid named entity builder for safe no-op behavior.
+    /// Returns a builder that operates on an invalid entity.
+    /// </summary>
+    /// <param name="name">Name to assign (ignored)</param>
+    /// <returns>EntityBuilder for an invalid entity.</returns>
+    public EntityBuilder CreateEntityBuilder(string name)
+    {
+        return new EntityBuilder(this, InvalidEntity);
     }
 
     /// <summary>
@@ -50,6 +82,15 @@ public sealed class NullWorld : IWorld
     /// </summary>
     /// <param name="entity">The entity to destroy (ignored).</param>
     public void DestroyEntity(Entity entity)
+    {
+        // No-op: Entity destruction is ignored
+    }
+
+    /// <summary>
+    /// No-op batch entity destruction. Entities are ignored.
+    /// </summary>
+    /// <param name="entities">The entities to destroy (ignored).</param>
+    public void DestroyEntities(IEnumerable<Entity> entities)
     {
         // No-op: Entity destruction is ignored
     }

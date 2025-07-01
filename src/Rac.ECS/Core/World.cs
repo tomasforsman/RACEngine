@@ -33,13 +33,25 @@ public sealed class World : IWorld
     /// <summary>
     /// Creates a new entity with a unique identifier.
     /// Entities are lightweight containers that exist to group components together.
+    /// Returns FluentEntity which provides fluent component addition API and can be used as Entity.
     /// </summary>
-    /// <returns>A new Entity with a unique ID.</returns>
-    public Entity CreateEntity()
+    /// <returns>A new FluentEntity with a unique ID that supports fluent component addition.</returns>
+    public FluentEntity CreateEntity()
     {
         var entity = new Entity(_nextEntityId++);
         _livingEntities.Add(entity.Id);
-        return entity;
+        return new FluentEntity(this, entity);
+    }
+
+    /// <summary>
+    /// Creates a new named entity with fluent component addition API.
+    /// Convenience method that creates an entity and assigns a NameComponent.
+    /// </summary>
+    /// <param name="name">Human-readable name for the entity</param>
+    /// <returns>FluentEntity with name already assigned</returns>
+    public FluentEntity CreateEntity(string name)
+    {
+        return CreateEntity().WithName(name);
     }
 
     /// <summary>
@@ -59,6 +71,58 @@ public sealed class World : IWorld
         foreach (var pool in _components.Values)
         {
             pool.Remove(entity.Id);
+        }
+    }
+
+    /// <summary>
+    /// Creates a new entity with fluent builder API for adding components.
+    /// Educational note: Enables readable entity composition with method chaining.
+    /// </summary>
+    /// <returns>EntityBuilder for fluent component addition</returns>
+    public EntityBuilder CreateEntityBuilder()
+    {
+        var fluentEntity = CreateEntity();
+        return new EntityBuilder(this, fluentEntity);
+    }
+
+    /// <summary>
+    /// Creates a new named entity with fluent builder API.
+    /// Convenience method that creates an entity and assigns a NameComponent.
+    /// </summary>
+    /// <param name="name">Human-readable name for the entity</param>
+    /// <returns>EntityBuilder with name already assigned</returns>
+    public EntityBuilder CreateEntityBuilder(string name)
+    {
+        var fluentEntity = CreateEntity();
+        var builder = new EntityBuilder(this, fluentEntity);
+        return builder.WithName(name);
+    }
+
+    /// <summary>
+    /// Destroys multiple entities in a single batch operation.
+    /// Educational note: Batch operations improve performance for bulk operations.
+    /// </summary>
+    /// <param name="entities">Collection of entities to destroy</param>
+    public void DestroyEntities(IEnumerable<Entity> entities)
+    {
+        if (entities == null) return;
+
+        // Convert to list to avoid multiple enumeration
+        var entityList = entities.ToList();
+        
+        // Remove all entities from living set
+        foreach (var entity in entityList)
+        {
+            _livingEntities.Remove(entity.Id);
+        }
+
+        // Remove from all component pools
+        foreach (var pool in _components.Values)
+        {
+            foreach (var entity in entityList)
+            {
+                pool.Remove(entity.Id);
+            }
         }
     }
 

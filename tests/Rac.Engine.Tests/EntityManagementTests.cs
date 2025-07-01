@@ -228,6 +228,240 @@ public class EntityManagementTests
         Assert.False(newTags.HasTag("Fast"));
     }
 
+    [Fact]
+    public void World_CreateEntity_ReturnsFluentEntity()
+    {
+        // Arrange
+        var world = new World();
+
+        // Act
+        var fluentEntity = world.CreateEntity();
+
+        // Assert
+        Assert.True(fluentEntity.Id > 0);
+        Assert.True(fluentEntity.IsAlive);
+        
+        // Test implicit conversion to Entity
+        Entity entity = fluentEntity;
+        Assert.Equal(fluentEntity.Id, entity.Id);
+        Assert.Equal(fluentEntity.IsAlive, entity.IsAlive);
+    }
+
+    [Fact]
+    public void FluentEntity_WithName_AddsNameComponent()
+    {
+        // Arrange
+        var world = new World();
+
+        // Act
+        var entity = world.CreateEntity().WithName("TestEntity");
+
+        // Assert
+        var nameQuery = world.Query<NameComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, nameQuery.Entity.Id);
+        Assert.Equal("TestEntity", nameQuery.Component1.Name);
+    }
+
+    [Fact]
+    public void FluentEntity_WithTag_AddsTagComponent()
+    {
+        // Arrange
+        var world = new World();
+
+        // Act
+        var entity = world.CreateEntity().WithTag("Enemy");
+
+        // Assert
+        var tagQuery = world.Query<TagComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, tagQuery.Entity.Id);
+        Assert.True(tagQuery.Component1.HasTag("Enemy"));
+    }
+
+    [Fact]
+    public void FluentEntity_WithTags_AddsMultipleTagsComponent()
+    {
+        // Arrange
+        var world = new World();
+
+        // Act
+        var entity = world.CreateEntity().WithTags("Enemy", "Fast", "Dangerous");
+
+        // Assert
+        var tagQuery = world.Query<TagComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, tagQuery.Entity.Id);
+        Assert.True(tagQuery.Component1.HasTag("Enemy"));
+        Assert.True(tagQuery.Component1.HasTag("Fast"));
+        Assert.True(tagQuery.Component1.HasTag("Dangerous"));
+    }
+
+    [Fact]
+    public void FluentEntity_WithPosition_AddsTransformComponent()
+    {
+        // Arrange
+        var world = new World();
+        var expectedPosition = new Vector2D<float>(100, 200);
+
+        // Act
+        var entity = world.CreateEntity().WithPosition(expectedPosition);
+
+        // Assert
+        var transformQuery = world.Query<TransformComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, transformQuery.Entity.Id);
+        Assert.Equal(expectedPosition, transformQuery.Component1.LocalPosition);
+        Assert.Equal(0f, transformQuery.Component1.LocalRotation);
+        Assert.Equal(Vector2D<float>.One, transformQuery.Component1.LocalScale);
+    }
+
+    [Fact]
+    public void FluentEntity_WithPositionXY_AddsTransformComponent()
+    {
+        // Arrange
+        var world = new World();
+
+        // Act
+        var entity = world.CreateEntity().WithPosition(50f, 75f);
+
+        // Assert
+        var transformQuery = world.Query<TransformComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, transformQuery.Entity.Id);
+        Assert.Equal(new Vector2D<float>(50f, 75f), transformQuery.Component1.LocalPosition);
+    }
+
+    [Fact]
+    public void FluentEntity_WithTransform_AddsFullTransformComponent()
+    {
+        // Arrange
+        var world = new World();
+        var position = new Vector2D<float>(10, 20);
+        var rotation = 1.5f;
+        var scale = new Vector2D<float>(2f, 3f);
+
+        // Act
+        var entity = world.CreateEntity().WithTransform(position, rotation, scale);
+
+        // Assert
+        var transformQuery = world.Query<TransformComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, transformQuery.Entity.Id);
+        Assert.Equal(position, transformQuery.Component1.LocalPosition);
+        Assert.Equal(rotation, transformQuery.Component1.LocalRotation);
+        Assert.Equal(scale, transformQuery.Component1.LocalScale);
+    }
+
+    [Fact]
+    public void FluentEntity_ChainedMethods_AddsMultipleComponents()
+    {
+        // Arrange
+        var world = new World();
+
+        // Act
+        var entity = world.CreateEntity()
+            .WithName("Player")
+            .WithPosition(100, 200)
+            .WithTags("Controllable", "Player");
+
+        // Assert
+        // Check name component
+        var nameQuery = world.Query<NameComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, nameQuery.Entity.Id);
+        Assert.Equal("Player", nameQuery.Component1.Name);
+
+        // Check transform component
+        var transformQuery = world.Query<TransformComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, transformQuery.Entity.Id);
+        Assert.Equal(new Vector2D<float>(100, 200), transformQuery.Component1.LocalPosition);
+
+        // Check tag component
+        var tagQuery = world.Query<TagComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, tagQuery.Entity.Id);
+        Assert.True(tagQuery.Component1.HasTag("Controllable"));
+        Assert.True(tagQuery.Component1.HasTag("Player"));
+    }
+
+    [Fact]
+    public void FluentEntity_WithComponent_AddsGenericComponent()
+    {
+        // Arrange
+        var world = new World();
+        var customTag = new TagComponent("CustomTag");
+
+        // Act
+        var entity = world.CreateEntity().WithComponent(customTag);
+
+        // Assert
+        var tagQuery = world.Query<TagComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, tagQuery.Entity.Id);
+        Assert.True(tagQuery.Component1.HasTag("CustomTag"));
+    }
+
+    [Fact]
+    public void World_DestroyEntities_BatchRemovesMultipleEntities()
+    {
+        // Arrange
+        var world = new World();
+        var entity1 = world.CreateEntity().WithName("Entity1");
+        var entity2 = world.CreateEntity().WithName("Entity2");
+        var entity3 = world.CreateEntity().WithName("Entity3");
+        var entitiesToDestroy = new Entity[] { entity1, entity2 }; // Cast to Entity
+
+        // Act
+        world.DestroyEntities(entitiesToDestroy);
+
+        // Assert
+        var allEntities = world.GetAllEntities().ToList();
+        Assert.Single(allEntities);
+        Assert.Contains((Entity)entity3, allEntities); // Cast for comparison
+        Assert.DoesNotContain((Entity)entity1, allEntities);
+        Assert.DoesNotContain((Entity)entity2, allEntities);
+
+        // Check that components are also removed
+        var nameQueries = world.Query<NameComponent>().ToList();
+        Assert.Single(nameQueries);
+        Assert.Equal("Entity3", nameQueries[0].Component1.Name);
+    }
+
+    [Fact]
+    public void World_DestroyEntities_WithNullCollection_DoesNotThrow()
+    {
+        // Arrange
+        var world = new World();
+        var entity = world.CreateEntity();
+
+        // Act & Assert
+        world.DestroyEntities((IEnumerable<Entity>?)null); // Should not throw
+        
+        // Entity should still exist
+        Assert.Single(world.GetAllEntities());
+    }
+
+    [Fact]
+    public void World_DestroyEntities_WithEmptyCollection_DoesNotThrow()
+    {
+        // Arrange
+        var world = new World();
+        var entity = world.CreateEntity();
+
+        // Act & Assert
+        world.DestroyEntities(new Entity[0]); // Should not throw
+        
+        // Entity should still exist
+        Assert.Single(world.GetAllEntities());
+    }
+
+    [Fact]
+    public void World_CreateEntityWithName_FluentAPI_CreatesNamedEntity()
+    {
+        // Arrange
+        var world = new World();
+
+        // Act
+        var entity = world.CreateEntity("NamedEntity");
+
+        // Assert
+        var nameQuery = world.Query<NameComponent>().FirstOrDefault();
+        Assert.Equal(entity.Id, nameQuery.Entity.Id);
+        Assert.Equal("NamedEntity", nameQuery.Component1.Name);
+    }
+
     private static IEngineFacade CreateTestFacade(IWorld world)
     {
         // Create a mock facade for testing
