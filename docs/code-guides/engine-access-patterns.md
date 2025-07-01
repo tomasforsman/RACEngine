@@ -331,7 +331,7 @@ engine.Renderer.SetShaderMode(ShaderMode.Bloom);
 
 ## See Also
 
-- [System Exposure Architecture Patterns](../architecture/system-exposure-patterns.md) - How these patterns are designed
+- [System Exposure Architecture Patterns](../architecture/system-exposure-architecture-patterns.md) - How these patterns are designed
 - [Getting Started Tutorial](../educational-material/getting-started-tutorial.md) - Hands-on examples
 - [Code Style Guidelines](code-style-guidelines.md) - When contributing to engine
 - Individual system documentation for specific APIs

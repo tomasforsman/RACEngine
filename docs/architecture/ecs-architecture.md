@@ -473,8 +473,7 @@ var movableNonPlayerEntities = world.QueryBuilder<VelocityComponent>()
 ## See Also
 
 - [System Overview](system-overview.md) - High-level architecture context
-- [Performance Considerations](performance-considerations.md) - Optimization strategies
-- [Design Patterns](design-patterns.md) - ECS and related patterns
+
 - [Rac.ECS Project Documentation](../projects/Rac.ECS.md) - Implementation details
 
 ## Changelog

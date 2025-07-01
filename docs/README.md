@@ -26,8 +26,7 @@ Deep dive into RACEngine's system design and architectural decisions:
 - [ECS Architecture](architecture/ecs-architecture.md) - Entity-Component-System design
 - [Rendering Pipeline](architecture/rendering-pipeline.md) - 4-phase rendering system
 - [Audio Architecture](architecture/audio-architecture.md) - Audio system integration
-- [Design Patterns](architecture/design-patterns.md) - Patterns used throughout engine
-- [Performance Considerations](architecture/performance-considerations.md) - Architecture performance decisions
+
 - [Dependency Diagram](architecture/dependency-diagram.md) - Visual module dependencies
 
 ### 💻 [Code Guides](code-guides/)

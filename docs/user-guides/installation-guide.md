@@ -479,7 +479,7 @@ After successful installation:
 
 1. **Complete the Tutorial**: Follow the [Getting Started Tutorial](../educational-material/getting-started-tutorial.md)
 2. **Explore Sample Games**: Study the implementation of different samples
-3. **Read Architecture Docs**: Understand the engine's design in [Architecture Documentation](../architecture/)
+3. **Read Architecture Docs**: Understand the engine's design in [Architecture Documentation](../architecture/index.md)
 4. **Create Your First Project**: Use [Project Setup Guide](project-setup.md)
 
 ## Verification Checklist

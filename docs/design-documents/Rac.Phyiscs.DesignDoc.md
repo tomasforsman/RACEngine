@@ -1415,7 +1415,7 @@ var physics = PhysicsBuilder.Create()
 
 - [System Overview](../architecture/system-overview.md) - RACEngine architecture context
 - [ECS Architecture](../architecture/ecs-architecture.md) - Component and system patterns
-- [Performance Considerations](../architecture/performance-considerations.md) - Optimization strategies
+
 - [Getting Started Tutorial](../educational-material/getting-started-tutorial.md) - Practical usage examples
 
 ## Changelog

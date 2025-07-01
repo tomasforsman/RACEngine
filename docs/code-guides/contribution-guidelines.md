@@ -398,7 +398,6 @@ List any breaking changes and migration steps
 - Provide practical usage examples
 
 ### 3. Testing Standards
-- Follow [Testing Standards](testing-standards.md)
 - Aim for high test coverage
 - Include performance tests for critical paths
 - Test edge cases and error conditions
@@ -427,9 +426,9 @@ List any breaking changes and migration steps
 
 ### Resources
 - [Documentation Hub](../README.md) - Complete documentation system
-- [Architecture Guides](../architecture/) - System design documentation
-- [Educational Material](../educational-material/) - Learning resources
-- [Code Guides](../code-guides/) - Development best practices
+- [Architecture Guides](../architecture/index.md) - System design documentation
+- [Educational Material](../educational-material/index.md) - Learning resources
+- [Code Guides](../code-guides/index.md) - Development best practices
 
 ### Support Channels
 - **GitHub Issues**: Bug reports and feature requests
@@ -480,7 +479,6 @@ List any breaking changes and migration steps
 
 ### Updating Changelogs
 - Add entries to [changelog.md](../changelogs/changelog.md)
-- Follow [Changelog Guidelines](../changelogs/changelog-guidelines.md)
 - Include impact description and educational value
 - Link to relevant issues and pull requests
 
