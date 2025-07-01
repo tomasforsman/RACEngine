@@ -1,0 +1,221 @@
+# .github/workflows/build-docs.yml
+name: Build and Deploy Documentation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - 'src/**'
+      - 'samples/**'
+      - 'tests/**'
+      - 'scripts/build-unified-docs.js'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'src/**'
+      - 'samples/**'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+  
+  # Run daily to catch any changes
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  build-documentation:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for better file modification dates
+          fetch-depth: 0
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: |
+          npm install gray-matter chokidar xml2js
+          # Install any other dependencies your project needs
+
+      - name: 🔨 Build unified documentation
+        run: |
+          # Create output directory
+          mkdir -p public
+          
+          # Run the documentation builder
+          node scripts/build-unified-docs.js --output ./public/docs.json --root ./
+          
+          # Verify the output was created
+          if [ ! -f "./public/docs.json" ]; then
+            echo "❌ docs.json was not created!"
+            exit 1
+          fi
+          
+          # Show file size
+          ls -lh ./public/docs.json
+          
+          # Show basic stats
+          echo "📊 Documentation stats:"
+          cat ./public/docs.json | jq '.metadata'
+
+      - name: 📄 Generate documentation report
+        run: |
+          # Create a build report
+          cat > ./public/build-report.json << EOF
+          {
+            "buildTime": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "gitCommit": "${{ github.sha }}",
+            "gitRef": "${{ github.ref }}",
+            "triggeredBy": "${{ github.event_name }}",
+            "actor": "${{ github.actor }}",
+            "repository": "${{ github.repository }}"
+          }
+          EOF
+
+      - name: 🧪 Validate documentation structure
+        run: |
+          # Basic validation of the generated JSON
+          echo "🔍 Validating documentation structure..."
+          
+          # Check if it's valid JSON
+          cat ./public/docs.json | jq . > /dev/null
+          
+          # Check required fields
+          TOTAL_DOCS=$(cat ./public/docs.json | jq '.metadata.totalDocuments')
+          echo "✅ Found $TOTAL_DOCS documents"
+          
+          if [ "$TOTAL_DOCS" -eq 0 ]; then
+            echo "❌ No documents found!"
+            exit 1
+          fi
+          
+          # Check for essential document types
+          API_DOCS=$(cat ./public/docs.json | jq '[.documents[] | select(.type == "api")] | length')
+          SAMPLES=$(cat ./public/docs.json | jq '[.documents[] | select(.type == "sample")] | length')
+          
+          echo "📋 Documentation breakdown:"
+          echo "   API docs: $API_DOCS"
+          echo "   Samples: $SAMPLES"
+
+      - name: 🏗️ Build React frontend (if exists)
+        run: |
+          if [ -f "package.json" ] && grep -q "react-scripts" package.json; then
+            echo "🟦 Building React frontend..."
+            npm install
+            npm run build
+          
+            # Copy documentation to React build
+            cp ./public/docs.json ./build/
+            cp ./public/build-report.json ./build/
+          else
+            echo "📝 No React frontend found, using documentation only"
+          fi
+
+      - name: 📤 Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-build
+          path: |
+            public/
+            build/
+          retention-days: 30
+
+      - name: 🚀 Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/deploy-pages@v3
+        with:
+          # Deploy React build if it exists, otherwise just the documentation
+          path: ${{ hashFiles('build/') != '' && 'build' || 'public' }}
+
+      - name: 📊 Comment on PR with stats
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const docs = JSON.parse(fs.readFileSync('./public/docs.json', 'utf8'));
+            
+            const stats = `## 📚 Documentation Build Results
+            
+            ✅ **Build successful!**
+            
+            📊 **Statistics:**
+            - **Total documents:** ${docs.metadata.totalDocuments}
+            - **Build time:** ${docs.metadata.buildTime}
+            - **Directories scanned:** ${docs.metadata.directories.join(', ')}
+            
+            🔍 **Document types:**
+            ${Object.entries(
+              Object.values(docs.documents).reduce((acc, doc) => {
+                acc[doc.type] = (acc[doc.type] || 0) + 1;
+                return acc;
+              }, {})
+            ).map(([type, count]) => `- **${type}:** ${count}`).join('\n')}
+            
+            🔗 **Cross-references:** ${Object.keys(docs.crossReferences).length}
+            
+            🏷️ **Search terms:** ${Object.keys(docs.searchIndex.terms).length}
+            
+            📦 **File size:** ${Math.round(fs.statSync('./public/docs.json').size / 1024)} KB
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: stats
+            });
+
+  # Separate job for deployment to allow for manual approval in protected environments
+  deploy-production:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build-documentation
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: 📥 Download documentation artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: documentation-build
+          path: ./deployment
+
+      - name: 🌐 Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: 📤 Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./deployment/build
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v3
+
+  # Optional: Notify when documentation is updated
+  notify-update:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [build-documentation, deploy-production]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📢 Notify documentation update
+        run: |
+          echo "🎉 Documentation has been updated and deployed!"
+          echo "🔗 Available at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
