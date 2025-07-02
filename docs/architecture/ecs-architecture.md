@@ -606,6 +606,254 @@ public void PhysicsAndMovement_IntegrateCorrectly()
 }
 ```
 
+## Development Tools and Debugging
+
+RACEngine provides comprehensive debugging and inspection tools to help developers understand and troubleshoot ECS behavior during development.
+
+### Entity Inspection
+
+**Core Inspection API:**
+```csharp
+/// <summary>
+/// Comprehensive entity debugging and inspection tools
+/// </summary>
+public void InspectGameState()
+{
+    var world = new World();
+    
+    // Create example entities for demonstration
+    var player = world.CreateEntity("Player");
+    world.SetComponent(player, new PositionComponent(new Vector2D<float>(10, 20)));
+    world.SetComponent(player, new TagComponent(new[] { "Player", "Controllable" }));
+    
+    // ✅ INSPECT: Get complete component breakdown
+    var inspection = world.InspectEntity(player);
+    Console.WriteLine($"Player entity has {inspection.Count} components:");
+    foreach (var (componentType, component) in inspection)
+    {
+        Console.WriteLine($"  {componentType}: {component}");
+    }
+    // Output:
+    // Player entity has 3 components:
+    //   Name: NameComponent { Name = "Player" }
+    //   Position: PositionComponent { Position = Vector2D { X = 10, Y = 20 } }
+    //   Tag: TagComponent { Tags = ["Player", "Controllable"] }
+}
+```
+
+**Entity Naming and Identification:**
+```csharp
+/// <summary>
+/// Human-readable entity identification for debugging
+/// </summary>
+public void EntityNaming()
+{
+    var world = new World();
+    
+    // Named entities provide clear debugging output
+    var namedEntity = world.CreateEntity("PlayerCharacter");
+    var unnamedEntity = world.CreateEntity();
+    
+    // ✅ NAMING: Get meaningful entity names
+    var name1 = world.GetEntityName(namedEntity);   // "PlayerCharacter"
+    var name2 = world.GetEntityName(unnamedEntity); // "Entity #2"
+    
+    Console.WriteLine($"Debug entities: {name1}, {name2}");
+    
+    // Use in error reporting and logging
+    var allEntities = world.GetAllEntities();
+    foreach (var entity in allEntities)
+    {
+        var entityName = world.GetEntityName(entity);
+        var componentCount = world.InspectEntity(entity).Count;
+        Console.WriteLine($"{entityName}: {componentCount} components");
+    }
+}
+```
+
+### Tag-Based Debugging Queries
+
+**Development-Time Entity Queries:**
+```csharp
+/// <summary>
+/// Tag-based entity discovery for debugging and diagnostics
+/// </summary>
+public void TagBasedDebugging()
+{
+    var world = new World();
+    
+    // Setup test scenario
+    CreateGameEntities(world);
+    
+    // ✅ DEBUG QUERIES: Find entities by category
+    var enemies = world.GetEntitiesWithTag("Enemy");
+    var playerControlled = world.GetEntitiesWithTag("Controllable");
+    var temporaryObjects = world.GetEntitiesWithTag("Temporary");
+    
+    Console.WriteLine($"Game State Breakdown:");
+    Console.WriteLine($"  Enemies: {enemies.Count()}");
+    Console.WriteLine($"  Controllable: {playerControlled.Count()}");
+    Console.WriteLine($"  Temporary objects: {temporaryObjects.Count()}");
+    
+    // Detailed enemy analysis
+    Console.WriteLine("\nEnemy Details:");
+    foreach (var enemy in enemies)
+    {
+        var name = world.GetEntityName(enemy);
+        var components = world.InspectEntity(enemy);
+        var tags = components.ContainsKey("Tag") 
+            ? ((TagComponent)components["Tag"]).Tags 
+            : new HashSet<string>();
+            
+        Console.WriteLine($"  {name}: {string.Join(", ", tags)}");
+    }
+}
+```
+
+### Development Validation and Error Handling
+
+**Helpful Error Messages:**
+```csharp
+/// <summary>
+/// Development-mode validation provides clear error guidance
+/// </summary>
+public void DevelopmentValidation()
+{
+    var world = new World();
+    
+    try
+    {
+        // ❌ Common mistake: Using destroyed entity
+        var entity = world.CreateEntity("TestEntity");
+        world.DestroyEntity(entity);
+        world.SetComponent(entity, new TagComponent(new[] { "Test" }));
+    }
+    catch (ArgumentException ex)
+    {
+        // ✅ Clear error message with specific guidance
+        Console.WriteLine($"Development Error: {ex.Message}");
+        // Output: "Entity with ID 1 does not exist or has been destroyed.
+        //          Common causes: entity was destroyed, entity is from a different world, 
+        //          or entity was never created."
+    }
+    
+    try
+    {
+        // ❌ Invalid entity creation
+        var invalidEntity = new Entity(-1);
+        world.SetComponent(invalidEntity, new TagComponent(new[] { "Invalid" }));
+    }
+    catch (ArgumentException ex)
+    {
+        // ✅ Specific guidance for invalid entities
+        Console.WriteLine($"Development Error: {ex.Message}");
+        // Output: "Entity with ID -1 appears to be invalid. 
+        //          Ensure you're using entities created by World.CreateEntity()."
+    }
+}
+```
+
+### Debugging System Integration
+
+**System Debugging Patterns:**
+```csharp
+/// <summary>
+/// Example system demonstrating debugging integration
+/// </summary>
+public class DiagnosticSystem : ISystem
+{
+    private readonly ILogger _logger;
+    
+    public DiagnosticSystem(ILogger logger)
+    {
+        _logger = logger;
+    }
+    
+    public void Update(World world, float deltaTime)
+    {
+        // ✅ MONITORING: Track entity counts by category
+        var entityCounts = new Dictionary<string, int>
+        {
+            ["Enemies"] = world.GetEntitiesWithTag("Enemy").Count(),
+            ["Projectiles"] = world.GetEntitiesWithTag("Projectile").Count(),
+            ["PowerUps"] = world.GetEntitiesWithTag("PowerUp").Count(),
+            ["UI"] = world.GetEntitiesWithTag("UI").Count()
+        };
+        
+        foreach (var (category, count) in entityCounts)
+        {
+            if (count > GetExpectedMaximum(category))
+            {
+                _logger.LogWarning($"High {category} count: {count}");
+                
+                // ✅ DETAILED DEBUGGING: Inspect problematic entities
+                var entities = world.GetEntitiesWithTag(category.TrimEnd('s'));
+                foreach (var entity in entities.Take(3)) // Sample first few
+                {
+                    var name = world.GetEntityName(entity);
+                    var components = world.InspectEntity(entity);
+                    _logger.LogDebug($"  Sample {category}: {name} - {components.Count} components");
+                }
+            }
+        }
+        
+        // ✅ PERFORMANCE MONITORING: Track system performance
+        var totalEntities = world.GetAllEntities().Count();
+        if (totalEntities > 1000)
+        {
+            _logger.LogInfo($"Large world: {totalEntities} entities");
+        }
+    }
+    
+    private int GetExpectedMaximum(string category) => category switch
+    {
+        "Enemies" => 50,
+        "Projectiles" => 100,
+        "PowerUps" => 10,
+        "UI" => 20,
+        _ => 100
+    };
+}
+```
+
+### Testing Integration
+
+**Debugging Tools in Tests:**
+```csharp
+[Test]
+public void SystemBehavior_CanBeDebugged()
+{
+    // Arrange
+    var world = new World();
+    var system = new MovementSystem();
+    
+    var entity = world.CreateEntity("TestEntity");
+    world.SetComponent(entity, new PositionComponent(Vector2D<float>.Zero));
+    world.SetComponent(entity, new VelocityComponent(new Vector2D<float>(1, 0)));
+    world.SetComponent(entity, new TagComponent(new[] { "Moving", "Test" }));
+    
+    // Act
+    system.Update(world, 1.0f);
+    
+    // Assert with debugging tools
+    var entityName = world.GetEntityName(entity);
+    var inspection = world.InspectEntity(entity);
+    
+    Console.WriteLine($"After update - {entityName}:");
+    foreach (var (componentType, component) in inspection)
+    {
+        Console.WriteLine($"  {componentType}: {component}");
+    }
+    
+    // Verify specific component states
+    Assert.That(inspection.ContainsKey("Position"), Is.True);
+    var position = (PositionComponent)inspection["Position"];
+    Assert.That(position.Position.X, Is.EqualTo(1.0f));
+}
+```
+
+*Implementation: Debugging tools in `src/Rac.ECS/Core/World.cs` and related files*
+
 ## Advanced Topics
 
 ### Component Events

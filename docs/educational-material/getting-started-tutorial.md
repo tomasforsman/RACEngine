@@ -1170,6 +1170,161 @@ public class SpatialHashGrid
 }
 ```
 
+### 9.6 Debugging and Development Tools
+
+**Entity Inspection for Development**:
+```csharp
+/// <summary>
+/// Debug and inspect entity state during development
+/// </summary>
+public void DebugGame()
+{
+    // ✅ MODERN: Inspect any entity to see all its components
+    var playerInspection = engine.World.InspectEntity(player);
+    Console.WriteLine($"Player components:");
+    foreach (var (componentType, component) in playerInspection)
+    {
+        Console.WriteLine($"  {componentType}: {component}");
+    }
+    
+    // ✅ MODERN: Get human-readable entity names
+    Console.WriteLine($"Entity names:");
+    foreach (var entity in engine.World.GetAllEntities())
+    {
+        var name = engine.World.GetEntityName(entity);
+        Console.WriteLine($"  {name} (ID: {entity.Id})");
+    }
+    
+    // ✅ MODERN: Query entities by tags for debugging
+    var allEnemies = engine.World.GetEntitiesWithTag("Enemy");
+    Console.WriteLine($"Found {allEnemies.Count()} enemies:");
+    foreach (var enemy in allEnemies)
+    {
+        var name = engine.World.GetEntityName(enemy);
+        var inspection = engine.World.InspectEntity(enemy);
+        Console.WriteLine($"  {name}: {inspection.Count} components");
+    }
+    
+    // Debug specific game states
+    var powerUps = engine.World.GetEntitiesWithTag("PowerUp");
+    var projectiles = engine.World.GetEntitiesWithTag("Projectile");
+    Console.WriteLine($"Game State: {powerUps.Count()} power-ups, {projectiles.Count()} projectiles");
+}
+```
+
+**Development-Time Validation**:
+```csharp
+/// <summary>
+/// Demonstrates helpful error messages for common mistakes
+/// </summary>
+public void DevelopmentValidation()
+{
+    try
+    {
+        // ❌ MISTAKE: Using destroyed entity
+        var entity = engine.World.CreateEntity("TestEntity");
+        engine.World.DestroyEntity(entity);
+        engine.World.SetComponent(entity, new HealthComponent(100)); // This will throw
+    }
+    catch (ArgumentException ex)
+    {
+        // ✅ HELPFUL: Clear error message explains the problem
+        Console.WriteLine($"Development Error: {ex.Message}");
+        // Output: "Entity with ID X does not exist or has been destroyed. 
+        //          Common causes: entity was destroyed, entity is from a different world..."
+    }
+    
+    try
+    {
+        // ❌ MISTAKE: Invalid entity ID
+        var invalidEntity = new Entity(-1);
+        engine.World.SetComponent(invalidEntity, new HealthComponent(100));
+    }
+    catch (ArgumentException ex)
+    {
+        // ✅ HELPFUL: Specific guidance for invalid entities
+        Console.WriteLine($"Development Error: {ex.Message}");
+        // Output: "Entity with ID -1 appears to be invalid. 
+        //          Ensure you're using entities created by World.CreateEntity()."
+    }
+}
+```
+
+**Debugging Systems with Entity Queries**:
+```csharp
+/// <summary>
+/// System that uses debugging tools for troubleshooting
+/// </summary>
+public class DiagnosticSystem : ISystem
+{
+    public void Update(World world, float deltaTime)
+    {
+        // Check for orphaned projectiles (projectiles without valid targets)
+        var projectiles = world.GetEntitiesWithTag("Projectile");
+        var targets = world.GetEntitiesWithTag("Enemy");
+        
+        if (projectiles.Count() > targets.Count() * 3)
+        {
+            Console.WriteLine($"⚠️ Warning: {projectiles.Count()} projectiles for {targets.Count()} targets");
+            
+            // Debug each projectile
+            foreach (var projectile in projectiles)
+            {
+                var name = world.GetEntityName(projectile);
+                var components = world.InspectEntity(projectile);
+                Console.WriteLine($"  {name}: {string.Join(", ", components.Keys)}");
+            }
+        }
+        
+        // Monitor entity count for memory leaks
+        var totalEntities = world.GetAllEntities().Count();
+        if (totalEntities > 1000)
+        {
+            Console.WriteLine($"⚠️ High entity count: {totalEntities}");
+            
+            // Break down by type
+            var byTag = new[] { "Enemy", "Projectile", "PowerUp", "Player" }
+                .Select(tag => new { Tag = tag, Count = world.GetEntitiesWithTag(tag).Count() })
+                .Where(x => x.Count > 0);
+                
+            foreach (var category in byTag)
+            {
+                Console.WriteLine($"  {category.Tag}: {category.Count}");
+            }
+        }
+    }
+}
+```
+
+**Integration with Logging Systems**:
+```csharp
+/// <summary>
+/// Example of integrating debugging tools with structured logging
+/// </summary>
+public void LogGameState(ILogger logger)
+{
+    var allEntities = engine.World.GetAllEntities().ToList();
+    logger.LogInfo($"Game state snapshot: {allEntities.Count} total entities");
+    
+    // Log entity breakdown by tags
+    var entityCounts = new[] { "Player", "Enemy", "Projectile", "PowerUp", "UI" }
+        .ToDictionary(tag => tag, tag => engine.World.GetEntitiesWithTag(tag).Count());
+        
+    foreach (var (tag, count) in entityCounts.Where(x => x.Value > 0))
+    {
+        logger.LogInfo($"  {tag}: {count} entities");
+    }
+    
+    // Log specific entity details for debugging
+    var player = engine.FindEntityByName("Player");
+    if (player.HasValue)
+    {
+        var playerComponents = engine.World.InspectEntity(player.Value);
+        logger.LogDebug($"Player state: {string.Join(", ", playerComponents.Keys)}");
+    }
+}
+```
+
 ## Troubleshooting
 
 ### Common Issues
