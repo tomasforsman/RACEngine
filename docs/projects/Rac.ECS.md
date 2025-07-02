@@ -61,11 +61,15 @@ Houses all component definitions and the base component interface. Components in
 
 Contains the behavioral logic layer of the ECS architecture and system management infrastructure.
 
-**ISystem**: Defines the contract for all system implementations. Establishes the frame-based update pattern with delta time for frame-rate independent behavior.
+**ISystem**: Defines the contract for all system implementations. Establishes the complete system lifecycle with Initialize(IWorld), Update(float), and Shutdown(IWorld) methods. Default implementations for lifecycle methods ensure backward compatibility with existing systems that only implement Update().
 
-**SystemScheduler**: Manages system registration, execution order, and batch updates. Provides the runtime infrastructure for coordinating system execution during the game loop.
+**RunAfterAttribute**: Declarative dependency management attribute that allows systems to specify execution order dependencies. Supports multiple dependencies per system and includes validation to prevent circular references. Uses standard .NET attribute inheritance patterns for modular system design.
 
-**TransformSystem**: Specialized system that computes world transforms from local transforms and hierarchy relationships. Implements depth-first traversal algorithms to efficiently propagate transformations through the scene graph.
+**SystemScheduler**: Manages system registration, execution order, lifecycle, and batch updates. Provides automatic dependency resolution using topological sorting algorithms to ensure systems execute in correct order. Includes circular dependency detection and supports both manual and automatic execution ordering. Handles system initialization during registration and shutdown during removal.
+
+**SystemDependencyResolver**: Internal utility class implementing Kahn's topological sorting algorithm for dependency resolution. Provides O(V + E) performance for dependency graphs and includes comprehensive circular dependency detection with clear error reporting.
+
+**TransformSystem**: Specialized system that computes world transforms from local transforms and hierarchy relationships. Implements depth-first traversal algorithms to efficiently propagate transformations through the scene graph. Demonstrates advanced system implementation patterns with Initialize() setup and complex update logic.
 
 ### Rac.ECS.Entities
 
@@ -83,7 +87,38 @@ The hierarchy system operates on two-way relationships where parent entities mai
 
 ### System Execution Model
 
-Systems operate on entity sets discovered through component queries, processing relevant entities each frame. The SystemScheduler manages execution order and provides delta time for frame-rate independent updates. Systems remain stateless and operate exclusively through the World interface, ensuring clean separation between logic and data.
+Systems operate on entity sets discovered through component queries, processing relevant entities each frame. The SystemScheduler manages the complete system lifecycle with automatic dependency resolution and proper execution ordering.
+
+**System Lifecycle Management:**
+Systems follow a three-phase lifecycle managed by the SystemScheduler:
+
+1. **Initialize Phase**: Called once when system is added to scheduler. Systems receive IWorld parameter for setup operations like creating configuration entities, caching queries, or registering event handlers.
+
+2. **Update Phase**: Called every frame with delta time for frame-rate independent logic. Systems query entities, process component data, and update world state based on game logic.
+
+3. **Shutdown Phase**: Called once when system is removed or scheduler is cleared. Systems receive IWorld parameter for cleanup operations like disposing resources, removing configuration entities, or unregistering event handlers.
+
+**Dependency Resolution:**
+The SystemScheduler uses declarative dependency management through RunAfter attributes:
+
+```csharp
+// Dependency chain: Input → Movement → Physics → Rendering
+public class InputSystem : ISystem { /* ... */ }
+
+[RunAfter(typeof(InputSystem))]
+public class MovementSystem : ISystem { /* ... */ }
+
+[RunAfter(typeof(MovementSystem))]  
+public class PhysicsSystem : ISystem { /* ... */ }
+
+[RunAfter(typeof(PhysicsSystem))]
+public class RenderingSystem : ISystem { /* ... */ }
+```
+
+The scheduler automatically resolves execution order using topological sorting, ensuring systems run in dependency order regardless of registration order. Circular dependencies are detected and reported with clear error messages.
+
+**Backward Compatibility:**
+Existing systems that implement only the Update() method continue to work without modification. The Initialize() and Shutdown() methods have default empty implementations, ensuring seamless integration with legacy code.
 
 ### Query Performance Characteristics
 

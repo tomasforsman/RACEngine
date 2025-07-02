@@ -81,15 +81,83 @@ Components represent pure data containers that define what an entity is:
 
 ### System Architecture
 
-Systems contain all game logic and operate on component data:
+Systems contain all game logic and operate on component data with full lifecycle management:
+
+**System Lifecycle Management:**
+- **Initialization Phase**: `Initialize(IWorld)` called once when system is registered
+- **Update Phase**: `Update(float)` called every frame with delta time for frame-rate independence
+- **Shutdown Phase**: `Shutdown(IWorld)` called once when system is removed or scheduler shuts down
+
+**System Dependency Management:**
+- **Declarative Dependencies**: Systems can declare dependencies using `[RunAfter(typeof(OtherSystem))]` attributes
+- **Automatic Ordering**: SystemScheduler uses topological sorting to resolve execution order
+- **Circular Dependency Detection**: Invalid dependency chains are detected and reported clearly
+- **Backward Compatibility**: Systems implementing only `Update()` method continue to work unchanged
 
 **System Processing Patterns:**
-- **Update Loop Integration**: Systems execute within the main game loop
+- **Update Loop Integration**: Systems execute within the main game loop in dependency order
 - **Component Querying**: Systems filter entities by required components
 - **Batch Processing**: Operations applied efficiently across entity collections
 - **Data Transformation**: Pure functions that transform component data
+- **State Isolation**: Systems remain stateless between update cycles
 
-*Implementation: `src/Rac.ECS/Systems/` directory*
+**Common System Categories:**
+- **Input Systems**: Process user input and update input components
+- **Logic Systems**: Implement game rules, AI behavior, and state management
+- **Physics Systems**: Handle movement, collision detection, and response
+- **Rendering Systems**: Process visual components and send data to GPU
+- **Audio Systems**: Manage sound effects and music based on entity states
+
+**System Communication Patterns:**
+- **Component-Mediated**: Systems communicate through shared component data
+- **Event Systems**: Decoupled communication using event publishing/subscription  
+- **Service Dependencies**: Systems can depend on external services for complex operations
+- **World Queries**: Systems discover relevant entities through component queries
+
+**System Dependency Examples:**
+```csharp
+// Simple dependency chain: Input → Movement → Rendering
+[RunAfter(typeof(InputSystem))]
+public class MovementSystem : ISystem
+{
+    public void Initialize(IWorld world) 
+    { 
+        // Set up physics configuration or caches
+    }
+    
+    public void Update(float delta) 
+    { 
+        // Process movement based on input
+    }
+    
+    public void Shutdown(IWorld world) 
+    { 
+        // Clean up resources
+    }
+}
+
+[RunAfter(typeof(MovementSystem))]
+public class RenderingSystem : ISystem
+{
+    public void Update(float delta) 
+    { 
+        // Render entities after movement is complete
+    }
+}
+
+// Multiple dependencies
+[RunAfter(typeof(InputSystem))]
+[RunAfter(typeof(PhysicsSystem))]
+public class CombatSystem : ISystem
+{
+    public void Update(float delta) 
+    { 
+        // Combat logic runs after input and physics
+    }
+}
+```
+
+*Implementation: `src/Rac.ECS/Systems/` and scheduler implementations*
 
 ### World Management Architecture
 
@@ -242,17 +310,63 @@ RACEngine promotes composition over inheritance through flexible component combi
 Effective system design follows established patterns for maintainability and performance:
 
 **System Execution Patterns:**
-- **Update Loop Integration**: Systems execute in specific phases of the game loop
-- **Dependency Ordering**: Systems execute in logical dependency order
+- **Lifecycle Management**: Systems follow Initialize → Update → Shutdown lifecycle
+- **Dependency Ordering**: SystemScheduler automatically resolves execution order
 - **Batch Processing**: Systems process all relevant entities in single passes
 - **State Isolation**: Systems remain stateless between update cycles
 
-**Common System Categories:**
-- **Input Systems**: Process user input and update input components
-- **Logic Systems**: Implement game rules, AI behavior, and state management
-- **Physics Systems**: Handle movement, collision detection, and response
-- **Rendering Systems**: Process visual components and send data to GPU
-- **Audio Systems**: Manage sound effects and music based on entity states
+**System Scheduler Architecture:**
+The SystemScheduler manages the complete system lifecycle with automatic dependency resolution:
+
+```csharp
+// Example of dependency-driven system registration
+var world = new World();
+var scheduler = new SystemScheduler(world);
+
+// Systems can be registered in any order - scheduler resolves dependencies
+scheduler.Add(new RenderingSystem());     // Depends on TransformSystem
+scheduler.Add(new MovementSystem());      // Depends on InputSystem  
+scheduler.Add(new InputSystem());         // No dependencies
+scheduler.Add(new TransformSystem());     // Depends on MovementSystem
+
+// Scheduler automatically orders: Input → Movement → Transform → Rendering
+scheduler.Update(deltaTime);
+```
+
+**Dependency Declaration Patterns:**
+```csharp
+// Simple linear dependency
+[RunAfter(typeof(InputSystem))]
+public class MovementSystem : ISystem
+{
+    public void Initialize(IWorld world) 
+    {
+        // Setup physics configuration
+        world.SetComponent(world.CreateEntity(), new GravityComponent(-9.81f));
+    }
+    
+    public void Update(float delta) 
+    {
+        // Process movement after input is handled
+    }
+    
+    public void Shutdown(IWorld world) 
+    {
+        // Clean up physics resources
+    }
+}
+
+// Multiple dependencies
+[RunAfter(typeof(MovementSystem))]
+[RunAfter(typeof(PhysicsSystem))]
+public class CollisionSystem : ISystem
+{
+    public void Update(float delta) 
+    {
+        // Handle collisions after movement and physics
+    }
+}
+```
 
 **System Communication Patterns:**
 - **Component-Mediated**: Systems communicate through shared component data
@@ -260,25 +374,7 @@ Effective system design follows established patterns for maintainability and per
 - **Service Dependencies**: Systems can depend on external services for complex operations
 - **World Queries**: Systems discover relevant entities through component queries
 
-*Implementation: `src/Rac.ECS/Systems/` and scheduler implementations*
-        _systems.Add(new CollisionSystem());
-        
-        // 4. Rendering systems (visual output)
-        _systems.Add(new SpriteRenderSystem());
-        _systems.Add(new ParticleRenderSystem());
-    }
-    
-    /// <summary>
-    /// Updates all systems in dependency order
-    /// </summary>
-    public void Update(World world, float deltaTime)
-    {
-        foreach (var system in _systems)
-        {
-            system.Update(world, deltaTime);
-        }
-    }
-}
+*Implementation: `src/Rac.ECS/Systems/` with SystemScheduler for lifecycle and dependency management*
 ```
 
 ### Component Lifecycle
