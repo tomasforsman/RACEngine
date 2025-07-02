@@ -127,6 +127,32 @@ public sealed class NullWorld : IWorld
         return false;
     }
 
+    /// <summary>
+    /// Always returns false as no components are stored.
+    /// </summary>
+    /// <typeparam name="T">The type of component to check for.</typeparam>
+    /// <param name="entity">The entity to check (ignored).</param>
+    /// <returns>Always false as no components exist.</returns>
+    public bool HasComponent<T>(Entity entity)
+        where T : IComponent
+    {
+        return false;
+    }
+
+    /// <summary>
+    /// Always returns false as no components are stored.
+    /// </summary>
+    /// <typeparam name="T">The type of component to retrieve.</typeparam>
+    /// <param name="entity">The entity to get the component from (ignored).</param>
+    /// <param name="component">Always set to default value.</param>
+    /// <returns>Always false as no components exist.</returns>
+    public bool TryGetComponent<T>(Entity entity, out T component)
+        where T : IComponent
+    {
+        component = default!;
+        return false;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // COMPONENT QUERIES
     // ═══════════════════════════════════════════════════════════════════════════
@@ -168,5 +194,127 @@ public sealed class NullWorld : IWorld
         where T3 : IComponent
     {
         return Enumerable.Empty<(Entity, T1, T2, T3)>();
+    }
+
+    /// <summary>
+    /// Returns empty enumerable as no entities have components.
+    /// </summary>
+    /// <typeparam name="T1">First component type to query for.</typeparam>
+    /// <typeparam name="T2">Second component type to query for.</typeparam>
+    /// <typeparam name="T3">Third component type to query for.</typeparam>
+    /// <typeparam name="T4">Fourth component type to query for.</typeparam>
+    /// <returns>Empty enumerable.</returns>
+    public IEnumerable<(Entity Entity, T1 Component1, T2 Component2, T3 Component3, T4 Component4)> Query<T1, T2, T3, T4>()
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T4 : IComponent
+    {
+        return Enumerable.Empty<(Entity, T1, T2, T3, T4)>();
+    }
+
+    /// <summary>
+    /// Returns empty enumerable as no entities have components.
+    /// </summary>
+    /// <typeparam name="T1">First component type to query for.</typeparam>
+    /// <typeparam name="T2">Second component type to query for.</typeparam>
+    /// <typeparam name="T3">Third component type to query for.</typeparam>
+    /// <typeparam name="T4">Fourth component type to query for.</typeparam>
+    /// <typeparam name="T5">Fifth component type to query for.</typeparam>
+    /// <returns>Empty enumerable.</returns>
+    public IEnumerable<(Entity Entity, T1 Component1, T2 Component2, T3 Component3, T4 Component4, T5 Component5)> Query<T1, T2, T3, T4, T5>()
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T4 : IComponent
+        where T5 : IComponent
+    {
+        return Enumerable.Empty<(Entity, T1, T2, T3, T4, T5)>();
+    }
+
+    /// <summary>
+    /// Creates a null query root that produces empty results.
+    /// </summary>
+    /// <returns>A NullQueryRoot that always returns empty results</returns>
+    public IQueryRoot Query()
+    {
+        return new NullQueryRoot();
+    }
+
+    /// <summary>
+    /// Returns a null query builder that produces empty results.
+    /// </summary>
+    /// <typeparam name="T">The primary component type to query for.</typeparam>
+    /// <returns>A NullQueryBuilder that always returns empty results.</returns>
+    public IQueryBuilder<T> QueryBuilder<T>()
+        where T : IComponent
+    {
+        return new NullQueryBuilder<T>();
+    }
+
+    /// <summary>
+    /// Always returns false as no components are stored.
+    /// </summary>
+    /// <typeparam name="T1">First component type to retrieve.</typeparam>
+    /// <typeparam name="T2">Second component type to retrieve.</typeparam>
+    /// <param name="entity">The entity to get components from (ignored).</param>
+    /// <param name="component1">Always set to default value.</param>
+    /// <param name="component2">Always set to default value.</param>
+    /// <returns>Always false as no components exist.</returns>
+    public bool TryGetComponents<T1, T2>(Entity entity, out T1 component1, out T2 component2)
+        where T1 : IComponent
+        where T2 : IComponent
+    {
+        component1 = default!;
+        component2 = default!;
+        return false;
+    }
+
+    /// <summary>
+    /// Always returns false as no components are stored.
+    /// </summary>
+    /// <typeparam name="T1">First component type to retrieve.</typeparam>
+    /// <typeparam name="T2">Second component type to retrieve.</typeparam>
+    /// <typeparam name="T3">Third component type to retrieve.</typeparam>
+    /// <param name="entity">The entity to get components from (ignored).</param>
+    /// <param name="component1">Always set to default value.</param>
+    /// <param name="component2">Always set to default value.</param>
+    /// <param name="component3">Always set to default value.</param>
+    /// <returns>Always false as no components exist.</returns>
+    public bool TryGetComponents<T1, T2, T3>(Entity entity, out T1 component1, out T2 component2, out T3 component3)
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+    {
+        component1 = default!;
+        component2 = default!;
+        component3 = default!;
+        return false;
+    }
+
+    /// <summary>
+    /// Always returns false as no components are stored.
+    /// </summary>
+    /// <typeparam name="T1">First component type to retrieve.</typeparam>
+    /// <typeparam name="T2">Second component type to retrieve.</typeparam>
+    /// <typeparam name="T3">Third component type to retrieve.</typeparam>
+    /// <typeparam name="T4">Fourth component type to retrieve.</typeparam>
+    /// <param name="entity">The entity to get components from (ignored).</param>
+    /// <param name="component1">Always set to default value.</param>
+    /// <param name="component2">Always set to default value.</param>
+    /// <param name="component3">Always set to default value.</param>
+    /// <param name="component4">Always set to default value.</param>
+    /// <returns>Always false as no components exist.</returns>
+    public bool TryGetComponents<T1, T2, T3, T4>(Entity entity, out T1 component1, out T2 component2, out T3 component3, out T4 component4)
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T4 : IComponent
+    {
+        component1 = default!;
+        component2 = default!;
+        component3 = default!;
+        component4 = default!;
+        return false;
     }
 }
