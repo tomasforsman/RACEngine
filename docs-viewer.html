@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RACEngine Documentation</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #0366d6;
+        }
+
+        .stats {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .accordion-item {
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            padding: 16px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .accordion-header:hover {
+            background: #f6f8fa;
+        }
+
+        .accordion-title {
+            font-weight: 600;
+            color: #0366d6;
+        }
+
+        .accordion-meta {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .accordion-icon {
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 0 20px 20px 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .accordion-content.open {
+            display: block;
+        }
+
+        .document-section {
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .section-content {
+            background: #f6f8fa;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            color: #e6e6e6;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .breadcrumb {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #1565c0;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-api { background: #e3f2fd; color: #1565c0; }
+        .type-tutorial { background: #e8f5e8; color: #2e7d32; }
+        .type-sample { background: #f3e5f5; color: #7b1fa2; }
+        .type-documentation { background: #fff3e0; color: #ef6c00; }
+        .type-source { background: #f1f8e9; color: #558b2f; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🚀 RACEngine Documentation</h1>
+        <input type="text" id="searchBox" class="search-box" placeholder="Search documentation... (e.g., 'SetColor', 'renderer', 'color')">
+        <div id="stats" class="stats">Loading documentation...</div>
+    </div>
+
+    <div id="loading" class="loading">
+        📚 Loading documentation...
+    </div>
+
+    <div id="content" style="display: none;">
+        <!-- Documentation items will be inserted here -->
+    </div>
+</div>
+
+<script>
+    let docsData = null;
+    let allItems = [];
+
+    // Load documentation
+    async function loadDocumentation() {
+        try {
+            console.log('Fetching docs.json...');
+            const response = await fetch('./docs.json');
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            docsData = await response.json();
+            console.log('Documentation loaded:', docsData);
+
+            displayStats();
+            renderDocumentation();
+            setupSearch();
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+        } catch (error) {
+            console.error('Failed to load documentation:', error);
+            document.getElementById('loading').innerHTML = `
+                    ❌ Failed to load documentation: ${error.message}<br>
+                    <small>Make sure docs.json exists in the same directory as this HTML file.</small>
+                `;
+        }
+    }
+
+    // Display statistics
+    function displayStats() {
+        const stats = document.getElementById('stats');
+        const meta = docsData.metadata;
+        const docCount = Object.keys(docsData.documents).length;
+        const searchTerms = Object.keys(docsData.searchIndex?.terms || {}).length;
+
+        stats.innerHTML = `
+                📄 ${docCount} documents • 
+                🔍 ${searchTerms} search terms • 
+                🕐 Built ${new Date(meta.buildTime).toLocaleDateString()}
+            `;
+    }
+
+    // Render all documentation
+    function renderDocumentation() {
+        const content = document.getElementById('content');
+        content.innerHTML = '';
+        allItems = [];
+
+        // Sort documents by breadcrumb key
+        const sortedDocs = Object.entries(docsData.documents)
+            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+
+        sortedDocs.forEach(([key, doc]) => {
+            const item = createDocumentItem(key, doc);
+            content.appendChild(item.element);
+            allItems.push(item);
+        });
+    }
+
+    // Create a single document item
+    function createDocumentItem(key, doc) {
+        const item = document.createElement('div');
+        item.className = 'accordion-item';
+
+        // Create header
+        const header = document.createElement('button');
+        header.className = 'accordion-header';
+        header.innerHTML = `
+                <div>
+                    <div class="accordion-title">
+                        <span class="type-badge type-${doc.type}">${doc.type}</span>
+                        ${doc.title}
+                    </div>
+                    <div class="accordion-meta">
+                        <span class="breadcrumb">${key}</span>
+                        ${doc.sections?.length || 0} sections • 
+                        ${doc.codeBlocks?.length || 0} code blocks
+                    </div>
+                </div>
+                <span class="accordion-icon">▶</span>
+            `;
+
+        // Create content
+        const content = document.createElement('div');
+        content.className = 'accordion-content';
+        content.innerHTML = renderDocumentContent(doc);
+
+        // Toggle functionality
+        header.addEventListener('click', () => {
+            const isOpen = content.classList.contains('open');
+            content.classList.toggle('open');
+            header.querySelector('.accordion-icon').textContent = isOpen ? '▶' : '▼';
+        });
+
+        item.appendChild(header);
+        item.appendChild(content);
+
+        return {
+            element: item,
+            doc: doc,
+            key: key,
+            searchText: `${doc.title} ${key} ${doc.type} ${(doc.searchTerms || []).join(' ')}`.toLowerCase()
+        };
+    }
+
+    // Render document content
+    function renderDocumentContent(doc) {
+        let html = '';
+
+        // XML Comment / Summary
+        if (doc.xmlComment) {
+            html += `
+                    <div class="document-section">
+                        <div class="section-title">📝 Summary</div>
+                        <div class="section-content">${doc.xmlComment}</div>
+                    </div>
+                `;
+        }
+
+        // Sections
+        if (doc.sections && doc.sections.length > 0) {
+            html += `<div class="document-section">
+                    <div class="section-title">📋 Sections</div>`;
+
+            doc.sections.forEach(section => {
+                html += `
+                        <div style="margin-bottom: 12px;">
+                            <strong>${section.heading || 'Untitled Section'}</strong>
+                            ${section.content ? `<div class="section-content">${section.content}</div>` : ''}
+                            ${section.codeBlocks && section.codeBlocks.length > 0 ?
+                    section.codeBlocks.map(code => `<div class="code-block">${escapeHtml(code)}</div>`).join('') : ''}
+                        </div>
+                    `;
+            });
+
+            html += `</div>`;
+        }
+
+        // Code Blocks
+        if (doc.codeBlocks && doc.codeBlocks.length > 0) {
+            html += `
+                    <div class="document-section">
+                        <div class="section-title">💻 Code Examples</div>
+                        ${doc.codeBlocks.map(block => {
+                const code = typeof block === 'string' ? block : block.code || '';
+                return `<div class="code-block">${escapeHtml(code)}</div>`;
+            }).join('')}
+                    </div>
+                `;
+        }
+
+        // API References
+        if (doc.apiReferences && doc.apiReferences.length > 0) {
+            html += `
+                    <div class="document-section">
+                        <div class="section-title">🔗 API References</div>
+                        <div class="section-content">${doc.apiReferences.join(', ')}</div>
+                    </div>
+                `;
+        }
+
+        // Search Terms
+        if (doc.searchTerms && doc.searchTerms.length > 0) {
+            html += `
+                    <div class="document-section">
+                        <div class="section-title">🏷️ Tags</div>
+                        <div class="section-content">${doc.searchTerms.join(', ')}</div>
+                    </div>
+                `;
+        }
+
+        return html || '<div class="section-content">No content available</div>';
+    }
+
+    // Setup search functionality
+    function setupSearch() {
+        const searchBox = document.getElementById('searchBox');
+
+        searchBox.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+
+            allItems.forEach(item => {
+                const matches = !query || item.searchText.includes(query);
+                item.element.classList.toggle('hidden', !matches);
+            });
+
+            // Update stats
+            const visibleCount = allItems.filter(item => !item.element.classList.contains('hidden')).length;
+            const statsEl = document.getElementById('stats');
+            if (query) {
+                statsEl.innerHTML = `🔍 Found ${visibleCount} results for "${query}"`;
+            } else {
+                displayStats();
+            }
+        });
+    }
+
+    // Utility function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Load documentation when page loads
+    document.addEventListener('DOMContentLoaded', loadDocumentation);
+</script>
+</body>
+</html>
