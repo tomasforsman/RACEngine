@@ -317,4 +317,41 @@ public sealed class NullWorld : IWorld
         component4 = default!;
         return false;
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DEBUGGING AND DEVELOPMENT TOOLS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Returns empty dictionary as no components are stored in NullWorld.
+    /// Provides safe no-op behavior for entity inspection.
+    /// </summary>
+    /// <param name="entity">The entity to inspect (ignored)</param>
+    /// <returns>Empty dictionary representing no components</returns>
+    public Dictionary<string, object> InspectEntity(Entity entity)
+    {
+        return new Dictionary<string, object>();
+    }
+
+    /// <summary>
+    /// Returns generic entity identifier as no names are stored in NullWorld.
+    /// Provides consistent behavior for entity naming.
+    /// </summary>
+    /// <param name="entity">The entity to get the name for</param>
+    /// <returns>Generic entity identifier string</returns>
+    public string GetEntityName(Entity entity)
+    {
+        return $"NullEntity #{entity.Id}";
+    }
+
+    /// <summary>
+    /// Returns empty enumerable as no tags are stored in NullWorld.
+    /// Provides safe no-op behavior for tag-based queries.
+    /// </summary>
+    /// <param name="tag">The tag to search for (ignored)</param>
+    /// <returns>Empty enumerable representing no tagged entities</returns>
+    public IEnumerable<Entity> GetEntitiesWithTag(string tag)
+    {
+        return Enumerable.Empty<Entity>();
+    }
 }

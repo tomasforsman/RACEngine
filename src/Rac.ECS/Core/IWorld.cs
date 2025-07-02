@@ -265,4 +265,46 @@ public interface IWorld
         where T2 : IComponent
         where T3 : IComponent
         where T4 : IComponent;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DEBUGGING AND DEVELOPMENT TOOLS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Retrieves detailed information about an entity and all its components for debugging purposes.
+    /// This method provides comprehensive entity inspection for development-time debugging.
+    /// </summary>
+    /// <param name="entity">The entity to inspect</param>
+    /// <returns>A dictionary containing all components attached to the entity, keyed by component type name</returns>
+    /// <remarks>
+    /// Educational Note: This debugging method enables developers to inspect entity composition
+    /// at runtime, which is crucial for understanding ECS behavior and troubleshooting issues.
+    /// The method uses reflection to provide comprehensive information about all attached components.
+    /// </remarks>
+    Dictionary<string, object> InspectEntity(Entity entity);
+
+    /// <summary>
+    /// Gets the name of an entity, or its ID if no NameComponent is present.
+    /// Provides a human-readable identifier for entities in debugging scenarios.
+    /// </summary>
+    /// <param name="entity">The entity to get the name for</param>
+    /// <returns>Entity name if NameComponent exists, otherwise "Entity #{ID}"</returns>
+    /// <remarks>
+    /// This method follows the pattern of providing fallback identification when explicit names
+    /// are not available, ensuring every entity can be meaningfully referenced in debug output.
+    /// </remarks>
+    string GetEntityName(Entity entity);
+
+    /// <summary>
+    /// Finds all entities that have a component with the specified tag.
+    /// Enables tag-based entity queries for debugging and gameplay systems.
+    /// </summary>
+    /// <param name="tag">The tag to search for</param>
+    /// <returns>Collection of entities that have the specified tag</returns>
+    /// <remarks>
+    /// Educational Note: Tag-based queries are a common pattern in ECS systems for
+    /// categorizing and filtering entities. This method provides direct access to
+    /// tag queries at the World level, complementing the existing engine facade methods.
+    /// </remarks>
+    IEnumerable<Entity> GetEntitiesWithTag(string tag);
 }

@@ -131,9 +131,13 @@ public sealed class World : IWorld
     /// <typeparam name="T">The type of component to add.</typeparam>
     /// <param name="entity">The entity to add the component to.</param>
     /// <param name="component">The component instance to add.</param>
+    /// <exception cref="ArgumentException">Thrown when the entity does not exist (development mode validation)</exception>
     public void SetComponent<T>(Entity entity, T component)
         where T : IComponent
     {
+        // Development-mode validation: Check if entity exists
+        ValidateEntityExists(entity, nameof(entity));
+
         var componentType = typeof(T);
         if (!_components.TryGetValue(componentType, out var pool))
         {
@@ -516,9 +520,19 @@ public sealed class World : IWorld
     /// <typeparam name="T">The type of component to check for.</typeparam>
     /// <param name="entity">The entity to check.</param>
     /// <returns>True if the entity has the component; false otherwise.</returns>
+    /// <remarks>
+    /// This method returns false for non-existent entities instead of throwing,
+    /// making it safe to use in conditional logic without explicit entity existence checks.
+    /// </remarks>
     public bool HasComponent<T>(Entity entity)
         where T : IComponent
     {
+        // Gracefully handle non-existent entities by returning false
+        if (!_livingEntities.Contains(entity.Id))
+        {
+            return false;
+        }
+
         var componentType = typeof(T);
         return _components.TryGetValue(componentType, out var pool) && pool.ContainsKey(entity.Id);
     }
@@ -544,5 +558,118 @@ public sealed class World : IWorld
         
         component = default!;
         return false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DEBUGGING AND DEVELOPMENT TOOLS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Retrieves detailed information about an entity and all its components for debugging purposes.
+    /// This method provides comprehensive entity inspection for development-time debugging.
+    /// </summary>
+    /// <param name="entity">The entity to inspect</param>
+    /// <returns>A dictionary containing all components attached to the entity, keyed by component type name</returns>
+    /// <exception cref="ArgumentException">Thrown when the entity does not exist</exception>
+    /// <remarks>
+    /// Educational Note: This debugging method enables developers to inspect entity composition
+    /// at runtime, which is crucial for understanding ECS behavior and troubleshooting issues.
+    /// The method uses reflection to provide comprehensive information about all attached components.
+    /// </remarks>
+    public Dictionary<string, object> InspectEntity(Entity entity)
+    {
+        if (!_livingEntities.Contains(entity.Id))
+        {
+            throw new ArgumentException($"Entity with ID {entity.Id} does not exist or has been destroyed", nameof(entity));
+        }
+
+        var inspection = new Dictionary<string, object>();
+        
+        // Iterate through all component pools to find components for this entity
+        foreach (var (componentType, pool) in _components)
+        {
+            if (pool.TryGetValue(entity.Id, out var component))
+            {
+                // Use friendly type name for debugging
+                var typeName = componentType.Name;
+                if (typeName.EndsWith("Component"))
+                {
+                    typeName = typeName[..^"Component".Length];
+                }
+                
+                inspection[typeName] = component;
+            }
+        }
+
+        return inspection;
+    }
+
+    /// <summary>
+    /// Gets the name of an entity, or its ID if no NameComponent is present.
+    /// Provides a human-readable identifier for entities in debugging scenarios.
+    /// </summary>
+    /// <param name="entity">The entity to get the name for</param>
+    /// <returns>Entity name if NameComponent exists, otherwise "Entity #{ID}"</returns>
+    /// <remarks>
+    /// This method follows the pattern of providing fallback identification when explicit names
+    /// are not available, ensuring every entity can be meaningfully referenced in debug output.
+    /// </remarks>
+    public string GetEntityName(Entity entity)
+    {
+        if (TryGetComponent<NameComponent>(entity, out var nameComponent))
+        {
+            return nameComponent.Name;
+        }
+        
+        return $"Entity #{entity.Id}";
+    }
+
+    /// <summary>
+    /// Finds all entities that have a component with the specified tag.
+    /// Enables tag-based entity queries for debugging and gameplay systems.
+    /// </summary>
+    /// <param name="tag">The tag to search for</param>
+    /// <returns>Collection of entities that have the specified tag</returns>
+    /// <exception cref="ArgumentNullException">Thrown when tag is null</exception>
+    /// <remarks>
+    /// Educational Note: Tag-based queries are a common pattern in ECS systems for
+    /// categorizing and filtering entities. This method provides direct access to
+    /// tag queries at the World level, complementing the existing engine facade methods.
+    /// </remarks>
+    public IEnumerable<Entity> GetEntitiesWithTag(string tag)
+    {
+        if (tag == null)
+        {
+            throw new ArgumentNullException(nameof(tag), "Tag cannot be null. Use string.Empty for empty tags.");
+        }
+
+        return Query<TagComponent>()
+            .Where(result => result.Component1.HasTag(tag))
+            .Select(result => result.Entity);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DEVELOPMENT MODE VALIDATION HELPERS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Validates that an entity exists in the world.
+    /// Provides helpful error messages for common development mistakes.
+    /// </summary>
+    /// <param name="entity">The entity to validate</param>
+    /// <param name="paramName">The parameter name for exception reporting</param>
+    /// <exception cref="ArgumentException">Thrown when entity does not exist with helpful diagnostic information</exception>
+    private void ValidateEntityExists(Entity entity, string paramName)
+    {
+        if (!_livingEntities.Contains(entity.Id))
+        {
+            // Provide helpful diagnostic information
+            var errorMessage = entity.Id <= 0
+                ? $"Entity with ID {entity.Id} appears to be invalid. Ensure you're using entities created by World.CreateEntity()."
+                : $"Entity with ID {entity.Id} does not exist or has been destroyed. " +
+                  $"Common causes: entity was destroyed, entity is from a different world, or entity was never created.";
+
+            throw new ArgumentException(errorMessage, paramName);
+        }
     }
 }
