@@ -1,0 +1,289 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://racengine.dev/schemas/documentation-frontmatter.json",
+  "title": "Documentation Frontmatter Schema",
+  "description": "Schema for validating YAML frontmatter in documentation markdown files",
+  "type": "object",
+  "required": ["title", "type", "summary", "tags"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Clear, descriptive title for the document",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "type": {
+      "type": "string",
+      "description": "Document type classification",
+      "enum": ["api", "tutorial", "sample", "documentation", "guide"]
+    },
+    "summary": {
+      "type": "string",
+      "description": "One-sentence description for search results",
+      "minLength": 10,
+      "maxLength": 500
+    },
+    "tags": {
+      "type": "array",
+      "description": "Array of topic tags for search and categorization",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "minItems": 1,
+      "maxItems": 20,
+      "uniqueItems": true
+    },
+    "namespace": {
+      "type": "string",
+      "description": "Full namespace for API elements (e.g., 'Company.Product.Module')",
+      "pattern": "^[A-Za-z][A-Za-z0-9.]*$"
+    },
+    "class": {
+      "type": "string",
+      "description": "Class name for API documentation",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+    },
+    "method": {
+      "type": "string",
+      "description": "Method name for API method documentation",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+    },
+    "property": {
+      "type": "string",
+      "description": "Property name for API property documentation",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+    },
+    "keywords": {
+      "type": "array",
+      "description": "Additional searchable terms",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "maxItems": 30,
+      "uniqueItems": true
+    },
+    "relatedMethods": {
+      "type": "array",
+      "description": "Names of related methods for cross-referencing",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+      },
+      "maxItems": 20,
+      "uniqueItems": true
+    },
+    "category": {
+      "type": "string",
+      "description": "Logical grouping category",
+      "maxLength": 100
+    },
+    "difficulty": {
+      "type": "string",
+      "description": "Difficulty level for tutorials and guides",
+      "enum": ["beginner", "intermediate", "advanced"]
+    },
+    "estimatedTime": {
+      "type": "string",
+      "description": "Estimated time to complete (e.g., '15 minutes', '2 hours')",
+      "pattern": "^\\d+\\s+(minute|minutes|hour|hours)$"
+    },
+    "prerequisites": {
+      "type": "array",
+      "description": "List of prerequisite documents or knowledge",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "nextSteps": {
+      "type": "array",
+      "description": "Suggested next documents or actions",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "demonstrates": {
+      "type": "array",
+      "description": "Features or concepts this sample demonstrates",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "maxItems": 15,
+      "uniqueItems": true
+    },
+    "frameworks": {
+      "type": "array",
+      "description": "Frameworks used in this sample",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "languages": {
+      "type": "array",
+      "description": "Programming languages used",
+      "items": {
+        "type": "string",
+        "enum": ["csharp", "javascript", "typescript", "python", "cpp", "java", "rust", "go", "html", "css", "sql", "bash", "powershell", "json", "yaml", "xml"]
+      },
+      "maxItems": 5,
+      "uniqueItems": true
+    },
+    "seeAlso": {
+      "type": "array",
+      "description": "Cross-references to related documents",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      },
+      "maxItems": 15,
+      "uniqueItems": true
+    },
+    "relatedConcepts": {
+      "type": "array",
+      "description": "Related concepts for cross-referencing",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "maxItems": 20,
+      "uniqueItems": true
+    },
+    "version": {
+      "type": "string",
+      "description": "Version when this documentation was written",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?(-[a-zA-Z0-9]+)?$"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "description": "Date when documentation was last updated",
+      "format": "date"
+    },
+    "deprecated": {
+      "type": "boolean",
+      "description": "Whether this API or feature is deprecated",
+      "default": false
+    },
+    "experimental": {
+      "type": "boolean",
+      "description": "Whether this API or feature is experimental",
+      "default": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": { "const": "api" }
+        }
+      },
+      "then": {
+        "properties": {
+          "namespace": {
+            "description": "Required for API documentation to specify the full namespace"
+          }
+        },
+        "anyOf": [
+          { "required": ["method"] },
+          { "required": ["property"] },
+          { "required": ["class"] }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": { "const": "tutorial" }
+        }
+      },
+      "then": {
+        "properties": {
+          "difficulty": {
+            "description": "Recommended for tutorials to help users choose appropriate content"
+          },
+          "estimatedTime": {
+            "description": "Recommended for tutorials to set user expectations"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": { "const": "sample" }
+        }
+      },
+      "then": {
+        "properties": {
+          "demonstrates": {
+            "description": "Recommended for samples to clearly state what they show"
+          },
+          "languages": {
+            "description": "Recommended for samples to specify programming languages used"
+          }
+        }
+      }
+    }
+  ],
+  "not": {
+    "allOf": [
+      {
+        "required": ["method", "property"]
+      }
+    ]
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "title": "SetColor Method",
+      "type": "api",
+      "namespace": "Rac.Rendering",
+      "class": "IRenderer",
+      "method": "SetColor",
+      "summary": "Sets the current rendering color for subsequent draw operations",
+      "tags": ["rendering", "color", "graphics", "api"],
+      "keywords": ["SetColor", "RGB", "RGBA", "color"],
+      "relatedMethods": ["GetColor", "Clear"],
+      "seeAlso": ["docs/tutorials/basic-rendering.md"]
+    },
+    {
+      "title": "Getting Started with 2D Rendering",
+      "type": "tutorial",
+      "category": "Getting Started",
+      "difficulty": "beginner",
+      "estimatedTime": "15 minutes",
+      "summary": "Learn the fundamentals of 2D rendering in RACEngine",
+      "tags": ["tutorial", "2d", "rendering", "beginner"],
+      "prerequisites": ["basic-setup.md"],
+      "nextSteps": ["advanced-rendering.md"]
+    },
+    {
+      "title": "Color Animation Sample",
+      "type": "sample",
+      "category": "Animation Examples",
+      "summary": "Demonstrates animated color transitions using the rendering API",
+      "tags": ["sample", "animation", "color", "rendering"],
+      "demonstrates": ["color-animation", "render-loop", "time-based-animation"],
+      "languages": ["csharp"],
+      "frameworks": ["RACEngine"]
+    }
+  ]
+}
