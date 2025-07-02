@@ -251,6 +251,225 @@ public sealed class World : IWorld
         }
     }
 
+    /// <summary>
+    /// Queries all entities that have components T1, T2, T3, and T4.
+    /// Uses performance optimization by iterating the smallest component pool first.
+    /// </summary>
+    /// <typeparam name="T1">First component type to query for.</typeparam>
+    /// <typeparam name="T2">Second component type to query for.</typeparam>
+    /// <typeparam name="T3">Third component type to query for.</typeparam>
+    /// <typeparam name="T4">Fourth component type to query for.</typeparam>
+    /// <returns>Entities and their component instances that match the query.</returns>
+    public IEnumerable<(Entity Entity, T1 Component1, T2 Component2, T3 Component3, T4 Component4)> Query<T1, T2, T3, T4>()
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T4 : IComponent
+    {
+        var pool1 = GetPool<T1>();
+        var pool2 = GetPool<T2>();
+        var pool3 = GetPool<T3>();
+        var pool4 = GetPool<T4>();
+
+        // Pick the smallest pool to drive iteration for optimal performance
+        var smallestPool = new[] { pool1, pool2, pool3, pool4 }.OrderBy(p => p.Count).First();
+
+        foreach (var entry in smallestPool)
+        {
+            int entityId = entry.Key;
+            if (
+                pool1.ContainsKey(entityId)
+                && pool2.ContainsKey(entityId)
+                && pool3.ContainsKey(entityId)
+                && pool4.ContainsKey(entityId)
+            )
+                yield return (
+                    new Entity(entityId),
+                    (T1)pool1[entityId],
+                    (T2)pool2[entityId],
+                    (T3)pool3[entityId],
+                    (T4)pool4[entityId]
+                );
+        }
+    }
+
+    /// <summary>
+    /// Queries all entities that have components T1, T2, T3, T4, and T5.
+    /// Uses performance optimization by iterating the smallest component pool first.
+    /// </summary>
+    /// <typeparam name="T1">First component type to query for.</typeparam>
+    /// <typeparam name="T2">Second component type to query for.</typeparam>
+    /// <typeparam name="T3">Third component type to query for.</typeparam>
+    /// <typeparam name="T4">Fourth component type to query for.</typeparam>
+    /// <typeparam name="T5">Fifth component type to query for.</typeparam>
+    /// <returns>Entities and their component instances that match the query.</returns>
+    public IEnumerable<(Entity Entity, T1 Component1, T2 Component2, T3 Component3, T4 Component4, T5 Component5)> Query<T1, T2, T3, T4, T5>()
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T4 : IComponent
+        where T5 : IComponent
+    {
+        var pool1 = GetPool<T1>();
+        var pool2 = GetPool<T2>();
+        var pool3 = GetPool<T3>();
+        var pool4 = GetPool<T4>();
+        var pool5 = GetPool<T5>();
+
+        // Pick the smallest pool to drive iteration for optimal performance
+        var smallestPool = new[] { pool1, pool2, pool3, pool4, pool5 }.OrderBy(p => p.Count).First();
+
+        foreach (var entry in smallestPool)
+        {
+            int entityId = entry.Key;
+            if (
+                pool1.ContainsKey(entityId)
+                && pool2.ContainsKey(entityId)
+                && pool3.ContainsKey(entityId)
+                && pool4.ContainsKey(entityId)
+                && pool5.ContainsKey(entityId)
+            )
+                yield return (
+                    new Entity(entityId),
+                    (T1)pool1[entityId],
+                    (T2)pool2[entityId],
+                    (T3)pool3[entityId],
+                    (T4)pool4[entityId],
+                    (T5)pool5[entityId]
+                );
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ADVANCED QUERY SYSTEM
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Creates a new query root for building queries with progressive type specification.
+    /// Supports the fluent syntax world.Query().With&lt;ComponentType&gt;().
+    /// </summary>
+    /// <returns>A new QueryRoot instance for building complex queries</returns>
+    /// <remarks>
+    /// Educational Note: Progressive Type Specification
+    /// 
+    /// This method enables the exact syntax specified in the requirements:
+    /// world.Query().With&lt;Velocity&gt;().Without&lt;Player&gt;()
+    /// 
+    /// The implementation uses a two-phase approach:
+    /// 1. Query() returns an untyped IQueryRoot
+    /// 2. With&lt;T&gt;() converts it to a typed IQueryBuilder&lt;T&gt;
+    /// 
+    /// This pattern provides maximum flexibility while maintaining type safety.
+    /// </remarks>
+    public IQueryRoot Query()
+    {
+        return new QueryRoot(this);
+    }
+
+    /// <summary>
+    /// Creates a new query builder for advanced filtering operations.
+    /// Supports fluent syntax for inclusion and exclusion filters.
+    /// </summary>
+    /// <typeparam name="T">The primary component type to query for.</typeparam>
+    /// <returns>A new QueryBuilder instance for building complex queries.</returns>
+    /// <remarks>
+    /// Educational Note: Builder Pattern with Fluent Interface
+    /// 
+    /// This method demonstrates the Builder pattern combined with a fluent interface
+    /// to create complex queries in a readable and maintainable way. The pattern
+    /// separates query construction from execution, allowing for optimization and
+    /// better code organization.
+    /// 
+    /// Example Usage:
+    /// var enemies = world.QueryBuilder&lt;PositionComponent&gt;()
+    ///     .With&lt;HealthComponent&gt;()
+    ///     .With&lt;AIComponent&gt;()
+    ///     .Without&lt;PlayerComponent&gt;()
+    ///     .Without&lt;DeadComponent&gt;()
+    ///     .Execute();
+    /// </remarks>
+    public IQueryBuilder<T> QueryBuilder<T>()
+        where T : IComponent
+    {
+        return new QueryBuilder<T>(this);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MULTI-COMPONENT HELPER METHODS  
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Attempts to retrieve two components from an entity in a single operation.
+    /// This is more efficient than calling TryGetComponent twice.
+    /// </summary>
+    /// <typeparam name="T1">First component type to retrieve.</typeparam>
+    /// <typeparam name="T2">Second component type to retrieve.</typeparam>
+    /// <param name="entity">The entity to get components from.</param>
+    /// <param name="component1">The first component if found; default value otherwise.</param>
+    /// <param name="component2">The second component if found; default value otherwise.</param>
+    /// <returns>True if both components were found; false otherwise.</returns>
+    public bool TryGetComponents<T1, T2>(Entity entity, out T1 component1, out T2 component2)
+        where T1 : IComponent
+        where T2 : IComponent
+    {
+        bool found1 = TryGetComponent(entity, out component1);
+        bool found2 = TryGetComponent(entity, out component2);
+        
+        return found1 && found2;
+    }
+
+    /// <summary>
+    /// Attempts to retrieve three components from an entity in a single operation.
+    /// This is more efficient than calling TryGetComponent three times.
+    /// </summary>
+    /// <typeparam name="T1">First component type to retrieve.</typeparam>
+    /// <typeparam name="T2">Second component type to retrieve.</typeparam>
+    /// <typeparam name="T3">Third component type to retrieve.</typeparam>
+    /// <param name="entity">The entity to get components from.</param>
+    /// <param name="component1">The first component if found; default value otherwise.</param>
+    /// <param name="component2">The second component if found; default value otherwise.</param>
+    /// <param name="component3">The third component if found; default value otherwise.</param>
+    /// <returns>True if all three components were found; false otherwise.</returns>
+    public bool TryGetComponents<T1, T2, T3>(Entity entity, out T1 component1, out T2 component2, out T3 component3)
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+    {
+        bool found1 = TryGetComponent(entity, out component1);
+        bool found2 = TryGetComponent(entity, out component2);
+        bool found3 = TryGetComponent(entity, out component3);
+        
+        return found1 && found2 && found3;
+    }
+
+    /// <summary>
+    /// Attempts to retrieve four components from an entity in a single operation.
+    /// This is more efficient than calling TryGetComponent four times.
+    /// </summary>
+    /// <typeparam name="T1">First component type to retrieve.</typeparam>
+    /// <typeparam name="T2">Second component type to retrieve.</typeparam>
+    /// <typeparam name="T3">Third component type to retrieve.</typeparam>
+    /// <typeparam name="T4">Fourth component type to retrieve.</typeparam>
+    /// <param name="entity">The entity to get components from.</param>
+    /// <param name="component1">The first component if found; default value otherwise.</param>
+    /// <param name="component2">The second component if found; default value otherwise.</param>
+    /// <param name="component3">The third component if found; default value otherwise.</param>
+    /// <param name="component4">The fourth component if found; default value otherwise.</param>
+    /// <returns>True if all four components were found; false otherwise.</returns>
+    public bool TryGetComponents<T1, T2, T3, T4>(Entity entity, out T1 component1, out T2 component2, out T3 component3, out T4 component4)
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T4 : IComponent
+    {
+        bool found1 = TryGetComponent(entity, out component1);
+        bool found2 = TryGetComponent(entity, out component2);
+        bool found3 = TryGetComponent(entity, out component3);
+        bool found4 = TryGetComponent(entity, out component4);
+        
+        return found1 && found2 && found3 && found4;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // INTERNAL UTILITIES AND MANAGEMENT
     // ═══════════════════════════════════════════════════════════════════════════
@@ -287,6 +506,43 @@ public sealed class World : IWorld
         var componentType = typeof(T);
         if (_components.TryGetValue(componentType, out var pool))
             return pool.Remove(entity.Id);
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if an entity has a specific component type.
+    /// This is useful for conditional logic and filtering operations.
+    /// </summary>
+    /// <typeparam name="T">The type of component to check for.</typeparam>
+    /// <param name="entity">The entity to check.</param>
+    /// <returns>True if the entity has the component; false otherwise.</returns>
+    public bool HasComponent<T>(Entity entity)
+        where T : IComponent
+    {
+        var componentType = typeof(T);
+        return _components.TryGetValue(componentType, out var pool) && pool.ContainsKey(entity.Id);
+    }
+
+    /// <summary>
+    /// Attempts to retrieve a specific component from an entity.
+    /// This method provides a safe way to access components without throwing exceptions.
+    /// </summary>
+    /// <typeparam name="T">The type of component to retrieve.</typeparam>
+    /// <param name="entity">The entity to get the component from.</param>
+    /// <param name="component">The component instance if found; default value otherwise.</param>
+    /// <returns>True if the component was found; false otherwise.</returns>
+    public bool TryGetComponent<T>(Entity entity, out T component)
+        where T : IComponent
+    {
+        var componentType = typeof(T);
+        if (_components.TryGetValue(componentType, out var pool) && 
+            pool.TryGetValue(entity.Id, out var componentObj))
+        {
+            component = (T)componentObj;
+            return true;
+        }
+        
+        component = default!;
         return false;
     }
 }

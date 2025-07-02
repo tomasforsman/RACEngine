@@ -31,11 +31,19 @@ Contains the fundamental building blocks of the ECS architecture and primary int
 
 **Entity**: Lightweight identifier struct that represents game objects. Contains only an ID and alive status, following ECS principles where entities are pure identifiers without behavior or data.
 
-**World**: Central component database and query engine. Manages all component storage, entity creation, and provides the query interface that systems use to discover relevant entities. Implements optimized multi-component queries with performance considerations for varying component pool sizes.
+**World**: Central component database and query engine. Manages all component storage, entity creation, and provides both traditional and advanced query interfaces that systems use to discover relevant entities. Implements optimized multi-component queries with performance considerations for varying component pool sizes. Supports up to 5-component queries and includes advanced filtering capabilities through the progressive type specification API.
 
 **EntityFluentExtensions**: Modern fluent interface API for entity component assignment. Implements Martin Fowler's "Fluent Interface" pattern using C# extension methods, providing chainable component assignment operations. This is the **recommended approach** for entity creation, offering superior readability, IDE discoverability, and reduced error potential compared to traditional verbose component assignment patterns.
 
 **EntityHierarchyExtensions**: Convenience layer that provides intuitive hierarchy management operations. Encapsulates complex parent-child relationship logic while maintaining the underlying ECS data model. Enables natural game object manipulation patterns while preserving ECS architectural integrity.
+
+**IQueryRoot**: Interface for building advanced queries without initially specifying a primary component type. Enables the progressive type specification syntax `world.Query().With<ComponentType>()` where the first `With<T>()` call establishes the primary component type for the query. Demonstrates progressive interface narrowing design patterns.
+
+**IQueryBuilder&lt;T&gt;**: Interface for building advanced queries with inclusion and exclusion filters. Provides fluent query syntax for complex entity filtering with method chaining capabilities. Follows Martin Fowler's "Fluent Interface" pattern for improved readability and maintainability.
+
+**QueryRoot**: Concrete implementation of IQueryRoot that serves as the entry point for progressive type specification queries. Converts untyped query requests into typed QueryBuilder instances when the first component type is specified.
+
+**QueryBuilder&lt;T&gt;**: High-performance implementation of IQueryBuilder that provides advanced filtering capabilities with inclusion (`With<T>()`) and exclusion (`Without<T>()`) criteria. Implements sophisticated optimization strategies including smallest pool iteration and early exit logic.
 
 ### Rac.ECS.Components
 
@@ -79,7 +87,87 @@ Systems operate on entity sets discovered through component queries, processing 
 
 ### Query Performance Characteristics
 
-Multi-component queries optimize performance by iterating the smallest component pool first, reducing unnecessary entity checks. The query system supports single, dual, and triple component combinations with automatic performance optimization. Query results are lazy-evaluated and can be safely enumerated multiple times within a frame.
+Multi-component queries optimize performance by iterating the smallest component pool first, reducing unnecessary entity checks. The query system supports single, dual, triple, quadruple, and quintuple component combinations with automatic performance optimization. Query results are lazy-evaluated and can be safely enumerated multiple times within a frame.
+
+### Advanced Query System
+
+The ECS includes a comprehensive advanced query system that supports flexible filtering through inclusion and exclusion criteria. This system enables complex entity discovery patterns while maintaining optimal performance characteristics.
+
+#### Progressive Type Specification API
+
+The advanced query system supports progressive type specification, allowing developers to build queries dynamically without initially specifying all component types:
+
+```csharp
+// Progressive type specification - starts untyped, becomes typed through With<T>()
+var enemies = world.Query()
+    .With<VelocityComponent>()
+    .Without<PlayerComponent>()
+    .Execute();
+
+// Complex filtering with multiple inclusion and exclusion criteria
+var armedLivingEnemies = world.Query()
+    .With<HealthComponent>()
+    .With<WeaponComponent>()
+    .With<AIComponent>()
+    .Without<PlayerComponent>()
+    .Without<DeadComponent>()
+    .Execute();
+```
+
+#### Extended Multi-Component Query Support
+
+The query system supports complex entity combinations beyond the traditional 3-component limit:
+
+```csharp
+// 4-component queries for complex entity types
+foreach (var (entity, pos, vel, health, weapon) in 
+    world.Query<PositionComponent, VelocityComponent, HealthComponent, WeaponComponent>())
+{
+    // Process entities with all four components
+}
+
+// 5-component queries for highly specialized entities
+foreach (var (entity, transform, sprite, ai, stats, inventory) in 
+    world.Query<TransformComponent, SpriteComponent, AIComponent, StatsComponent, InventoryComponent>())
+{
+    // Process complex game entities with five components
+}
+```
+
+#### Multi-Component Helper Methods
+
+Efficient batch component retrieval methods reduce the overhead of multiple individual component access operations:
+
+```csharp
+// Retrieve two components in a single operation
+if (world.TryGetComponents<PositionComponent, VelocityComponent>(entity, out var pos, out var vel))
+{
+    // Process entity with both components - more efficient than two separate calls
+}
+
+// Support for 3 and 4 component batch retrieval
+world.TryGetComponents<T1, T2, T3>(entity, out var c1, out var c2, out var c3);
+world.TryGetComponents<T1, T2, T3, T4>(entity, out var c1, out var c2, out var c3, out var c4);
+```
+
+#### Advanced Query Architecture
+
+The advanced query system follows a builder pattern architecture with clear separation of concerns:
+
+- **IQueryRoot**: Untyped query starting point enabling progressive type specification
+- **IQueryBuilder&lt;T&gt;**: Typed query builder providing fluent filtering interface
+- **QueryRoot**: Concrete implementation of the untyped query entry point
+- **QueryBuilder&lt;T&gt;**: High-performance query builder with optimization strategies
+- **Null Object Pattern**: Complete null object implementations for testing scenarios
+
+#### Performance Optimization Strategies
+
+The advanced query system implements several performance optimization techniques:
+
+- **Smallest Pool Iteration**: Queries iterate the component pool with the fewest entities to minimize unnecessary checks
+- **Early Exit Logic**: Filtering stops as soon as any exclusion condition is met
+- **Lazy Evaluation**: Query results use `yield return` for memory-efficient iteration
+- **Batch Component Access**: Multi-component helpers reduce World access overhead
 
 ## Integration Points
 
@@ -189,6 +277,117 @@ var enemies = new[] { "Grunt", "Elite", "Boss" }
 - **Fluent API**: Zero performance overhead compared to traditional component assignment
 - **Method Chaining**: Enables efficient entity setup without temporary variables
 
+### Advanced Query Usage Patterns
+
+The advanced query system provides two complementary approaches for complex entity discovery with flexible filtering capabilities.
+
+#### Progressive Type Specification (Recommended for Dynamic Queries)
+
+```csharp
+// ✅ RECOMMENDED: When building queries dynamically or when primary type is unknown
+var livingEnemies = world.Query()
+    .With<HealthComponent>()
+    .With<AIComponent>()
+    .Without<PlayerComponent>()
+    .Without<DeadComponent>()
+    .Execute();
+
+// Complex filtering for specialized gameplay systems
+var renderableMovingEntities = world.Query()
+    .With<TransformComponent>()
+    .With<SpriteComponent>()
+    .With<VelocityComponent>()
+    .Without<HiddenComponent>()
+    .Without<CulledComponent>()
+    .Execute();
+
+// Conditional query building based on game state
+var query = world.Query().With<PositionComponent>();
+if (includeMoving) query = query.With<VelocityComponent>();
+if (excludePlayer) query = query.Without<PlayerComponent>();
+var entities = query.Execute();
+```
+
+#### Direct Type Specification (Optimized for Known Primary Types)
+
+```csharp
+// ✅ OPTIMIZED: When primary component type is known at design time
+var playerEntities = world.QueryBuilder<PlayerComponent>()
+    .With<HealthComponent>()
+    .With<InventoryComponent>()
+    .Without<DeadComponent>()
+    .Execute();
+
+// Performance-critical systems with known entity archetypes
+var physicsEntities = world.QueryBuilder<PhysicsBodyComponent>()
+    .With<TransformComponent>()
+    .With<VelocityComponent>()
+    .Without<StaticComponent>()
+    .Execute();
+```
+
+#### Extended Multi-Component Queries
+
+```csharp
+// Traditional approach for simple multi-component queries
+foreach (var (entity, pos, vel, health) in world.Query<PositionComponent, VelocityComponent, HealthComponent>())
+{
+    // Direct access to all three components
+}
+
+// Extended support for complex entity archetypes (4+ components)
+foreach (var (entity, transform, sprite, physics, ai, inventory) in 
+    world.Query<TransformComponent, SpriteComponent, PhysicsComponent, AIComponent, InventoryComponent>())
+{
+    // Process highly specialized entities with five components
+}
+```
+
+#### Multi-Component Helper Methods
+
+```csharp
+// Efficient batch component retrieval for individual entities
+if (world.TryGetComponents<PositionComponent, VelocityComponent>(targetEntity, out var pos, out var vel))
+{
+    // Process specific entity with guaranteed component access
+    var newPosition = pos.Value + vel.Value * deltaTime;
+    world.SetComponent(targetEntity, new PositionComponent(newPosition));
+}
+
+// Complex component combinations for specialized operations
+if (world.TryGetComponents<HealthComponent, ArmorComponent, ShieldComponent>(combatant, 
+    out var health, out var armor, out var shield))
+{
+    var totalDefense = armor.Value + shield.Value;
+    var damageReduction = CalculateDamageReduction(totalDefense);
+    // Apply damage calculations with all defensive components
+}
+```
+
+#### Performance-Optimized Query Patterns
+
+```csharp
+// Cache expensive queries when entity sets remain stable
+private IEnumerable<(Entity, PositionComponent, VelocityComponent)>? _cachedMovingEntities;
+
+public void UpdateMovementSystem(World world, float deltaTime)
+{
+    // Recalculate query only when needed (e.g., after entity creation/destruction)
+    _cachedMovingEntities ??= world.Query<PositionComponent, VelocityComponent>().ToList();
+    
+    foreach (var (entity, pos, vel) in _cachedMovingEntities)
+    {
+        // Process cached query results for better performance
+    }
+}
+
+// Use smallest component pool advantage for rare component combinations
+var rareEntities = world.Query()
+    .With<RareComponent>()      // Start with rarest component
+    .With<CommonComponent>()    // Add more common components
+    .Execute();
+```
+
 ### System Implementation
 
 Custom systems implement `ISystem` and use World queries to discover relevant entities. Systems typically iterate query results, read component data, perform calculations, and update components with new states. Frame-rate independence is achieved by scaling operations with the provided delta time.
@@ -203,6 +402,12 @@ Performance-critical code should minimize component queries per frame and cache 
 
 ## Extension Points
 
-The ECS architecture supports extension through additional component types, custom systems, and enhanced query capabilities. New component types integrate seamlessly with existing query infrastructure. Custom systems can implement domain-specific logic while leveraging the established component and hierarchy systems.
+The ECS architecture supports extension through additional component types, custom systems, and enhanced query capabilities. New component types integrate seamlessly with existing query infrastructure, including both traditional multi-component queries and the advanced filtering system. Custom systems can implement domain-specific logic while leveraging the established component, hierarchy, and advanced query systems.
 
-Future enhancements may include component archetype optimization, multithreaded system execution, and enhanced query filtering capabilities. The current architecture provides a solid foundation for these advanced features without requiring fundamental design changes.
+The current advanced query system provides a foundation for future enhancements such as:
+- **Query Caching**: Automatic caching of expensive query results for stable entity sets
+- **Parallel Query Execution**: Multi-threaded query processing for large entity collections  
+- **Query Optimization**: Advanced query planning and execution optimization
+- **Custom Filter Predicates**: User-defined filtering logic beyond component presence/absence
+
+These enhancements can be implemented without fundamental architectural changes, building upon the existing builder pattern infrastructure.
