@@ -52,15 +52,26 @@ public class IWorldTests
         // Arrange
         var interfaceType = typeof(IWorld);
 
-        // Act & Assert - Check for required methods
+        // Act & Assert - Check for core entity management methods
         Assert.NotNull(interfaceType.GetMethod("CreateEntity", Type.EmptyTypes)); // No parameters
         Assert.NotNull(interfaceType.GetMethod("CreateEntity", new[] { typeof(string) })); // String parameter
         Assert.NotNull(interfaceType.GetMethod("SetComponent"));
         Assert.NotNull(interfaceType.GetMethod("GetSingleton"));
         Assert.NotNull(interfaceType.GetMethod("RemoveComponent"));
         
-        // Check for query methods
+        // Check for new component access methods
+        Assert.NotNull(interfaceType.GetMethod("HasComponent"));
+        Assert.NotNull(interfaceType.GetMethod("TryGetComponent"));
+        
+        // Check for query methods - now includes advanced query methods
         var queryMethods = interfaceType.GetMethods().Where(m => m.Name == "Query").ToArray();
-        Assert.Equal(3, queryMethods.Length); // Single, double, and triple component queries
+        Assert.Equal(6, queryMethods.Length); // 1,2,3,4,5 component queries + QueryRoot
+
+        // Check for QueryBuilder method
+        Assert.NotNull(interfaceType.GetMethod("QueryBuilder"));
+        
+        // Check for TryGetComponents methods
+        var tryGetComponentsMethods = interfaceType.GetMethods().Where(m => m.Name == "TryGetComponents").ToArray();
+        Assert.Equal(3, tryGetComponentsMethods.Length); // 2, 3, and 4 component versions
     }
 }
