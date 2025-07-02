@@ -572,11 +572,60 @@ public class QueryBuilder<T1> where T1 : struct, IComponent
     }
 }
 
-// Usage example
-var movableNonPlayerEntities = world.QueryBuilder<VelocityComponent>()
+// Usage example - Progressive Type Specification
+var movableNonPlayerEntities = world.Query()
+    .With<VelocityComponent>()
     .With<PositionComponent>()
     .Without<PlayerComponent>()
-    .Execute(world);
+    .Execute();
+
+// Alternative - Direct QueryBuilder approach
+var armedEnemies = world.QueryBuilder<EnemyComponent>()
+    .With<WeaponComponent>()
+    .Without<DeadComponent>()
+    .Execute();
+
+// Extended Query Support (4+ components)
+foreach (var (entity, pos, vel, health, weapon, ai) in world.Query<PositionComponent, VelocityComponent, HealthComponent, WeaponComponent, AIComponent>())
+{
+    // Process complex entity combinations
+}
+
+// Multi-Component Helpers
+if (world.TryGetComponents<Position, Velocity>(entity, out var pos, out var vel))
+{
+    // Efficient batch component retrieval
+}
+```
+
+### Advanced Query Features
+
+The advanced query system in RACEngine provides sophisticated entity filtering capabilities:
+
+**Progressive Type Specification:**
+```csharp
+// Start untyped, establish primary component with first With<T>()
+var results = world.Query()
+    .With<PrimaryComponent>()  // Establishes primary type
+    .With<RequiredComponent>() // Additional requirements
+    .Without<ExcludedComponent>() // Exclusion filters
+    .Execute();
+```
+
+**Extended Query Support:**
+```csharp
+// Support for 4+ component combinations
+var complexEntities = world.Query<T1, T2, T3, T4, T5>();
+
+// Helper methods for batch component access
+bool success = world.TryGetComponents<T1, T2, T3, T4>(entity, out var c1, out var c2, out var c3, out var c4);
+```
+
+**Performance Characteristics:**
+- Maintains O(n) complexity using smallest pool iteration
+- Early exit optimizations for filter evaluation
+- Lazy evaluation with yield return for memory efficiency
+- Supports large datasets (1000+ entities) with sub-millisecond query times
 ```
 
 ## See Also
