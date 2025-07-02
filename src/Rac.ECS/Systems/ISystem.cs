@@ -1,3 +1,5 @@
+using Rac.ECS.Core;
+
 namespace Rac.ECS.Systems;
 
 /// <summary>
@@ -59,6 +61,48 @@ namespace Rac.ECS.Systems;
 public interface ISystem
 {
     /// <summary>
+    /// Initializes the system with access to the ECS world.
+    /// Called once when the system is registered with the SystemScheduler.
+    /// </summary>
+    /// <param name="world">The ECS world for entity and component operations.</param>
+    /// <remarks>
+    /// This method is called during system registration, before any Update() calls.
+    /// Use this method for:
+    /// - Setting up system state and caches
+    /// - Registering event handlers or callbacks
+    /// - Creating global/singleton components
+    /// - Validating system dependencies
+    /// 
+    /// SYSTEM LIFECYCLE:
+    /// 1. Initialize() - Called once when system is added to scheduler
+    /// 2. Update() - Called every frame by the scheduler
+    /// 3. Shutdown() - Called once when system is removed or scheduler is cleared
+    /// 
+    /// EDUCATIONAL NOTES:
+    /// - Initialization phases are common in system architectures
+    /// - Separation of initialization from update logic improves maintainability
+    /// - Access to IWorld enables systems to set up required components or state
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// public void Initialize(IWorld world)
+    /// {
+    ///     // Set up global configuration component
+    ///     world.SetComponent(world.CreateEntity(), new PhysicsConfigComponent 
+    ///     { 
+    ///         Gravity = -9.81f 
+    ///     });
+    ///     
+    ///     // Cache frequently used queries for performance
+    ///     _movableEntitiesQuery = world.QueryBuilder&lt;VelocityComponent&gt;()
+    ///         .With&lt;PositionComponent&gt;()
+    ///         .Build();
+    /// }
+    /// </code>
+    /// </example>
+    void Initialize(IWorld world) { }
+
+    /// <summary>
     /// Updates the system logic for a single frame with the specified time delta.
     /// </summary>
     /// <param name="delta">
@@ -99,4 +143,47 @@ public interface ISystem
     /// </code>
     /// </example>
     void Update(float delta);
+
+    /// <summary>
+    /// Cleans up system resources and state before the system is removed.
+    /// Called once when the system is unregistered from the SystemScheduler.
+    /// </summary>
+    /// <param name="world">The ECS world for final cleanup operations.</param>
+    /// <remarks>
+    /// This method is called during system removal or scheduler shutdown.
+    /// Use this method for:
+    /// - Disposing of system resources and caches
+    /// - Unregistering event handlers or callbacks
+    /// - Removing global/singleton components if needed
+    /// - Performing final state cleanup
+    /// 
+    /// CLEANUP GUIDELINES:
+    /// - Always dispose of managed resources (file handles, network connections)
+    /// - Clear event subscriptions to prevent memory leaks
+    /// - Remove temporary components or entities created during initialization
+    /// - Log shutdown completion for debugging purposes
+    /// 
+    /// EDUCATIONAL NOTES:
+    /// - Proper cleanup prevents resource leaks in long-running applications
+    /// - Symmetric initialization/shutdown patterns improve system reliability
+    /// - Cleanup phases enable graceful degradation during system changes
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// public void Shutdown(IWorld world)
+    /// {
+    ///     // Dispose of cached resources
+    ///     _particleBuffer?.Dispose();
+    ///     _renderTargets?.ForEach(rt => rt.Dispose());
+    ///     
+    ///     // Remove global components created during initialization
+    ///     var configEntities = world.Query&lt;PhysicsConfigComponent&gt;().ToList();
+    ///     world.DestroyEntities(configEntities.Select(e => e.Entity));
+    ///     
+    ///     // Log successful shutdown
+    ///     Logger.Info($"{GetType().Name} shutdown completed successfully");
+    /// }
+    /// </code>
+    /// </example>
+    void Shutdown(IWorld world) { }
 }
