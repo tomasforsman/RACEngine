@@ -14,7 +14,8 @@ public class EntityHierarchyExtensionsTests
         // Arrange
         var entity = new Entity(1);
         var parent = new Entity(2);
-        var transformSystem = new TransformSystem(new World());
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(new World());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => entity.SetParent(null!, parent, transformSystem));
@@ -37,7 +38,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
         var parent = world.CreateEntity();
         var child = world.CreateEntity();
 
@@ -54,7 +56,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var entity = new Entity(1);
-        var transformSystem = new TransformSystem(new World());
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(new World());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => entity.RemoveParent(null!, transformSystem));
@@ -76,7 +79,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
         var parent = world.CreateEntity();
         var child = world.CreateEntity();
         
@@ -97,7 +101,8 @@ public class EntityHierarchyExtensionsTests
         // Arrange
         var entity = new Entity(1);
         var child = new Entity(2);
-        var transformSystem = new TransformSystem(new World());
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(new World());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => entity.AddChild(null!, child, transformSystem));
@@ -120,7 +125,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
         var parent = world.CreateEntity();
         var child = world.CreateEntity();
 
@@ -161,7 +167,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
         var parent = world.CreateEntity();
         var child = world.CreateEntity();
         
@@ -203,7 +210,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
         var parent = world.CreateEntity();
         var child1 = world.CreateEntity();
         var child2 = world.CreateEntity();
@@ -249,7 +257,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
         var parent = world.CreateEntity();
         var child = world.CreateEntity();
         
@@ -285,7 +294,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
         var parent = world.CreateEntity();
         var child = world.CreateEntity();
         
@@ -324,7 +334,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
         var parent = world.CreateEntity();
         var child1 = world.CreateEntity();
         var child2 = world.CreateEntity();
@@ -515,7 +526,8 @@ public class EntityHierarchyExtensionsTests
     {
         // Arrange
         var world = new World();
-        var transformSystem = new TransformSystem(world);
+        var transformSystem = new TransformSystem();
+        transformSystem.Initialize(world);
 
         var character = world.CreateEntity();
         var weapon = world.CreateEntity();

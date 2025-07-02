@@ -135,9 +135,11 @@ public static class BoidSample
         // Settings Entity: Holds global configuration data (boundary constraints, interaction rules)
 
         var world = engine.World;
-        var transformSystem = new TransformSystem(world);
-        engine.AddSystem(new BoidSystem(world));
+        var transformSystem = new TransformSystem();
+        var boidSystem = new BoidSystem();
+        
         engine.AddSystem(transformSystem);
+        engine.AddSystem(boidSystem);
         var settingsEntity = world.CreateEntity();
 
         // ═══════════════════════════════════════════════════════════════════════════

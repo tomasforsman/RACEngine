@@ -9,10 +9,13 @@ namespace Rac.ECS.Tests.Systems;
 public class TransformSystemTests
 {
     [Fact]
-    public void Constructor_RequiresWorld()
+    public void Initialize_RequiresWorld()
     {
+        // Arrange  
+        var system = new TransformSystem();
+        
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TransformSystem(null!));
+        Assert.Throws<ArgumentNullException>(() => system.Initialize(null!));
     }
 
     [Fact]
@@ -20,7 +23,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
         
         var entity = world.CreateEntity();
         var localTransform = new TransformComponent(
@@ -48,7 +52,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
 
         // Create parent entity
         var parent = world.CreateEntity();
@@ -105,7 +110,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
 
         // Create grandparent (root)
         var grandparent = world.CreateEntity();
@@ -154,7 +160,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
         
         var parent = world.CreateEntity();
         var child = world.CreateEntity();
@@ -177,7 +184,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
         var entity = world.CreateEntity();
 
         // Act & Assert
@@ -189,7 +197,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
         
         var entityA = world.CreateEntity();
         var entityB = world.CreateEntity();
@@ -206,7 +215,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
         
         var oldParent = world.CreateEntity();
         var newParent = world.CreateEntity();
@@ -242,7 +252,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
         
         var parent = world.CreateEntity();
         var child = world.CreateEntity();
@@ -273,7 +284,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
         
         var entity = world.CreateEntity();
         var transform = new TransformComponent(new Vector2D<float>(50f, 60f));
@@ -296,7 +308,8 @@ public class TransformSystemTests
     {
         // Arrange
         var world = new World();
-        var system = new TransformSystem(world);
+        var system = new TransformSystem();
+        system.Initialize(world);
         
         // Create entity with only hierarchy component, no transform
         var entityWithoutTransform = world.CreateEntity();

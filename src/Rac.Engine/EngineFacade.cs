@@ -27,7 +27,7 @@ public class EngineFacade : IEngineFacade
     {
         _windowManager = windowManager ?? throw new ArgumentNullException(nameof(windowManager));
         World = new World();
-        Systems = new SystemScheduler();
+        Systems = new SystemScheduler(World);
         _inner = new GameEngine.Engine(windowManager, inputService, configManager);
 
         // Initialize camera manager for dual-camera system

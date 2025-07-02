@@ -48,7 +48,7 @@ public class ModularEngineFacade : IEngineFacade
 
         // Initialize core services (never null due to Null Object pattern)
         _world = new World();
-        _systems = new SystemScheduler();
+        _systems = new SystemScheduler(_world);
         
         // Initialize game engine
         _inner = new GameEngine.Engine(windowManager, inputService, configManager);
