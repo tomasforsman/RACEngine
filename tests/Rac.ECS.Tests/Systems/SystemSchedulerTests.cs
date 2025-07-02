@@ -27,21 +27,6 @@ public class SystemSchedulerTests
     }
 
     [Fact]
-    public void Add_WithoutWorld_DoesNotCallInitialize()
-    {
-        // Arrange
-        var scheduler = new SystemScheduler();
-        var system = new TestInputSystem();
-
-        // Act
-        scheduler.Add(system);
-
-        // Assert
-        Assert.False(system.InitializeCalled);
-        Assert.Null(system.ReceivedWorld);
-    }
-
-    [Fact]
     public void Remove_WithWorld_CallsShutdownOnSystem()
     {
         // Arrange
@@ -56,22 +41,6 @@ public class SystemSchedulerTests
         // Assert
         Assert.True(removed);
         Assert.True(system.ShutdownCalled);
-    }
-
-    [Fact]
-    public void Remove_WithoutWorld_DoesNotCallShutdown()
-    {
-        // Arrange
-        var scheduler = new SystemScheduler();
-        var system = new TestInputSystem();
-        scheduler.Add(system);
-
-        // Act
-        var removed = scheduler.Remove(system);
-
-        // Assert
-        Assert.True(removed);
-        Assert.False(system.ShutdownCalled);
     }
 
     [Fact]
@@ -120,7 +89,7 @@ public class SystemSchedulerTests
     public void Update_WithDependencies_ExecutesSystemsInCorrectOrder()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
         var inputSystem = new TestInputSystem();
         var movementSystem = new TestMovementSystem();
         var renderSystem = new TestRenderSystem();
@@ -150,7 +119,7 @@ public class SystemSchedulerTests
     public void Add_WithComplexDependencies_ResolvesCorrectOrder()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
         var inputSystem = new TestInputSystem();
         var movementSystem = new TestMovementSystem();
         var complexSystem = new TestComplexSystem(); // Depends on both input and movement
@@ -178,7 +147,7 @@ public class SystemSchedulerTests
     public void Add_WithCircularDependencies_ThrowsInvalidOperationException()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
         var systemA = new TestCircularA();
         var systemB = new TestCircularB();
 
@@ -193,7 +162,7 @@ public class SystemSchedulerTests
     public void Add_WithMissingDependency_IgnoresMissingDependency()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
         var movementSystem = new TestMovementSystem(); // Depends on InputSystem, but we won't add it
 
         // Act - Should not throw
@@ -206,53 +175,21 @@ public class SystemSchedulerTests
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // BACKWARD COMPATIBILITY TESTS
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    [Fact]
-    public void Update_WithLegacySystem_ExecutesUpdateMethod()
-    {
-        // Arrange
-        var scheduler = new SystemScheduler();
-        var legacySystem = new TestLegacySystem();
-
-        // Act
-        scheduler.Add(legacySystem);
-        scheduler.Update(0.016f);
-
-        // Assert
-        Assert.Equal(1, legacySystem.UpdateCallCount);
-    }
-
-    [Fact]
-    public void Add_WithMixedSystemTypes_WorksCorrectly()
-    {
-        // Arrange
-        var world = new World();
-        var scheduler = new SystemScheduler(world);
-        var modernSystem = new TestInputSystem();
-        var legacySystem = new TestLegacySystem();
-
-        // Act
-        scheduler.Add(modernSystem);
-        scheduler.Add(legacySystem);
-        scheduler.Update(0.016f);
-
-        // Assert
-        Assert.True(modernSystem.InitializeCalled);
-        Assert.Equal(1, modernSystem.UpdateCallCount);
-        Assert.Equal(1, legacySystem.UpdateCallCount);
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
     // EDGE CASES AND ERROR HANDLING
     // ═══════════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Constructor_WithNullWorld_ThrowsArgumentNullException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new SystemScheduler(null!));
+    }
 
     [Fact]
     public void Add_WithNullSystem_ThrowsArgumentNullException()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => scheduler.Add(null!));
@@ -262,7 +199,7 @@ public class SystemSchedulerTests
     public void AddSystems_WithNullArray_ThrowsArgumentNullException()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => scheduler.AddSystems(null!));
@@ -272,7 +209,7 @@ public class SystemSchedulerTests
     public void AddSystems_WithNullSystemInArray_ThrowsArgumentNullException()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
         var validSystem = new TestInputSystem();
 
         // Act & Assert
@@ -283,7 +220,7 @@ public class SystemSchedulerTests
     public void Remove_WithNullSystem_ReturnsFalse()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
 
         // Act
         var result = scheduler.Remove(null!);
@@ -296,7 +233,7 @@ public class SystemSchedulerTests
     public void Remove_WithNonExistentSystem_ReturnsFalse()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
         var system = new TestInputSystem();
 
         // Act
@@ -310,7 +247,7 @@ public class SystemSchedulerTests
     public void GetRegisteredSystems_ReturnsSystemsInRegistrationOrder()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
         var system1 = new TestInputSystem();
         var system2 = new TestMovementSystem();
         var system3 = new TestRenderSystem();
@@ -332,7 +269,7 @@ public class SystemSchedulerTests
     public void Update_WithEmptyScheduler_DoesNotThrow()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
 
         // Act & Assert - Should not throw
         scheduler.Update(0.016f);
@@ -342,7 +279,7 @@ public class SystemSchedulerTests
     public void Update_WithSpecificSystems_BypassesDependencyResolution()
     {
         // Arrange
-        var scheduler = new SystemScheduler();
+        var scheduler = new SystemScheduler(new World());
         var inputSystem = new TestInputSystem();
         var movementSystem = new TestMovementSystem();
 

@@ -11,7 +11,7 @@ public class SystemDependencyResolverTests
     {
         // Arrange
         var system1 = new TestInputSystem();
-        var system2 = new TestLegacySystem();
+        var system2 = new TestMovementSystem();
         var systems = new List<ISystem> { system1, system2 };
 
         // Act

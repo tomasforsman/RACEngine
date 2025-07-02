@@ -61,7 +61,7 @@ Houses all component definitions and the base component interface. Components in
 
 Contains the behavioral logic layer of the ECS architecture and system management infrastructure.
 
-**ISystem**: Defines the contract for all system implementations. Establishes the complete system lifecycle with Initialize(IWorld), Update(float), and Shutdown(IWorld) methods. Default implementations for lifecycle methods ensure backward compatibility with existing systems that only implement Update().
+**ISystem**: Defines the contract for all system implementations. Establishes the complete system lifecycle with Initialize(IWorld), Update(float), and Shutdown(IWorld) methods. All three methods are required implementations to ensure proper resource management and deterministic system behavior throughout the application lifecycle.
 
 **RunAfterAttribute**: Declarative dependency management attribute that allows systems to specify execution order dependencies. Supports multiple dependencies per system and includes validation to prevent circular references. Uses standard .NET attribute inheritance patterns for modular system design.
 
@@ -117,8 +117,8 @@ public class RenderingSystem : ISystem { /* ... */ }
 
 The scheduler automatically resolves execution order using topological sorting, ensuring systems run in dependency order regardless of registration order. Circular dependencies are detected and reported with clear error messages.
 
-**Backward Compatibility:**
-Existing systems that implement only the Update() method continue to work without modification. The Initialize() and Shutdown() methods have default empty implementations, ensuring seamless integration with legacy code.
+**Required System Implementation:**
+All systems must implement the complete ISystem interface including Initialize(), Update(), and Shutdown() methods. The SystemScheduler requires an IWorld instance during construction to ensure proper system lifecycle management and resource cleanup.
 
 ### Query Performance Characteristics
 

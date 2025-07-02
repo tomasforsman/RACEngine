@@ -12,9 +12,14 @@ namespace Rac.ECS.System;
 public class BoidSystem : ISystem
 {
     private readonly Random _random = new();
-    private readonly IWorld _world;
+    private IWorld _world = null!;
 
-    public BoidSystem(IWorld world)
+    /// <summary>
+    /// Initializes the system with access to the ECS world.
+    /// Called once when the system is registered with the SystemScheduler.
+    /// </summary>
+    /// <param name="world">The ECS world for entity and component operations.</param>
+    public void Initialize(IWorld world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
@@ -147,5 +152,16 @@ public class BoidSystem : ISystem
             var updatedLocalTransform = currentLocalTransform.WithPosition(newPosition);
             _world.SetComponent(boidEntity, updatedLocalTransform);
         }
+    }
+
+    /// <summary>
+    /// Cleans up system resources before the system is removed.
+    /// Called once when the system is unregistered from the SystemScheduler.
+    /// </summary>
+    /// <param name="world">The ECS world for final cleanup operations.</param>
+    public void Shutdown(IWorld world)
+    {
+        // No resources to clean up for BoidSystem
+        // All component modifications are managed by the ECS world
     }
 }

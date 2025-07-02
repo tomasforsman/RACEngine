@@ -100,7 +100,7 @@ public interface ISystem
     /// }
     /// </code>
     /// </example>
-    void Initialize(IWorld world) { }
+    void Initialize(IWorld world);
 
     /// <summary>
     /// Updates the system logic for a single frame with the specified time delta.
@@ -185,5 +185,5 @@ public interface ISystem
     /// }
     /// </code>
     /// </example>
-    void Shutdown(IWorld world) { }
+    void Shutdown(IWorld world);
 }

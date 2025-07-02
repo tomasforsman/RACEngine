@@ -92,7 +92,7 @@ Systems contain all game logic and operate on component data with full lifecycle
 - **Declarative Dependencies**: Systems can declare dependencies using `[RunAfter(typeof(OtherSystem))]` attributes
 - **Automatic Ordering**: SystemScheduler uses topological sorting to resolve execution order
 - **Circular Dependency Detection**: Invalid dependency chains are detected and reported clearly
-- **Backward Compatibility**: Systems implementing only `Update()` method continue to work unchanged
+- **Complete Lifecycle**: All systems must implement Initialize(), Update(), and Shutdown() methods for proper resource management
 
 **System Processing Patterns:**
 - **Update Loop Integration**: Systems execute within the main game loop in dependency order

@@ -39,22 +39,15 @@ public sealed class SystemScheduler
 
     private readonly List<ISystem> _systems = new();
     private readonly List<ISystem> _orderedSystems = new();
-    private readonly IWorld? _world;
+    private readonly IWorld _world;
     private bool _isDirty = false;
-
-    /// <summary>
-    /// Initializes a new SystemScheduler.
-    /// </summary>
-    public SystemScheduler()
-    {
-        _world = null;
-    }
 
     /// <summary>
     /// Initializes a new SystemScheduler with access to the ECS world.
     /// Systems will receive the world instance during initialization and shutdown.
     /// </summary>
     /// <param name="world">The ECS world for system lifecycle operations.</param>
+    /// <exception cref="ArgumentNullException">Thrown when world is null.</exception>
     public SystemScheduler(IWorld world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
@@ -79,11 +72,8 @@ public sealed class SystemScheduler
         _systems.Add(system);
         _isDirty = true;
 
-        // Initialize the system if world is available
-        if (_world != null)
-        {
-            system.Initialize(_world);
-        }
+        // Initialize the system
+        system.Initialize(_world);
 
         // Resolve dependencies and rebuild execution order
         ResolveDependencies();
@@ -108,11 +98,8 @@ public sealed class SystemScheduler
 
             _systems.Add(system);
 
-            // Initialize the system if world is available
-            if (_world != null)
-            {
-                system.Initialize(_world);
-            }
+            // Initialize the system
+            system.Initialize(_world);
         }
 
         _isDirty = true;
@@ -133,11 +120,8 @@ public sealed class SystemScheduler
         var removed = _systems.Remove(system);
         if (removed)
         {
-            // Shutdown the system if world is available
-            if (_world != null)
-            {
-                system.Shutdown(_world);
-            }
+            // Shutdown the system
+            system.Shutdown(_world);
 
             _isDirty = true;
             ResolveDependencies();
@@ -148,17 +132,14 @@ public sealed class SystemScheduler
 
     /// <summary>
     /// Clears all registered systems.
-    /// Calls Shutdown() on all systems if world is available.
+    /// Calls Shutdown() on all systems.
     /// </summary>
     public void Clear()
     {
-        // Shutdown all systems in reverse order if world is available
-        if (_world != null)
+        // Shutdown all systems in reverse order
+        for (int i = _orderedSystems.Count - 1; i >= 0; i--)
         {
-            for (int i = _orderedSystems.Count - 1; i >= 0; i--)
-            {
-                _orderedSystems[i].Shutdown(_world);
-            }
+            _orderedSystems[i].Shutdown(_world);
         }
 
         _systems.Clear();

@@ -111,24 +111,15 @@ public class TestComplexSystem : ISystem
 [RunAfter(typeof(TestCircularB))]
 public class TestCircularA : ISystem
 {
+    public void Initialize(IWorld world) { }
     public void Update(float delta) { }
+    public void Shutdown(IWorld world) { }
 }
 
 [RunAfter(typeof(TestCircularA))]
 public class TestCircularB : ISystem
 {
+    public void Initialize(IWorld world) { }
     public void Update(float delta) { }
-}
-
-// Legacy system that only implements Update method
-public class TestLegacySystem : ISystem
-{
-    public int UpdateCallCount { get; private set; }
-
-    public void Update(float delta)
-    {
-        UpdateCallCount++;
-    }
-
-    // Note: No Initialize or Shutdown implementations - testing backward compatibility
+    public void Shutdown(IWorld world) { }
 }

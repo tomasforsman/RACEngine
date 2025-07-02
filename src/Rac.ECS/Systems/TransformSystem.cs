@@ -50,15 +50,15 @@ public class TransformSystem : ISystem
     // SYSTEM STATE AND CONFIGURATION
     // ═══════════════════════════════════════════════════════════════════════════
     
-    private readonly IWorld _world;
+    private IWorld _world = null!;
     private readonly HashSet<int> _processedEntities = new();
     
     /// <summary>
-    /// Creates a new transform system that operates on the specified world.
+    /// Initializes the system with access to the ECS world.
+    /// Called once when the system is registered with the SystemScheduler.
     /// </summary>
-    /// <param name="world">The ECS world containing entities and components</param>
-    /// <exception cref="ArgumentNullException">Thrown when world is null</exception>
-    public TransformSystem(IWorld world)
+    /// <param name="world">The ECS world for entity and component operations.</param>
+    public void Initialize(IWorld world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
@@ -107,6 +107,20 @@ public class TransformSystem : ISystem
                 ProcessEntityHierarchy(entity, transform, null);
             }
         }
+    }
+
+    /// <summary>
+    /// Cleans up system resources before the system is removed.
+    /// Called once when the system is unregistered from the SystemScheduler.
+    /// </summary>
+    /// <param name="world">The ECS world for final cleanup operations.</param>
+    public void Shutdown(IWorld world)
+    {
+        // Clear processed entities cache
+        _processedEntities.Clear();
+        
+        // No additional cleanup needed for TransformSystem
+        // World transform components are managed by the ECS world itself
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
