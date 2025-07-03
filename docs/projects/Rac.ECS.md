@@ -37,6 +37,8 @@ Contains the fundamental building blocks of the ECS architecture and primary int
 
 **EntityHierarchyExtensions**: Convenience layer that provides intuitive hierarchy management operations. Encapsulates complex parent-child relationship logic while maintaining the underlying ECS data model. Enables natural game object manipulation patterns while preserving ECS architectural integrity.
 
+**ContainerExtensions**: Provides intuitive container and attachment operations through extension methods. Offers semantic APIs for different relationship types - PlaceIn for containment (items in backpack), AttachTo for attachments (scope on rifle), and world management operations. Demonstrates extension method patterns for domain-specific API design while maintaining ECS architectural principles.
+
 **IQueryRoot**: Interface for building advanced queries without initially specifying a primary component type. Enables the progressive type specification syntax `world.Query().With<ComponentType>()` where the first `With<T>()` call establishes the primary component type for the query. Demonstrates progressive interface narrowing design patterns.
 
 **IQueryBuilder&lt;T&gt;**: Interface for building advanced queries with inclusion and exclusion filters. Provides fluent query syntax for complex entity filtering with method chaining capabilities. Follows Martin Fowler's "Fluent Interface" pattern for improved readability and maintainability.
@@ -57,6 +59,8 @@ Houses all component definitions and the base component interface. Components in
 
 **ParentHierarchyComponent**: Manages parent-child relationships between entities. Stores parent references and child collections to enable scene graph traversal and hierarchical transform inheritance.
 
+**ContainerComponent**: Marks an entity as a container that can hold other entities within it. Provides logical grouping capabilities with support for named containers, loaded/unloaded states, and persistence across scene changes. Enables composition-based game development patterns such as inventory systems, scene organization, and modular prefab assemblies.
+
 ### Rac.ECS.Systems
 
 Contains the behavioral logic layer of the ECS architecture and system management infrastructure.
@@ -70,6 +74,8 @@ Contains the behavioral logic layer of the ECS architecture and system managemen
 **SystemDependencyResolver**: Internal utility class implementing Kahn's topological sorting algorithm for dependency resolution. Provides O(V + E) performance for dependency graphs and includes comprehensive circular dependency detection with clear error reporting.
 
 **TransformSystem**: Specialized system that computes world transforms from local transforms and hierarchy relationships. Implements depth-first traversal algorithms to efficiently propagate transformations through the scene graph. Demonstrates advanced system implementation patterns with Initialize() setup and complex update logic.
+
+**ContainerSystem**: Manages container lifecycle and provides factory methods for container creation and destruction. Handles container state management (loaded/unloaded), persistence configuration, and safe cleanup of contained entities. Demonstrates factory pattern implementation and lifecycle management within the ECS architecture.
 
 ### Rac.ECS.Entities
 
@@ -97,6 +103,135 @@ Systems follow a three-phase lifecycle managed by the SystemScheduler:
 2. **Update Phase**: Called every frame with delta time for frame-rate independent logic. Systems query entities, process component data, and update world state based on game logic.
 
 3. **Shutdown Phase**: Called once when system is removed or scheduler is cleared. Systems receive IWorld parameter for cleanup operations like disposing resources, removing configuration entities, or unregistering event handlers.
+
+## Container System
+
+The Container System provides a comprehensive solution for logical grouping of entities with intuitive APIs that distinguish between different types of spatial relationships. This system enables composition-based game development patterns while maintaining clear semantic boundaries between containment and attachment relationships.
+
+### Core Design Principles
+
+- **Semantic Clarity**: Clear distinction between containment (PlaceIn) and attachment (AttachTo) operations
+- **Intuitive APIs**: Natural language-like method names that express intent clearly
+- **Zero-Overhead Integration**: Built on existing ECS components and systems without breaking changes
+- **Educational Focus**: Extensive documentation and comments explaining design patterns and use cases
+
+### Components and Architecture
+
+**ContainerComponent**: A lightweight marker component that identifies entities capable of containing other entities. Supports named containers, loaded/unloaded states for streaming scenarios, and persistence configuration for entities that should survive scene changes.
+
+**ContainerExtensions**: Extension methods that provide natural APIs for spatial relationship management:
+- `PlaceIn()`: For containment relationships requiring target to have ContainerComponent
+- `AttachTo()`: For attachment relationships working with any entity
+- `LoadToWorld()`: For making entities part of world space
+- `RemoveFrom()`: For removing entities from containers or attachment points
+- Query methods: `IsInContainer()`, `GetContainer()` for relationship inspection
+
+**ContainerSystem**: Factory and lifecycle management system providing:
+- Container creation with full configuration options
+- Safe container destruction with configurable entity handling
+- Container state management (loaded/unloaded)
+- Container renaming and persistence control
+
+### Usage Patterns
+
+#### Inventory Management
+```csharp
+// Create inventory containers
+var backpack = containerSystem.CreateContainer("PlayerBackpack");
+var chest = containerSystem.CreateContainer("TreasureChest");
+
+// Place items naturally
+sword.PlaceIn(backpack, world, transformSystem);
+potion.PlaceIn(chest, world, transformSystem, new Vector2D<float>(1f, 0f));
+
+// Query containment
+bool swordInContainer = sword.IsInContainer(world);
+Entity? container = sword.GetContainer(world);
+```
+
+#### Equipment and Attachments
+```csharp
+// Place weapon in inventory (containment)
+rifle.PlaceIn(playerBackpack, world, transformSystem);
+
+// Attach accessories to weapon (attachment)
+scope.AttachTo(rifle, new Vector2D<float>(0f, 0.1f), world, transformSystem);
+silencer.AttachTo(rifle, new Vector2D<float>(0.5f, 0f), world, transformSystem);
+
+// Different semantic meanings preserved
+Debug.Assert(rifle.IsInContainer(world));     // true - rifle is contained
+Debug.Assert(!scope.IsInContainer(world));   // false - scope is attached, not contained
+```
+
+#### Scene Organization
+```csharp
+// Create scene containers for organization
+var forestLevel = containerSystem.CreateContainer("Forest_Level", persistent: true);
+var enemySpawner = containerSystem.CreateContainer("EnemySpawns");
+
+// Organize scene elements
+trees.PlaceIn(forestLevel, world, transformSystem);
+rocks.PlaceIn(forestLevel, world, transformSystem);
+enemies.PlaceIn(enemySpawner, world, transformSystem);
+
+// Cleanup destroys contained entities
+containerSystem.DestroyContainer(enemySpawner, destroyContainedEntities: true);
+```
+
+### Advanced Features
+
+#### Container State Management
+```csharp
+// Create unloaded container for streaming
+var distantArea = containerSystem.CreateContainer("DistantArea", isLoaded: false);
+
+// Dynamic loading/unloading
+containerSystem.SetContainerLoaded(distantArea, true);  // Load area
+containerSystem.SetContainerLoaded(distantArea, false); // Unload area
+```
+
+#### Mixed Relationship Hierarchies
+The container system supports complex hierarchical structures with mixed containment and attachment relationships:
+
+```csharp
+// Player has backpack (containment)
+backpack.PlaceIn(player, world, transformSystem);
+
+// Backpack contains rifle (containment)
+rifle.PlaceIn(backpack, world, transformSystem);
+
+// Rifle has attached scope (attachment)
+scope.AttachTo(rifle, scopeMountPoint, world, transformSystem);
+
+// All relationships maintained correctly:
+// player → backpack (contains) → rifle (contains) → scope (attached)
+```
+
+### Integration with Existing Systems
+
+The container system integrates seamlessly with existing RACEngine systems:
+
+- **Transform System**: Uses SetParent/RemoveParent for spatial hierarchy
+- **Parent Hierarchy**: Leverages ParentHierarchyComponent for relationships
+- **Query System**: Works with existing component queries and filters
+- **System Scheduler**: ContainerSystem participates in normal system lifecycle
+
+### Performance Characteristics
+
+- **Lightweight Components**: ContainerComponent adds minimal memory overhead
+- **Efficient Queries**: Uses existing ECS query infrastructure
+- **Validation Only When Needed**: Container validation occurs only during PlaceIn operations
+- **Batch Operations**: System supports efficient batch container operations
+
+### Educational Value
+
+The container system demonstrates several important software engineering patterns:
+
+- **Extension Method Pattern**: Domain-specific APIs without modifying core types
+- **Factory Pattern**: ContainerSystem acts as factory for container entities
+- **Semantic API Design**: Method names that clearly express intent and purpose
+- **Composition over Inheritance**: Containers are entities with components, not special types
+- **Null Object Pattern**: Graceful handling of missing components and invalid operations
 
 **Dependency Resolution:**
 The SystemScheduler uses declarative dependency management through RunAfter attributes:
