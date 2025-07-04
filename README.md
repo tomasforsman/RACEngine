@@ -7,6 +7,7 @@
 ## 🚀 Features
 
 * **Entity Component System (ECS):** A clean, idiomatic ECS implementation featuring `Entity`, `IComponent`, `World`, `ISystem`, and `SystemScheduler`.
+* **Container System:** Intuitive APIs for spatial relationships with semantic distinction between containment (PlaceIn) and attachment (AttachTo) operations.
 * **4-Phase Rendering Pipeline:** Distinct separation of configuration, preprocessing, processing, and post-processing phases for optimal performance and tool development.
 * **Modular Architecture:** Each subsystem (e.g., AI, Animation, Audio, Assets) resides in its own project/folder, promoting scalability and maintainability.
 * **Sample Games:** Multiple samples demonstrating engine capabilities including boid simulations, rendering effects, and the 4-phase pipeline architecture.
@@ -157,6 +158,7 @@ The repository includes multiple sample applications demonstrating different asp
 * **BloomTest:** HDR bloom effect demonstration highlighting post-processing capabilities
 * **CameraDemonstration:** Interactive camera system with dual-camera rendering
 * **RenderingPipelineDemo:** Educational demonstration of the 4-phase rendering pipeline
+* **ContainerSample:** Container system demonstration with inventory management and equipment patterns
 
 ### Running Samples
 
@@ -169,12 +171,14 @@ dotnet run -- shootersample   # Interactive shooter
 dotnet run -- bloomtest       # HDR bloom effects
 dotnet run -- camerademo      # Camera system demonstration
 dotnet run -- pipelinedemo    # 4-phase rendering pipeline demo
+dotnet run -- containersample # Container system with inventory patterns
 ```
 
 ### Educational Features
 
 Each sample includes:
 * **Comprehensive commenting:** Educational explanations of game engine concepts
+* **Container System Demonstrations:** Inventory management, equipment systems, and spatial organization
 * **Multiple rendering modes:** Normal, SoftGlow, and Bloom shader effects
 * **Interactive controls:** Keyboard and mouse input demonstrations
 * **ECS showcases:** Component composition and system interactions

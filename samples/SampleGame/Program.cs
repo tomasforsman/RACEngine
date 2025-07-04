@@ -28,6 +28,10 @@ public static class Program
             case "pipelinedemo":
                 RenderingPipelineDemo.Run(args); // 4-phase rendering pipeline demonstration
                 break;
+                
+            case "containersample":
+                ContainerSample.Run(args); // Container system demonstration
+                break;
 
             // ─── add more samples here ────────────────────
             // case "othersample": OtherSample.Run(args); break;
@@ -71,6 +75,7 @@ public static class Program
         Console.WriteLine("  bloomtest       - HDR bloom effect demonstration (Issue #51)");
         Console.WriteLine("  camerademo      - Interactive camera system demonstration with dual-camera rendering");
         Console.WriteLine("  pipelinedemo    - Educational 4-phase rendering pipeline demonstration");
+        Console.WriteLine("  containersample - Container system demonstration with inventory and equipment patterns");
         // … list additional samples here …
         Console.Write("Enter sample name (or press Enter for default 'boidsample'): ");
         
@@ -108,9 +113,11 @@ public static class Program
         Console.WriteLine("  dotnet run -- bloomtest");
         Console.WriteLine("  dotnet run -- camerademo");
         Console.WriteLine("  dotnet run -- pipelinedemo");
+        Console.WriteLine("  dotnet run -- containersample");
         Console.WriteLine();
         Console.WriteLine("All samples demonstrate shader mode switching and engine features.");
         Console.WriteLine("The bloomtest specifically demonstrates HDR color bloom effects.");
         Console.WriteLine("The pipelinedemo provides educational insight into the 4-phase rendering architecture.");
+        Console.WriteLine("The containersample showcases the ECS Container System with inventory and equipment patterns.");
     }
 }
