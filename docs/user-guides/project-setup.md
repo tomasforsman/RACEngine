@@ -127,7 +127,7 @@ Create `src/Core/GameApplication.cs`:
 ```csharp
 using Rac.Engine;
 using Rac.ECS;
-using Rac.Core.Math;
+using Rac.Core.Extension;
 using Rac.Rendering;
 using MyGame.Systems;
 using MyGame.Components;
@@ -350,7 +350,7 @@ Create `src/Components/GameComponents.cs`:
 
 ```csharp
 using Rac.ECS;
-using Rac.Core.Math;
+using Rac.Core.Extension;
 
 namespace MyGame.Components;
 
@@ -426,7 +426,7 @@ Create `src/Systems/InputSystem.cs`:
 
 ```csharp
 using Rac.ECS;
-using Rac.Core.Math;
+using Rac.Core.Extension;
 using MyGame.Components;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
