@@ -87,6 +87,7 @@ public class ModularEngineFacade : IEngineFacade
     public ICameraManager CameraManager => _cameraManager;
     public IWindowManager WindowManager => _windowManager;
     public IContainerService Container => _container;
+    public TransformSystem TransformSystem => _transformSystem;
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;

@@ -488,6 +488,7 @@ internal class TestEngineFacade : IEngineFacade
     public ICameraManager CameraManager => throw new NotImplementedException();
     public IWindowManager WindowManager => throw new NotImplementedException();
     public IContainerService Container => throw new NotImplementedException();
+    public TransformSystem TransformSystem => throw new NotImplementedException();
     
     public event Action? LoadEvent;
     public event Action<float>? UpdateEvent;

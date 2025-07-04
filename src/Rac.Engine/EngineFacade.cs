@@ -78,6 +78,7 @@ public class EngineFacade : IEngineFacade
     public ICameraManager CameraManager { get; }
     public IWindowManager WindowManager => _windowManager;
     public IContainerService Container { get; }
+    public TransformSystem TransformSystem => _transformSystem;
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;
