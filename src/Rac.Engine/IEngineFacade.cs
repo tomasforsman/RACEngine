@@ -33,6 +33,9 @@ public interface IEngineFacade
     /// <summary>Gets the window manager for window operations and size information.</summary>
     IWindowManager WindowManager { get; }
 
+    /// <summary>Gets the container service for entity container management and operations.</summary>
+    IContainerService Container { get; }
+
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     event Action? LoadEvent;
 
@@ -102,4 +105,35 @@ public interface IEngineFacade
     /// <param name="name">Name to search for</param>
     /// <returns>Entity with the specified name, or null if not found</returns>
     Entity? FindEntityByName(string name);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONTAINER MANAGEMENT CONVENIENCE METHODS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Creates a new container entity with the specified name.
+    /// Convenience method that delegates to the container service.
+    /// </summary>
+    /// <param name="containerName">Human-readable name for the container</param>
+    /// <returns>The newly created container entity</returns>
+    Entity CreateContainer(string containerName);
+
+    /// <summary>
+    /// Places an item inside a container at the origin.
+    /// Convenience method for the most common placement operation.
+    /// </summary>
+    /// <param name="item">The entity to place inside the container</param>
+    /// <param name="container">The container entity (must have ContainerComponent)</param>
+    /// <exception cref="ArgumentException">Thrown when target entity is not a container</exception>
+    void PlaceInContainer(Entity item, Entity container);
+
+    /// <summary>
+    /// Places an item inside a container at the specified local position.
+    /// Convenience method that provides positioning control.
+    /// </summary>
+    /// <param name="item">The entity to place inside the container</param>
+    /// <param name="container">The container entity (must have ContainerComponent)</param>
+    /// <param name="localPosition">Local position within the container</param>
+    /// <exception cref="ArgumentException">Thrown when target entity is not a container</exception>
+    void PlaceInContainer(Entity item, Entity container, Vector2D<float> localPosition);
 }

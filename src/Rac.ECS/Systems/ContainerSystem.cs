@@ -7,6 +7,13 @@ namespace Rac.ECS.Systems;
 
 /// <summary>
 /// System for managing container lifecycle and basic container operations.
+/// Implements IContainerService interface following RACEngine's progressive complexity principle.
+/// 
+/// PROGRESSIVE COMPLEXITY IMPLEMENTATION:
+/// This class serves as the concrete implementation layer in RACEngine's three-tier architecture:
+/// - Facade Layer: Simple operations through EngineFacade convenience methods
+/// - Service Layer: Full feature set through IContainerService interface (this class)
+/// - Implementation Layer: Direct access to ContainerSystem for specialized scenarios
 /// 
 /// CONTAINER LIFECYCLE MANAGEMENT:
 /// - Container Creation: Establishes new containers with proper components
@@ -16,7 +23,8 @@ namespace Rac.ECS.Systems;
 /// 
 /// EDUCATIONAL NOTES:
 /// This system demonstrates several important patterns in game engine architecture:
-/// - Factory Pattern: CreateContainer method acts as a factory for container entities
+/// - Service Interface Pattern: Implements IContainerService for dependency injection and testing
+/// - Factory Pattern: CreateContainer methods act as factories for container entities
 /// - Lifecycle Management: Proper initialization and cleanup of complex entities
 /// - Composition over Inheritance: Containers are entities with components, not special types
 /// - System Coordination: Works with TransformSystem for spatial relationships
@@ -39,7 +47,7 @@ namespace Rac.ECS.Systems;
 /// - Produces: Entities with ContainerComponent and supporting components
 /// - Integrates: With existing ParentHierarchyComponent for entity relationships
 /// </summary>
-public class ContainerSystem : ISystem
+public class ContainerSystem : ISystem, IContainerService
 {
     // ═══════════════════════════════════════════════════════════════════════════
     // SYSTEM STATE AND DEPENDENCIES
@@ -103,11 +111,54 @@ public class ContainerSystem : ISystem
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // CONTAINER CREATION AND MANAGEMENT
+    // INTERFACE IMPLEMENTATION - SIMPLE OPERATIONS
+    // Educational note: Simple overloads delegate to advanced methods with sensible defaults
     // ═══════════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Creates a new container entity with the specified name and position.
+    /// Creates a new container entity with the specified name.
+    /// Simple factory method implementation delegating to advanced method with default parameters.
+    /// </summary>
+    /// <param name="containerName">Human-readable name for the container</param>
+    /// <returns>The newly created container entity</returns>
+    /// <exception cref="ArgumentException">Thrown when containerName is null or empty</exception>
+    public Entity CreateContainer(string containerName)
+    {
+        return CreateContainer(containerName, Vector2D<float>.Zero, isLoaded: true, isPersistent: false);
+    }
+
+    /// <summary>
+    /// Creates a new container entity with position and basic configuration.
+    /// Intermediate factory method implementation delegating to advanced method.
+    /// </summary>
+    /// <param name="containerName">Human-readable name for the container</param>
+    /// <param name="position">World position for the container</param>
+    /// <param name="isLoaded">Whether the container starts in loaded state (optional, defaults to true)</param>
+    /// <returns>The newly created container entity</returns>
+    /// <exception cref="ArgumentException">Thrown when containerName is null or empty</exception>
+    public Entity CreateContainer(string containerName, Vector2D<float> position, bool isLoaded = true)
+    {
+        return CreateContainer(containerName, position, isLoaded, isPersistent: false);
+    }
+
+    /// <summary>
+    /// Destroys a container and all contained entities.
+    /// Simple cleanup method implementation delegating to advanced method with default behavior.
+    /// </summary>
+    /// <param name="container">The container entity to destroy</param>
+    /// <exception cref="ArgumentException">Thrown when entity is not a container</exception>
+    public void DestroyContainer(Entity container)
+    {
+        DestroyContainer(container, destroyContainedEntities: true);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONTAINER CREATION AND MANAGEMENT - ADVANCED IMPLEMENTATION
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Creates a new container entity with full configuration options.
+    /// This is the primary implementation method that all other overloads delegate to.
     /// </summary>
     /// <param name="containerName">Human-readable name for the container</param>
     /// <param name="position">World position for the container (optional, defaults to origin)</param>
@@ -122,7 +173,7 @@ public class ContainerSystem : ISystem
     /// var persistentChest = containerSystem.CreateContainer("TreasureChest", Vector2D&lt;float&gt;.Zero, true, true);
     /// </code>
     /// </example>
-    public Entity CreateContainer(string containerName, Vector2D<float> position = default, bool isLoaded = true, bool isPersistent = false)
+    public Entity CreateContainer(string containerName, Vector2D<float> position, bool isLoaded, bool isPersistent)
     {
         if (_world == null)
             throw new InvalidOperationException("ContainerSystem must be initialized before creating containers");
@@ -153,22 +204,23 @@ public class ContainerSystem : ISystem
     }
 
     /// <summary>
-    /// Destroys a container and handles all contained entities according to cleanup policy.
+    /// Destroys a container with configurable handling of contained entities.
+    /// This is the primary implementation method that the simple overload delegates to.
     /// </summary>
     /// <param name="container">The container entity to destroy</param>
-    /// <param name="destroyContainedEntities">Whether to destroy all contained entities (default: true)</param>
+    /// <param name="destroyContainedEntities">Whether to destroy all contained entities</param>
     /// <exception cref="ArgumentException">Thrown when entity is not a container</exception>
     /// <exception cref="InvalidOperationException">Thrown when system is not initialized</exception>
     /// <example>
     /// <code>
     /// // Destroy container and all contents
-    /// containerSystem.DestroyContainer(backpack);
+    /// containerSystem.DestroyContainer(backpack, destroyContainedEntities: true);
     /// 
     /// // Destroy container but move contents to world
     /// containerSystem.DestroyContainer(backpack, destroyContainedEntities: false);
     /// </code>
     /// </example>
-    public void DestroyContainer(Entity container, bool destroyContainedEntities = true)
+    public void DestroyContainer(Entity container, bool destroyContainedEntities)
     {
         if (_world == null)
             throw new InvalidOperationException("ContainerSystem must be initialized before destroying containers");

@@ -18,6 +18,7 @@ public class EngineFacade : IEngineFacade
 {
     private readonly GameEngine.Engine _inner;
     private readonly IWindowManager _windowManager;
+    private readonly TransformSystem _transformSystem;
 
     public EngineFacade(
         IWindowManager windowManager,
@@ -35,6 +36,15 @@ public class EngineFacade : IEngineFacade
 
         // Initialize audio service (use null object pattern as fallback)
         Audio = new NullAudioService();
+
+        // Initialize transform system (required for container operations)
+        _transformSystem = new TransformSystem();
+        Systems.Add(_transformSystem);
+
+        // Initialize container service with container system integration
+        var containerSystem = new ContainerSystem();
+        Container = containerSystem;
+        Systems.Add(containerSystem);
 
         // Set up camera system integration
         SetupCameraIntegration();
@@ -67,6 +77,7 @@ public class EngineFacade : IEngineFacade
     public IAudioService Audio { get; }
     public ICameraManager CameraManager { get; }
     public IWindowManager WindowManager => _windowManager;
+    public IContainerService Container { get; }
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     public event Action? LoadEvent;
@@ -170,6 +181,48 @@ public class EngineFacade : IEngineFacade
             .FirstOrDefault(result => result.Component1.Name == name);
         
         return result.Entity.Id != 0 ? result.Entity : null;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONTAINER MANAGEMENT CONVENIENCE METHODS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Creates a new container entity with the specified name.
+    /// Convenience method that delegates to the container service for the most common use case.
+    /// </summary>
+    /// <param name="containerName">Human-readable name for the container</param>
+    /// <returns>The newly created container entity</returns>
+    public Entity CreateContainer(string containerName)
+    {
+        return Container.CreateContainer(containerName);
+    }
+
+    /// <summary>
+    /// Places an item inside a container at the origin.
+    /// Convenience method for the most common placement operation using extension methods.
+    /// </summary>
+    /// <param name="item">The entity to place inside the container</param>
+    /// <param name="container">The container entity (must have ContainerComponent)</param>
+    /// <exception cref="ArgumentException">Thrown when target entity is not a container</exception>
+    public void PlaceInContainer(Entity item, Entity container)
+    {
+        // Use the extension method from ContainerExtensions
+        item.PlaceIn(container, World, _transformSystem);
+    }
+
+    /// <summary>
+    /// Places an item inside a container at the specified local position.
+    /// Convenience method that provides positioning control using extension methods.
+    /// </summary>
+    /// <param name="item">The entity to place inside the container</param>
+    /// <param name="container">The container entity (must have ContainerComponent)</param>
+    /// <param name="localPosition">Local position within the container</param>
+    /// <exception cref="ArgumentException">Thrown when target entity is not a container</exception>
+    public void PlaceInContainer(Entity item, Entity container, Vector2D<float> localPosition)
+    {
+        // Use the extension method from ContainerExtensions
+        item.PlaceIn(container, World, _transformSystem, localPosition);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

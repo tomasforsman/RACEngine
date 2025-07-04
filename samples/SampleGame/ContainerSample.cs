@@ -86,7 +86,7 @@ public static class ContainerSample
 
     // System references for operations
     private static TransformSystem? _transformSystem;
-    private static ContainerSystem? _containerSystem;
+    // Note: No longer need direct ContainerSystem reference - using engine facade patterns
     
     // Entity references for demo operations
     private static Entity _playerBackpack;
@@ -133,48 +133,63 @@ public static class ContainerSample
     private static void InitializeContainerDemo(EngineFacade engine)
     {
         // ═══════════════════════════════════════════════════════════════════════════
-        // CONTAINER SYSTEM INITIALIZATION
+        // CONTAINER SYSTEM INITIALIZATION - PROGRESSIVE COMPLEXITY DEMONSTRATION
         // ═══════════════════════════════════════════════════════════════════════════
+        
+        Console.WriteLine("This sample demonstrates RACEngine's progressive complexity principle:");
+        Console.WriteLine("- Facade Layer: Simple engine.CreateContainer() for beginners");  
+        Console.WriteLine("- Service Layer: engine.Container.CreateContainer(...) for advanced control");
+        Console.WriteLine("- Extension Layer: entity.PlaceIn(container) for semantic clarity");
+        Console.WriteLine("═══════════════════════════════════════════════════════════════════════════");
         
         var world = engine.World;
         var transformSystem = new TransformSystem();
-        var containerSystem = new ContainerSystem();
         
-        // Add systems to engine
+        // Add transform system to engine (container system is already integrated into facade)
         engine.AddSystem(transformSystem);
-        engine.AddSystem(containerSystem);
         
-        // Store system references for later use
+        // Store system reference for extension method usage
         _transformSystem = transformSystem;
-        _containerSystem = containerSystem;
         
         // Clear any existing entities
         _items.Clear();
         _containers.Clear();
         
         // ─── Create Player Inventory Hierarchy ────────────────────────────────────
-        // Demonstrates nested container organization
+        // Demonstrates nested container organization using different API layers
         
-        _playerBackpack = containerSystem.CreateContainer(
-            "PlayerBackpack", 
-            new Vector2D<float>(0f, 0.5f),
-            isLoaded: true,
-            isPersistent: true
-        );
+        // FACADE LAYER: Simple container creation for beginners
+        Console.WriteLine("Creating player backpack using facade layer (engine.CreateContainer)...");
+        _playerBackpack = engine.CreateContainer("PlayerBackpack");
         _containers.Add(_playerBackpack);
         
-        _weaponRack = containerSystem.CreateContainer("WeaponRack");
-        _weaponRack.PlaceIn(_playerBackpack, world, transformSystem, new Vector2D<float>(-0.3f, 0f));
+        // SERVICE LAYER: Advanced configuration using service interface
+        Console.WriteLine("Creating weapon rack using service layer (engine.Container.CreateContainer)...");
+        _weaponRack = engine.Container.CreateContainer(
+            "WeaponRack", 
+            new Vector2D<float>(-0.3f, 0f),
+            isLoaded: true
+        );
         _containers.Add(_weaponRack);
         
-        _potionBag = containerSystem.CreateContainer("PotionBag");
-        _potionBag.PlaceIn(_playerBackpack, world, transformSystem, new Vector2D<float>(0.3f, 0f));
+        // EXTENSION LAYER: Semantic placement using extension methods
+        Console.WriteLine("Placing weapon rack in backpack using extension methods...");
+        _weaponRack.PlaceIn(_playerBackpack, world, transformSystem, new Vector2D<float>(-0.3f, 0f));
+        
+        // Demonstrate facade convenience method
+        Console.WriteLine("Creating potion bag using facade convenience methods...");
+        _potionBag = engine.CreateContainer("PotionBag");
         _containers.Add(_potionBag);
         
-        // ─── Create Level Organization Container ───────────────────────────────────
-        // Demonstrates scene organization patterns
+        // Use facade placement convenience method
+        Console.WriteLine("Placing potion bag using facade convenience method...");
+        engine.PlaceInContainer(_potionBag, _playerBackpack, new Vector2D<float>(0.3f, 0f));
         
-        _levelContainer = containerSystem.CreateContainer(
+        // ─── Create Level Organization Container ───────────────────────────────────
+        // Demonstrates scene organization patterns using service layer for full control
+        
+        Console.WriteLine("Creating level container with full configuration (service layer)...");
+        _levelContainer = engine.Container.CreateContainer(
             "MainLevel", 
             new Vector2D<float>(0f, -0.7f),
             isLoaded: true,
@@ -246,7 +261,8 @@ public static class ContainerSample
     {
         var world = engine.World;
         var transformSystem = _transformSystem!;
-        var containerSystem = _containerSystem!;
+        // Use container service through engine facade instead of direct reference
+        var containerService = engine.Container;
         
         switch (key)
         {
@@ -304,11 +320,11 @@ public static class ContainerSample
                 break;
                 
             case Key.Number3: // Create new container with items
-                CreateNewContainerWithItems(world, transformSystem, containerSystem);
+                CreateNewContainerWithItems(world, transformSystem, containerService);
                 break;
                 
             case Key.Number4: // Destroy random container
-                DestroyRandomContainer(world, transformSystem, containerSystem);
+                DestroyRandomContainer(world, transformSystem, containerService);
                 break;
                 
             // ─── UI Controls ────────────────────────────────────────────────────────
@@ -413,7 +429,7 @@ public static class ContainerSample
         }
     }
 
-    private static void CreateNewContainerWithItems(IWorld world, TransformSystem transformSystem, ContainerSystem containerSystem)
+    private static void CreateNewContainerWithItems(IWorld world, TransformSystem transformSystem, IContainerService containerService)
     {
         // Create new container at random position
         var position = new Vector2D<float>(
@@ -421,14 +437,16 @@ public static class ContainerSample
             (Random.Shared.NextSingle() - 0.5f) * 1.0f
         );
         
-        var newContainer = containerSystem.CreateContainer($"Container{_containers.Count + 1}", position);
+        // Demonstrate service layer for container creation
+        var newContainer = containerService.CreateContainer($"Container{_containers.Count + 1}");
         _containers.Add(newContainer);
         
-        // Add a few items to it
+        // Add items using extension methods for semantic clarity
         for (int i = 0; i < 3; i++)
         {
             var item = CreateItem(world, $"Item{_items.Count + 1}", ItemColor);
             var offset = new Vector2D<float>(i * 0.1f - 0.1f, 0f);
+            // Extension method provides semantic clarity: "place item IN container"
             item.PlaceIn(newContainer, world, transformSystem, offset);
             _items.Add(item);
         }
@@ -440,7 +458,7 @@ public static class ContainerSample
         }
     }
 
-    private static void DestroyRandomContainer(IWorld world, TransformSystem transformSystem, ContainerSystem containerSystem)
+    private static void DestroyRandomContainer(IWorld world, TransformSystem transformSystem, IContainerService containerService)
     {
         if (_containers.Count > 2) // Keep at least 2 containers
         {
@@ -457,7 +475,8 @@ public static class ContainerSample
                     _items.Remove(item);
                 }
                 
-                containerSystem.DestroyContainer(container, destroyContainedEntities: true);
+                // Demonstrate service layer for advanced container management
+                containerService.DestroyContainer(container, destroyContainedEntities: true);
                 _containers.Remove(container);
                 
                 Console.WriteLine($"Destroyed container: {containerName} and {containedItems.Count} contained items");
