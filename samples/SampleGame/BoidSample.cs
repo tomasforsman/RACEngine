@@ -135,10 +135,8 @@ public static class BoidSample
         // Settings Entity: Holds global configuration data (boundary constraints, interaction rules)
 
         var world = engine.World;
-        var transformSystem = new TransformSystem();
         var boidSystem = new BoidSystem();
         
-        engine.AddSystem(transformSystem);
         engine.AddSystem(boidSystem);
         var settingsEntity = world.CreateEntity();
 
@@ -198,8 +196,8 @@ public static class BoidSample
         //
         // Initial world population with varied species counts creates realistic ecosystem
 
-        SpawnAllSpecies(transformSystem);
-        SpawnObstacles(transformSystem);
+        SpawnAllSpecies();
+        SpawnObstacles();
 
         // ═══════════════════════════════════════════════════════════════════════════
         // INPUT HANDLING FOR CAMERA CONTROLS AND SHADER MODE SWITCHING
@@ -805,7 +803,7 @@ public static class BoidSample
             world.SetComponent(settingsEntity, boidSettings);
         }
 
-        void SpawnAllSpecies(TransformSystem transformSystem)
+        void SpawnAllSpecies()
         {
             // ───────────────────────────────────────────────────────────────────────
             // ECOSYSTEM POPULATION DISTRIBUTION
@@ -843,7 +841,7 @@ public static class BoidSample
             }
         }
 
-        void SpawnObstacles(TransformSystem transformSystem)
+        void SpawnObstacles()
         {
             // ───────────────────────────────────────────────────────────────────────
             // ENVIRONMENTAL OBSTACLES

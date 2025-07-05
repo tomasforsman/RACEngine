@@ -143,13 +143,9 @@ public static class ContainerSample
         Console.WriteLine("═══════════════════════════════════════════════════════════════════════════");
         
         var world = engine.World;
-        var transformSystem = new TransformSystem();
         
-        // Add transform system to engine (container system is already integrated into facade)
-        engine.AddSystem(transformSystem);
-        
-        // Store system reference for extension method usage
-        _transformSystem = transformSystem;
+        // Use engine's transform system for extension method usage
+        _transformSystem = engine.TransformSystem;
         
         // Clear any existing entities
         _items.Clear();
@@ -174,7 +170,7 @@ public static class ContainerSample
         
         // EXTENSION LAYER: Semantic placement using extension methods
         Console.WriteLine("Placing weapon rack in backpack using extension methods...");
-        _weaponRack.PlaceIn(_playerBackpack, world, transformSystem, new Vector2D<float>(-0.3f, 0f));
+        _weaponRack.PlaceIn(_playerBackpack, world, _transformSystem!, new Vector2D<float>(-0.3f, 0f));
         
         // Demonstrate facade convenience method
         Console.WriteLine("Creating potion bag using facade convenience methods...");
@@ -201,15 +197,15 @@ public static class ContainerSample
         // Demonstrates mixed containment and attachment relationships
         
         _rifle = CreateItem(world, "Rifle", WeaponColor);
-        _rifle.PlaceIn(_weaponRack, world, transformSystem, new Vector2D<float>(0f, 0f));
+        _rifle.PlaceIn(_weaponRack, world, _transformSystem!, new Vector2D<float>(0f, 0f));
         _items.Add(_rifle);
         
         _scope = CreateItem(world, "Scope", AttachmentColor);
         _silencer = CreateItem(world, "Silencer", AttachmentColor);
         
         // Initially detached - can be attached with key '1'
-        _scope.LoadToWorld(world, transformSystem, new Vector2D<float>(-0.8f, 0f));
-        _silencer.LoadToWorld(world, transformSystem, new Vector2D<float>(-0.8f, -0.3f));
+        _scope.LoadToWorld(world, _transformSystem!, new Vector2D<float>(-0.8f, 0f));
+        _silencer.LoadToWorld(world, _transformSystem!, new Vector2D<float>(-0.8f, -0.3f));
         _items.Add(_scope);
         _items.Add(_silencer);
         
@@ -218,7 +214,7 @@ public static class ContainerSample
         for (int i = 0; i < 3; i++)
         {
             var potion = CreateItem(world, $"Potion{i + 1}", ItemColor);
-            potion.PlaceIn(_potionBag, world, transformSystem, new Vector2D<float>(i * 0.1f - 0.1f, 0f));
+            potion.PlaceIn(_potionBag, world, _transformSystem!, new Vector2D<float>(i * 0.1f - 0.1f, 0f));
             _items.Add(potion);
         }
         
@@ -227,7 +223,7 @@ public static class ContainerSample
         for (int i = 0; i < 5; i++)
         {
             var levelItem = CreateItem(world, $"LevelItem{i + 1}", ItemColor);
-            levelItem.PlaceIn(_levelContainer, world, transformSystem, 
+            levelItem.PlaceIn(_levelContainer, world, _transformSystem!, 
                 new Vector2D<float>((i - 2) * 0.2f, 0f));
             _items.Add(levelItem);
         }
@@ -308,23 +304,23 @@ public static class ContainerSample
                 
             // ─── Container System Operations ────────────────────────────────────────
             case Key.Space: // Create new item and place in random container
-                CreateRandomItem(world, transformSystem);
+                CreateRandomItem(world);
                 break;
                 
             case Key.Number1: // Toggle weapon attachments
-                ToggleWeaponAttachments(world, transformSystem);
+                ToggleWeaponAttachments(world);
                 break;
                 
             case Key.Number2: // Move items between containers
-                MoveItemsBetweenContainers(world, transformSystem);
+                MoveItemsBetweenContainers(world);
                 break;
                 
             case Key.Number3: // Create new container with items
-                CreateNewContainerWithItems(world, transformSystem, containerService);
+                CreateNewContainerWithItems(world, containerService);
                 break;
                 
             case Key.Number4: // Destroy random container
-                DestroyRandomContainer(world, transformSystem, containerService);
+                DestroyRandomContainer(world, containerService);
                 break;
                 
             // ─── UI Controls ────────────────────────────────────────────────────────
@@ -340,7 +336,7 @@ public static class ContainerSample
         }
     }
 
-    private static void CreateRandomItem(IWorld world, TransformSystem transformSystem)
+    private static void CreateRandomItem(IWorld world)
     {
         var itemNames = new[] { "Sword", "Potion", "Gem", "Scroll", "Key" };
         var itemName = itemNames[Random.Shared.Next(itemNames.Length)];
@@ -356,7 +352,7 @@ public static class ContainerSample
                 (Random.Shared.NextSingle() - 0.5f) * 0.4f
             );
             
-            item.PlaceIn(container, world, transformSystem, offset);
+            item.PlaceIn(container, world, _transformSystem!, offset);
             _items.Add(item);
             
             if (world.TryGetComponent<ContainerComponent>(container, out var containerComp))
@@ -367,34 +363,34 @@ public static class ContainerSample
         }
     }
 
-    private static void ToggleWeaponAttachments(IWorld world, TransformSystem transformSystem)
+    private static void ToggleWeaponAttachments(IWorld world)
     {
         if (!_scopeAttached)
         {
             // Attach scope to rifle
-            _scope.AttachTo(_rifle, new Vector2D<float>(0f, 0.1f), world, transformSystem);
+            _scope.AttachTo(_rifle, new Vector2D<float>(0f, 0.1f), world, _transformSystem!);
             _scopeAttached = true;
             Console.WriteLine("Scope attached to rifle");
         }
         else if (!_silencerAttached)
         {
             // Attach silencer to rifle  
-            _silencer.AttachTo(_rifle, new Vector2D<float>(0.15f, 0f), world, transformSystem);
+            _silencer.AttachTo(_rifle, new Vector2D<float>(0.15f, 0f), world, _transformSystem!);
             _silencerAttached = true;
             Console.WriteLine("Silencer attached to rifle");
         }
         else
         {
             // Detach both
-            _scope.RemoveFrom(world, transformSystem);
-            _silencer.RemoveFrom(world, transformSystem);
+            _scope.RemoveFrom(world, _transformSystem!);
+            _silencer.RemoveFrom(world, _transformSystem!);
             _scopeAttached = false;
             _silencerAttached = false;
             Console.WriteLine("Attachments removed from rifle");
         }
     }
 
-    private static void MoveItemsBetweenContainers(IWorld world, TransformSystem transformSystem)
+    private static void MoveItemsBetweenContainers(IWorld world)
     {
         // Find items in containers and move them around
         var containedItems = _items.Where(item => item.IsInContainer(world)).ToList();
@@ -412,7 +408,7 @@ public static class ContainerSample
                     (Random.Shared.NextSingle() - 0.5f) * 0.3f
                 );
                 
-                item.PlaceIn(targetContainer, world, transformSystem, offset);
+                item.PlaceIn(targetContainer, world, _transformSystem!, offset);
                 
                 if (currentContainer.HasValue &&
                     world.TryGetComponent<ContainerComponent>(currentContainer.Value, out var currentComp) &&
@@ -429,7 +425,7 @@ public static class ContainerSample
         }
     }
 
-    private static void CreateNewContainerWithItems(IWorld world, TransformSystem transformSystem, IContainerService containerService)
+    private static void CreateNewContainerWithItems(IWorld world, IContainerService containerService)
     {
         // Create new container at random position
         var position = new Vector2D<float>(
@@ -447,7 +443,7 @@ public static class ContainerSample
             var item = CreateItem(world, $"Item{_items.Count + 1}", ItemColor);
             var offset = new Vector2D<float>(i * 0.1f - 0.1f, 0f);
             // Extension method provides semantic clarity: "place item IN container"
-            item.PlaceIn(newContainer, world, transformSystem, offset);
+            item.PlaceIn(newContainer, world, _transformSystem!, offset);
             _items.Add(item);
         }
         
@@ -458,7 +454,7 @@ public static class ContainerSample
         }
     }
 
-    private static void DestroyRandomContainer(IWorld world, TransformSystem transformSystem, IContainerService containerService)
+    private static void DestroyRandomContainer(IWorld world, IContainerService containerService)
     {
         if (_containers.Count > 2) // Keep at least 2 containers
         {

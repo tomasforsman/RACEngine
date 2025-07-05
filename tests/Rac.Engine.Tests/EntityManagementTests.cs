@@ -488,6 +488,7 @@ internal class TestEngineFacade : IEngineFacade
     public ICameraManager CameraManager => throw new NotImplementedException();
     public IWindowManager WindowManager => throw new NotImplementedException();
     public IContainerService Container => throw new NotImplementedException();
+    public TransformSystem TransformSystem => throw new NotImplementedException();
     
     public event Action? LoadEvent;
     public event Action<float>? UpdateEvent;
@@ -528,7 +529,7 @@ internal class TestEngineFacade : IEngineFacade
         return result.Entity.Id != 0 ? result.Entity : null;
     }
 
-    // Container management methods (delegated to container service - not implemented in test)
+    // Container management methods (not used in tests)
     public Entity CreateContainer(string containerName) => throw new NotImplementedException();
     public void PlaceInContainer(Entity item, Entity container) => throw new NotImplementedException();
     public void PlaceInContainer(Entity item, Entity container, Vector2D<float> localPosition) => throw new NotImplementedException();

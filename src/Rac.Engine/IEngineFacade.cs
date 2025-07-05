@@ -35,6 +35,9 @@ public interface IEngineFacade
 
     /// <summary>Gets the container service for entity container management and operations.</summary>
     IContainerService Container { get; }
+    
+    /// <summary>Gets the transform system for direct access to transform operations and extension methods.</summary>
+    TransformSystem TransformSystem { get; }
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>
     event Action? LoadEvent;
