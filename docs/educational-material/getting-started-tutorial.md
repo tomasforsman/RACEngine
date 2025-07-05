@@ -102,7 +102,7 @@ Create `Program.cs`:
 
 ```csharp
 using Rac.Engine;
-using Rac.Core.Math;
+using Rac.Core.Extension;
 using Rac.ECS;
 using System;
 
@@ -232,7 +232,7 @@ Create `Components.cs`:
 
 ```csharp
 using Rac.ECS;
-using Rac.Core.Math;
+using Rac.Core.Extension;
 using System;
 
 namespace AsteroidDodge;
@@ -338,7 +338,7 @@ Create `Systems/InputSystem.cs`:
 
 ```csharp
 using Rac.ECS;
-using Rac.Core.Math;
+using Rac.Core.Extension;
 using System;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -394,7 +394,7 @@ Create `Systems/CollisionSystem.cs`:
 
 ```csharp
 using Rac.ECS;
-using Rac.Core.Math;
+using Rac.Core.Extension;
 using System.Collections.Generic;
 
 namespace AsteroidDodge.Systems;
@@ -506,7 +506,7 @@ Create `AsteroidDodgeGame.cs`:
 ```csharp
 using Rac.Engine;
 using Rac.ECS;
-using Rac.Core.Math;
+using Rac.Core.Extension;
 using Rac.Rendering;
 using AsteroidDodge.Systems;
 using System;
