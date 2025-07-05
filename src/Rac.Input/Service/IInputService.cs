@@ -5,6 +5,9 @@ using Silk.NET.Windowing;
 
 namespace Rac.Input.Service;
 
+/// <summary>
+/// Input service interface providing both simple and advanced input functionality.
+/// </summary>
 public interface IInputService
 {
     /// <summary>Realtime polling of which keys are pressed.</summary>
@@ -17,6 +20,7 @@ public interface IInputService
     void Update(double delta);
     void Shutdown();
 
+    // Simple input methods (events)
     /// <summary>
     ///   Occurs when the left mouse button is pressed, providing the position in pixels.
     /// </summary>
@@ -27,6 +31,7 @@ public interface IInputService
     /// </summary>
     event Action<float>? OnMouseScroll;
 
+    // Advanced input methods (detailed keyboard handling)
     /// <summary>
     ///   Occurs when any key is pressed, providing the <see cref="Silk.NET.Input.Key" />.
     /// </summary>

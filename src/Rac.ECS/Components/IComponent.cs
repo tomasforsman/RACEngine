@@ -43,5 +43,6 @@ namespace Rac.ECS.Components;
 /// </example>
 public interface IComponent
 {
-    // TODO: implement IComponent
+    // Marker interface for ECS components - no members required
+    // Components should be implemented as readonly record structs for performance and immutability
 }
