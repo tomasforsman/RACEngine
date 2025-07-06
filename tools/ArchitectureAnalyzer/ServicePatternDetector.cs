@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 
 namespace ArchitectureAnalyzer;
 
@@ -23,7 +24,7 @@ public class ServicePatternDetector
         if (IsServiceInterface(interfaceName))
         {
             var moduleName = ExtractModuleName(interfaceName);
-            var methods = GetPublicMethods(interfaceDecl);
+            var methods = GetPublicMembers(interfaceDecl);
             
             var pattern = GetOrCreatePattern(moduleName);
             pattern.ServiceInterface = interfaceName;
@@ -56,7 +57,7 @@ public class ServicePatternDetector
                 else
                 {
                     pattern.Implementation = className;
-                    var methods = GetPublicMethods(classDecl);
+                    var methods = GetPublicMembers(classDecl);
                     pattern.ImplementationMethods.AddRange(methods);
                 }
             }
@@ -65,7 +66,7 @@ public class ServicePatternDetector
         // Check if this is a facade class (EngineFacade or {Module}Facade)
         if (IsFacadeClass(className))
         {
-            var methods = GetPublicMethods(classDecl);
+            var methods = GetPublicMembers(classDecl);
             
             // For EngineFacade, distribute methods to appropriate modules based on context
             if (className == "EngineFacade" || className == "ModularEngineFacade")
@@ -132,21 +133,57 @@ public class ServicePatternDetector
         // Exclude advanced methods with many parameters or complex names
         var basicPrefixes = new[] { "Play", "Stop", "Set", "Get", "Create", "Destroy", "Add", "Remove", "Load", "Save" };
         var advancedKeywords = new[] { "3D", "Advanced", "Complex", "Detailed", "Internal" };
+        
+        // Input events are considered basic facade operations
+        var inputEvents = new[] { "KeyEvent", "LeftClickEvent", "MouseScrollEvent", "OnLeftClick", "OnMouseScroll", "PressedKey", "OnKeyEvent" };
 
         var isBasicPrefix = basicPrefixes.Any(prefix => methodName.StartsWith(prefix));
         var hasAdvancedKeyword = advancedKeywords.Any(keyword => methodName.Contains(keyword));
+        var isInputEvent = inputEvents.Contains(methodName);
 
-        return isBasicPrefix && !hasAdvancedKeyword;
+        return (isBasicPrefix && !hasAdvancedKeyword) || isInputEvent;
     }
 
-    private static List<string> GetPublicMethods(TypeDeclarationSyntax typeDecl)
+    private static List<string> GetPublicMembers(TypeDeclarationSyntax typeDecl)
     {
-        return typeDecl.Members
+        var members = new List<string>();
+        
+        // Get public methods
+        var methods = typeDecl.Members
             .OfType<MethodDeclarationSyntax>()
             .Where(m => m.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PublicKeyword) ||
                        (typeDecl is InterfaceDeclarationSyntax)) // Interface methods are implicitly public
-            .Select(m => m.Identifier.ValueText)
-            .ToList();
+            .Select(m => m.Identifier.ValueText);
+        
+        members.AddRange(methods);
+        
+        // Get public events (important for facade pattern detection)
+        var events = typeDecl.Members
+            .OfType<EventDeclarationSyntax>()
+            .Where(e => e.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PublicKeyword) ||
+                       (typeDecl is InterfaceDeclarationSyntax)) // Interface events are implicitly public
+            .Select(e => e.Identifier.ValueText);
+        
+        // Also check for event field declarations (like "public event Action<> EventName;")
+        var eventFields = typeDecl.Members
+            .OfType<EventFieldDeclarationSyntax>()
+            .Where(e => e.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PublicKeyword) ||
+                       (typeDecl is InterfaceDeclarationSyntax))
+            .SelectMany(e => e.Declaration.Variables.Select(v => v.Identifier.ValueText));
+        
+        members.AddRange(events);
+        members.AddRange(eventFields);
+        
+        // Get public properties (for comprehensive facade coverage)
+        var properties = typeDecl.Members
+            .OfType<PropertyDeclarationSyntax>()
+            .Where(p => p.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PublicKeyword) ||
+                       (typeDecl is InterfaceDeclarationSyntax)) // Interface properties are implicitly public
+            .Select(p => p.Identifier.ValueText);
+        
+        members.AddRange(properties);
+        
+        return members;
     }
 
     private static List<string> GetImplementedInterfaces(ClassDeclarationSyntax classDecl, SemanticModel? semanticModel)
@@ -212,7 +249,8 @@ public class ServicePatternDetector
             return "Audio";
         if (methodName.Contains("Render") || methodName.Contains("Draw") || methodName.Contains("Color"))
             return "Rendering";
-        if (methodName.Contains("Input") || methodName.Contains("Key") || methodName.Contains("Mouse"))
+        if (methodName.Contains("Input") || methodName.Contains("Key") || methodName.Contains("Mouse") || 
+            methodName == "KeyEvent" || methodName == "LeftClickEvent" || methodName == "MouseScrollEvent")
             return "Input";
         if (methodName.Contains("Physics") || methodName.Contains("Collision"))
             return "Physics";

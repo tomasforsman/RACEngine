@@ -1,8 +1,8 @@
 # Progressive Complexity Health Report
 
-*Last updated: July 6, 2025 at 18:56 UTC*
+*Last updated: July 6, 2025 at 19:27 UTC*
 
-## Overall Architecture Health: 27% ❌
+## Overall Architecture Health: 25% ❌
 
 **Critical**: Significant facade coverage gaps impact educational accessibility.
 
@@ -28,19 +28,22 @@
 
 **Priority**: ⚠️ Medium - Moderate improvements needed for better discoverability
 
-### ⌨️ Input System - 0% ❌ Critical
+### ⌨️ Input System - 20% ❌ Critical
 
 **Coverage Metrics:**
-- **Facade Coverage**: 0% 🔴 (critical gaps)
+- **Facade Coverage**: 20% 🔴 (critical gaps)
 - **Service Coverage**: 100% 🟢 (excellent coverage)
 
 **Architecture Details:**
 - **Service Interface**: `IInputService`
 - **Implementation**: `SilkInputService`
-- **Facade Access**: No facade layer detected
+- **Facade Access**: EngineFacade.Input.*
 
 **Improvement Opportunities:**
 - Add facade methods for common input operations
+- Consider adding OnLeftClick() convenience method
+- Consider adding OnMouseScroll() convenience method
+- Consider adding PressedKey() convenience method
 
 **Priority**: 🔥 High - Critical facade coverage gap impacts beginner accessibility
 
@@ -72,7 +75,7 @@
 **Architecture Details:**
 - **Service Interface**: `IAudioService`
 - **Implementation**: `OpenALAudioService`
-- **Facade Access**: No facade layer detected
+- **Facade Access**: EngineFacade.Audio.*
 
 **Improvement Opportunities:**
 - Add facade methods for common audio operations
@@ -99,12 +102,30 @@
 
 **Priority**: 🔥 High - Critical facade coverage gap impacts beginner accessibility
 
+### 🎨 Rendering System - 0% ❌ Critical
+
+**Coverage Metrics:**
+- **Facade Coverage**: 0% 🔴 (critical gaps)
+- **Service Coverage**: 0% 🔴 (critical gaps)
+
+**Architecture Details:**
+- **Service Interface**: ``
+- **Implementation**: ``
+- **Facade Access**: EngineFacade.Rendering.*
+
+**Improvement Opportunities:**
+- Add facade methods for common rendering operations
+- Create IRenderingService interface for dependency injection support
+
+**Priority**: 🔥 High - Critical facade coverage gap impacts beginner accessibility
+
 ## Architecture Recommendations
 
 ### 🚨 Critical Actions Needed
 
 - **Input**: Create facade layer for beginner accessibility
 - **ECS**: Create facade layer for beginner accessibility
+- **Rendering**: Create facade layer for beginner accessibility
 - **Audio**: Create facade layer for beginner accessibility
 - **Physics**: Create facade layer for beginner accessibility
 
