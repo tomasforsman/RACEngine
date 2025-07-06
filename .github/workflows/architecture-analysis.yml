@@ -1,0 +1,119 @@
+name: Architecture Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze-architecture:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Build Architecture Analyzer
+        run: |
+          dotnet build tools/ArchitectureAnalyzer/ArchitectureAnalyzer.csproj --configuration Release
+          
+      - name: Run Architecture Analysis
+        run: |
+          dotnet run --project tools/ArchitectureAnalyzer/ArchitectureAnalyzer.csproj --configuration Release
+          
+      - name: Upload Architecture Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-metrics
+          path: tools/artifacts/architecture-metrics/
+          retention-days: 90
+          
+      - name: Commit Documentation Updates
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Check if there are changes to commit
+          if git diff --quiet docs/architecture/progressive-complexity-report.md; then
+            echo "No documentation changes to commit"
+          else
+            git add docs/architecture/progressive-complexity-report.md
+            git commit -m "Update Progressive Complexity architecture report [skip ci]"
+            git push
+          fi
+          
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find the latest metrics file
+            const metricsDir = 'tools/artifacts/architecture-metrics';
+            const files = fs.readdirSync(metricsDir);
+            const latestMetrics = files
+              .filter(f => f.startsWith('metrics-') && f.endsWith('.json'))
+              .sort()
+              .pop();
+            
+            if (!latestMetrics) {
+              console.log('No metrics file found');
+              return;
+            }
+            
+            const metricsPath = path.join(metricsDir, latestMetrics);
+            const metrics = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
+            
+            // Generate PR comment with architecture impact
+            const overallHealth = metrics.OverallHealth.toFixed(1);
+            const healthIcon = overallHealth >= 70 ? '🎯' : overallHealth >= 50 ? '✅' : overallHealth >= 30 ? '⚠️' : '❌';
+            
+            const modulesSummary = metrics.Modules
+              .map(m => {
+                const icon = m.FacadeCoverage >= 70 ? '🟢' : m.FacadeCoverage >= 50 ? '🟡' : m.FacadeCoverage >= 30 ? '🟠' : '🔴';
+                return `- **${m.Name}**: ${m.FacadeCoverage.toFixed(0)}% facade coverage ${icon}`;
+              })
+              .join('\n');
+            
+            const comment = `## 📊 Progressive Complexity Architecture Analysis
+            
+            **Overall Health**: ${overallHealth}% ${healthIcon}
+            
+            ### Module Coverage Summary:
+            ${modulesSummary}
+            
+            ### Key Insights:
+            ${metrics.Modules
+              .filter(m => m.Opportunities.length > 0)
+              .slice(0, 3)
+              .map(m => `- **${m.Name}**: ${m.Opportunities[0]}`)
+              .join('\n') || '- All modules have good architecture patterns'}
+            
+            *This analysis shows how well each module follows RACEngine's Progressive Complexity patterns.*
+            
+            <details>
+            <summary>📚 About Progressive Complexity</summary>
+            
+            RACEngine follows a Progressive Complexity principle where systems provide three access layers:
+            - **Facade Layer**: Simple methods for common use cases (e.g., \`engine.PlaySound()\`)
+            - **Service Interface Layer**: Full feature access with DI support (e.g., \`IAudioService\`)
+            - **Implementation Layer**: Direct access for engine contributors (e.g., \`OpenALAudioService\`)
+            
+            Higher facade coverage indicates better beginner accessibility.
+            </details>`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
