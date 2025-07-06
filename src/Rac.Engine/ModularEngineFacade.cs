@@ -1,3 +1,5 @@
+using Rac.Assets;
+using Rac.Assets.FileSystem;
 using Rac.Audio;
 using Rac.Core.Logger;
 using Rac.Core.Manager;
@@ -30,6 +32,7 @@ public class ModularEngineFacade : IEngineFacade
     private readonly SystemScheduler _systems;
     private readonly IRenderer _renderer;
     private readonly IAudioService _audio;
+    private readonly IAssetService _assets;
     private readonly ICameraManager _cameraManager;
     private readonly IContainerService _container;
     private readonly TransformSystem _transformSystem;
@@ -61,6 +64,11 @@ public class ModularEngineFacade : IEngineFacade
         // Initialize audio service (use null object pattern as fallback)
         _audio = new NullAudioService();
 
+        // Initialize asset service with default configuration
+        _assets = AssetServiceBuilder.Create()
+            .WithBasePath("assets")
+            .Build();
+
         // Initialize camera manager for dual-camera system
         _cameraManager = new CameraManager();
 
@@ -84,6 +92,7 @@ public class ModularEngineFacade : IEngineFacade
     public SystemScheduler Systems => _systems;
     public IRenderer Renderer => _renderer;
     public IAudioService Audio => _audio;
+    public IAssetService Assets => _assets;
     public ICameraManager CameraManager => _cameraManager;
     public IWindowManager WindowManager => _windowManager;
     public IContainerService Container => _container;

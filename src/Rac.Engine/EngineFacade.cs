@@ -1,5 +1,7 @@
 ﻿// File: src/Rac.Engine/EngineFacade.cs
 
+using Rac.Assets;
+using Rac.Assets.FileSystem;
 using Rac.Audio;
 using Rac.Core.Manager;
 using Rac.ECS.Core;
@@ -36,6 +38,11 @@ public class EngineFacade : IEngineFacade
 
         // Initialize audio service (use null object pattern as fallback)
         Audio = new NullAudioService();
+
+        // Initialize asset service with default configuration
+        Assets = AssetServiceBuilder.Create()
+            .WithBasePath("assets")
+            .Build();
 
         // Initialize transform system (required for container operations)
         _transformSystem = new TransformSystem();
@@ -75,6 +82,7 @@ public class EngineFacade : IEngineFacade
     public SystemScheduler Systems { get; }
     public IRenderer Renderer => _inner.Renderer;
     public IAudioService Audio { get; }
+    public IAssetService Assets { get; }
     public ICameraManager CameraManager { get; }
     public IWindowManager WindowManager => _windowManager;
     public IContainerService Container { get; }

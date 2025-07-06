@@ -9,6 +9,7 @@
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Rac.Assets\Rac.Assets.csproj" />
     <ProjectReference Include="..\Rac.Audio\Rac.Audio.csproj" />
     <ProjectReference Include="..\Rac.Core\Rac.Core.csproj" />
     <ProjectReference Include="..\Rac.ECS\Rac.ECS.csproj" />
