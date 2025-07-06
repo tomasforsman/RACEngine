@@ -1,3 +1,4 @@
+using Rac.Assets;
 using Rac.Audio;
 using Rac.Core.Manager;
 using Rac.ECS.Core;
@@ -485,6 +486,7 @@ internal class TestEngineFacade : IEngineFacade
     public SystemScheduler Systems => throw new NotImplementedException();
     public IRenderer Renderer => throw new NotImplementedException();
     public IAudioService Audio => throw new NotImplementedException();
+    public IAssetService Assets => throw new NotImplementedException();
     public ICameraManager CameraManager => throw new NotImplementedException();
     public IWindowManager WindowManager => throw new NotImplementedException();
     public IContainerService Container => throw new NotImplementedException();

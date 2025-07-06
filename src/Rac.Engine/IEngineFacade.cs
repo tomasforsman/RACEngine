@@ -1,3 +1,4 @@
+using Rac.Assets;
 using Rac.Audio;
 using Rac.Core.Manager;
 using Rac.ECS.Core;
@@ -26,6 +27,9 @@ public interface IEngineFacade
 
     /// <summary>Gets the audio service for sound and music playback.</summary>
     IAudioService Audio { get; }
+
+    /// <summary>Gets the asset service for loading textures, audio, and other game assets.</summary>
+    IAssetService Assets { get; }
 
     /// <summary>Gets the camera manager for dual-camera system (game world and UI).</summary>
     ICameraManager CameraManager { get; }
