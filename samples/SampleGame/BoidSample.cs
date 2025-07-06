@@ -58,6 +58,8 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using System.Linq;
 
+using Rac.ECS.Systems.HealthMonitoring;
+
 namespace SampleGame;
 
 public static class BoidSample
@@ -135,8 +137,8 @@ public static class BoidSample
         // Settings Entity: Holds global configuration data (boundary constraints, interaction rules)
 
         var world = engine.World;
-        var boidSystem = new BoidSystem();
-        
+        var boidSystem = new BoidSystem().WithHealthMonitoring();
+
         engine.AddSystem(boidSystem);
         var settingsEntity = world.CreateEntity();
 
@@ -470,13 +472,13 @@ public static class BoidSample
             // ─── Camera Movement Controls (WASD) ─────────────────────────────────────
             const float cameraSpeed = 0.1f;
             var camera = engine.CameraManager.GameCamera;
-            
+
             switch (key)
             {
                 case Key.W: // Move camera up
                     camera.Move(new Vector2D<float>(0f, cameraSpeed));
                     break;
-                case Key.A: // Move camera left  
+                case Key.A: // Move camera left
                     camera.Move(new Vector2D<float>(-cameraSpeed, 0f));
                     break;
                 case Key.S: // Move camera down
@@ -485,12 +487,12 @@ public static class BoidSample
                 case Key.D: // Move camera right
                     camera.Move(new Vector2D<float>(cameraSpeed, 0f));
                     break;
-                
+
                 // ─── Shader Mode Controls (M) ───────────────────────────────────────
                 case Key.M: // Cycle shader modes (moved from S to avoid conflict)
                     CycleShaderMode();
                     break;
-                
+
                 // ─── Camera Zoom Controls (Q/E) ─────────────────────────────────────
                 case Key.Q: // Zoom out
                     camera.Zoom = Math.Max(0.1f, camera.Zoom - 0.1f);
@@ -498,7 +500,7 @@ public static class BoidSample
                 case Key.E: // Zoom in
                     camera.Zoom = Math.Min(5f, camera.Zoom + 0.1f);
                     break;
-                
+
                 // ─── Camera Reset (R) ────────────────────────────────────────────────
                 case Key.R:
                     camera.Position = Vector2D<float>.Zero;
@@ -506,7 +508,7 @@ public static class BoidSample
                     camera.Rotation = 0f;
                     Console.WriteLine("Camera reset to origin");
                     break;
-                
+
                 // ─── UI Toggle (Tab) ─────────────────────────────────────────────────
                 case Key.Tab:
                     showUIOverlay = !showUIOverlay;
@@ -520,8 +522,8 @@ public static class BoidSample
             // Convert screen coordinates to world coordinates using camera manager
             var windowSize = engine.WindowManager.Size;
             var worldPosition = engine.CameraManager.ScreenToGameWorld(
-                screenPosition, 
-                windowSize.X, 
+                screenPosition,
+                windowSize.X,
                 windowSize.Y
             );
 
@@ -539,11 +541,11 @@ public static class BoidSample
         void HandleMouseScroll(float delta, EngineFacade engine)
         {
             var camera = engine.CameraManager.GameCamera;
-            
+
             // Zoom with mouse wheel
             const float zoomSensitivity = 0.1f;
             float zoomDelta = delta * zoomSensitivity;
-            
+
             // Apply zoom with limits
             camera.Zoom = Math.Max(0.1f, Math.Min(10f, camera.Zoom + zoomDelta));
         }
@@ -629,7 +631,7 @@ public static class BoidSample
                     obj.Position.X - halfSize, obj.Position.Y - halfSize,
                     obj.Position.X + halfSize, obj.Position.Y - halfSize,
                     obj.Position.X + halfSize, obj.Position.Y + halfSize,
-                    
+
                     // Triangle 2
                     obj.Position.X - halfSize, obj.Position.Y - halfSize,
                     obj.Position.X + halfSize, obj.Position.Y + halfSize,
@@ -654,14 +656,14 @@ public static class BoidSample
             // Uses geometric shapes as placeholders for text-based information display.
 
             var camera = engine.CameraManager.GameCamera;
-            
+
             // UI Panel background (top-left corner)
             DrawUIQuad(-380f, 250f, 200f, 120f, new Vector4D<float>(0.1f, 0.1f, 0.3f, 0.8f), engine);
 
             // Camera position indicators (colored bars representing X and Y)
             float posX = Math.Clamp(camera.Position.X * 50f, -80f, 80f);
             float posY = Math.Clamp(camera.Position.Y * 50f, -80f, 80f);
-            
+
             DrawUIQuad(-350f, 220f, posX, 10f, new Vector4D<float>(1f, 0f, 0f, 1f), engine); // X position (red)
             DrawUIQuad(-350f, 200f, posY, 10f, new Vector4D<float>(0f, 1f, 0f, 1f), engine); // Y position (green)
 
@@ -684,9 +686,9 @@ public static class BoidSample
             var vertices = new float[]
             {
                 x, y,                    // Bottom-left
-                x + width, y,           // Bottom-right  
+                x + width, y,           // Bottom-right
                 x + width, y + height,  // Top-right
-                
+
                 x, y,                   // Bottom-left
                 x + width, y + height,  // Top-right
                 x, y + height,          // Top-left
