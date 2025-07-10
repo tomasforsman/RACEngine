@@ -14,6 +14,7 @@
 using Rac.Rendering.Camera;
 using Rac.Rendering.Pipeline;
 using Rac.Rendering.Shader;
+using Rac.Assets.Types;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
@@ -197,6 +198,12 @@ public class OpenGLRenderer : IRenderer, IDisposable
         ValidateRenderingState();
         _processor!.SetColor(rgba);
     }
+
+    public void SetTexture(Assets.Types.Texture texture)
+    {
+        ValidateRenderingState();
+        _processor!.SetTexture(texture);
+    }
     
     public void SetCameraMatrix(Matrix4X4<float> cameraMatrix)
     {
@@ -358,6 +365,9 @@ public class OpenGLRenderer : IRenderer, IDisposable
     {
         try
         {
+            // Clear any pending OpenGL errors before disposal/reinitialization
+            _gl.GetError(); 
+
             // Dispose existing phases in reverse order
             _postProcessor?.Dispose();
             _processor = null;

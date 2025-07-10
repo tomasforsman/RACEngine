@@ -33,32 +33,32 @@ namespace Rac.Assets.FileSystem;
 
 /// <summary>
 /// File-based asset service with plugin architecture and intelligent caching.
-/// 
+///
 /// EDUCATIONAL PURPOSE:
 /// This implementation demonstrates professional asset service design:
 /// - Plugin architecture allows adding new asset types without code changes
 /// - Intelligent caching balances memory usage with loading performance
 /// - Async support prevents blocking the main thread during asset loading
 /// - Path resolution provides flexible asset organization strategies
-/// 
+///
 /// PLUGIN ARCHITECTURE BENEFITS:
 /// - Extensibility: New asset types added by implementing IAssetLoader&lt;T&gt;
 /// - Modularity: Each asset type has independent loading logic
 /// - Testability: Loaders can be tested in isolation
 /// - Performance: Specialized loaders optimize for specific formats
-/// 
+///
 /// CACHING STRATEGY:
 /// - Type-specific caches for different asset categories
 /// - LRU eviction prevents memory exhaustion
 /// - Configurable memory limits per asset type
 /// - Cache warming through preloading for predictable access patterns
-/// 
+///
 /// PATH RESOLUTION:
 /// - Base path configuration for asset root directory
 /// - Relative path support for portable asset references
 /// - Cross-platform path handling for compatibility
 /// - Asset discovery and validation
-/// 
+///
 /// ASYNC LOADING PIPELINE:
 /// - Non-blocking I/O prevents frame rate drops
 /// - Parallel loading for multiple assets
@@ -126,23 +126,23 @@ public class FileAssetService : IAssetService, IDisposable
     public T LoadAsset<T>(string path) where T : class
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-
-        if (string.IsNullOrWhiteSpace(path))
-            throw new ArgumentException("Asset path cannot be null or empty", nameof(path));
+        var _fullPath = Path.Combine(_basePath, path);
+        if (string.IsNullOrWhiteSpace(_fullPath))
+            throw new ArgumentException("Asset path cannot be null or empty", nameof(_fullPath));
 
         // Try cache first for performance
         var cache = GetOrCreateCache<T>();
-        if (cache.TryGet(path, out var cachedAsset))
+        if (cache.TryGet(_fullPath, out var cachedAsset))
         {
             return cachedAsset!;
         }
 
         // Load from file system
-        var asset = LoadAssetFromFile<T>(path);
-        
+        var asset = LoadAssetFromFile<T>(_fullPath);
+
         // Cache the loaded asset
-        cache.Store(path, asset);
-        
+        cache.Store(_fullPath, asset);
+
         return asset;
     }
 
@@ -265,7 +265,7 @@ public class FileAssetService : IAssetService, IDisposable
 
     /// <summary>
     /// Registers an asset loader for the specified asset type.
-    /// 
+    ///
     /// EDUCATIONAL PURPOSE:
     /// Plugin registration enables extensible asset systems:
     /// - Type safety through generic constraints
@@ -288,7 +288,7 @@ public class FileAssetService : IAssetService, IDisposable
 
     /// <summary>
     /// Loads an asset from the file system using the appropriate loader.
-    /// 
+    ///
     /// EDUCATIONAL IMPLEMENTATION:
     /// Demonstrates the complete asset loading pipeline:
     /// 1. Path resolution and validation
@@ -304,7 +304,7 @@ public class FileAssetService : IAssetService, IDisposable
     {
         // Resolve full file path
         var fullPath = Path.Combine(_basePath, relativePath);
-        
+
         if (!File.Exists(fullPath))
         {
             throw new FileNotFoundException($"Asset file not found: {fullPath}");
@@ -312,7 +312,7 @@ public class FileAssetService : IAssetService, IDisposable
 
         // Get file extension for loader selection
         var extension = Path.GetExtension(fullPath).ToLowerInvariant();
-        
+
         // Get appropriate loader
         var loader = GetLoader<T>();
         if (!loader.CanLoad(extension))
@@ -339,7 +339,7 @@ public class FileAssetService : IAssetService, IDisposable
     private IAssetCache<T> GetOrCreateCache<T>() where T : class
     {
         var assetType = typeof(T);
-        
+
         if (_caches.TryGetValue(assetType, out var existingCache))
         {
             return (IAssetCache<T>)existingCache;
@@ -406,7 +406,7 @@ public class FileAssetService : IAssetService, IDisposable
     private void LoadAssetByPath(string path)
     {
         var extension = Path.GetExtension(path).ToLowerInvariant();
-        
+
         try
         {
             switch (extension)
@@ -439,7 +439,7 @@ public class FileAssetService : IAssetService, IDisposable
             {
                 cache.Dispose();
             }
-            
+
             _caches.Clear();
             _loaders.Clear();
             _disposed = true;

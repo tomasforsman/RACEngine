@@ -1,4 +1,5 @@
 using Rac.Assets;
+using Rac.Assets.Types;
 using Rac.Audio;
 using Rac.Core.Manager;
 using Rac.ECS.Core;
@@ -143,4 +144,135 @@ public interface IEngineFacade
     /// <param name="localPosition">Local position within the container</param>
     /// <exception cref="ArgumentException">Thrown when target entity is not a container</exception>
     void PlaceInContainer(Entity item, Entity container, Vector2D<float> localPosition);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ASSET LOADING CONVENIENCE METHODS (LAYER 1: BEGINNER API)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Loads a texture from the specified file path.
+    /// 
+    /// EDUCATIONAL PURPOSE:
+    /// This method demonstrates the simplest possible asset loading experience:
+    /// - No configuration required - works immediately
+    /// - Intuitive naming matches the asset type being loaded
+    /// - Automatic caching for performance optimization
+    /// - Clear error messages guide troubleshooting
+    /// 
+    /// BEGINNER-FRIENDLY DESIGN:
+    /// - Method name clearly indicates what it does and returns
+    /// - Single parameter keeps API surface minimal
+    /// - Throws descriptive exceptions for common issues
+    /// - Works with relative paths from standard "assets" directory
+    /// 
+    /// PERFORMANCE BENEFITS:
+    /// - Automatic caching prevents redundant file loading
+    /// - Lazy service initialization minimizes startup time
+    /// - Efficient PNG decoding through optimized loaders
+    /// - Memory management through automatic cache policies
+    /// </summary>
+    /// <param name="filename">Relative path to texture file (e.g., "player.png", "ui/button.png")</param>
+    /// <returns>Loaded texture ready for rendering</returns>
+    /// <exception cref="FileNotFoundException">Thrown when texture file doesn't exist</exception>
+    /// <exception cref="ArgumentException">Thrown when filename is null or empty</exception>
+    /// <exception cref="FormatException">Thrown when file format is invalid or unsupported</exception>
+    /// <example>
+    /// <code>
+    /// // Load player sprite texture
+    /// var playerTexture = engine.LoadTexture("sprites/player.png");
+    /// 
+    /// // Load UI button texture
+    /// var buttonTexture = engine.LoadTexture("ui/button.png");
+    /// 
+    /// // Use with renderer
+    /// renderer.DrawSprite(playerTexture, position, size);
+    /// </code>
+    /// </example>
+    Texture LoadTexture(string filename);
+
+    /// <summary>
+    /// Loads an audio clip from the specified file path.
+    /// 
+    /// EDUCATIONAL PURPOSE:
+    /// Audio loading demonstrates handling of binary asset types:
+    /// - Different asset type but same simple loading pattern
+    /// - Automatic format detection and validation
+    /// - Memory-efficient loading for various audio sizes
+    /// - Consistent error handling across asset types
+    /// 
+    /// AUDIO ASSET CHARACTERISTICS:
+    /// - WAV format provides uncompressed, high-quality audio
+    /// - Suitable for sound effects requiring immediate playback
+    /// - Larger file sizes than compressed formats (MP3, OGG)
+    /// - Universal compatibility across audio systems
+    /// 
+    /// PERFORMANCE CONSIDERATIONS:
+    /// - Audio assets can be large - caching is beneficial
+    /// - Uncompressed format enables immediate playback
+    /// - Memory usage scales with audio length and quality
+    /// - Consider audio compression for music vs. sound effects
+    /// </summary>
+    /// <param name="filename">Relative path to audio file (e.g., "jump.wav", "music/theme.wav")</param>
+    /// <returns>Loaded audio clip ready for playback</returns>
+    /// <exception cref="FileNotFoundException">Thrown when audio file doesn't exist</exception>
+    /// <exception cref="ArgumentException">Thrown when filename is null or empty</exception>
+    /// <exception cref="FormatException">Thrown when file format is invalid or unsupported</exception>
+    /// <example>
+    /// <code>
+    /// // Load sound effect
+    /// var jumpSound = engine.LoadAudio("sfx/jump.wav");
+    /// 
+    /// // Load background music
+    /// var bgMusic = engine.LoadAudio("music/level1.wav");
+    /// 
+    /// // Use with audio system
+    /// engine.Audio.PlaySound(jumpSound, volume: 0.8f);
+    /// engine.Audio.PlayMusic(bgMusic, loop: true);
+    /// </code>
+    /// </example>
+    AudioClip LoadAudio(string filename);
+
+    /// <summary>
+    /// Loads shader source code from the specified file path.
+    /// 
+    /// EDUCATIONAL PURPOSE:
+    /// Text asset loading demonstrates versatility of the asset system:
+    /// - Same loading pattern works for different data types
+    /// - Text assets enable data-driven game development
+    /// - Automatic encoding detection for cross-platform compatibility
+    /// - Foundation for more complex asset types (JSON, XML, scripts)
+    /// 
+    /// SHADER DEVELOPMENT WORKFLOW:
+    /// - External shader files enable live editing during development
+    /// - Version control friendly (text-based, diff-friendly)
+    /// - Shader compilation happens at runtime for flexibility
+    /// - Easy to share and modify shader effects
+    /// 
+    /// TEXT ASSET USE CASES:
+    /// - Shader source code (vertex, fragment, compute shaders)
+    /// - Configuration files (JSON, XML, INI formats)
+    /// - Game scripts (Lua, JavaScript, custom scripting languages)
+    /// - Localization data (text strings, dialog, UI text)
+    /// </summary>
+    /// <param name="filename">Relative path to text file (e.g., "basic.vert", "config.json")</param>
+    /// <returns>Loaded text content as string</returns>
+    /// <exception cref="FileNotFoundException">Thrown when text file doesn't exist</exception>
+    /// <exception cref="ArgumentException">Thrown when filename is null or empty</exception>
+    /// <exception cref="FormatException">Thrown when text encoding is invalid</exception>
+    /// <example>
+    /// <code>
+    /// // Load vertex shader source
+    /// var vertexShader = engine.LoadShaderSource("shaders/basic.vert");
+    /// 
+    /// // Load fragment shader source  
+    /// var fragmentShader = engine.LoadShaderSource("shaders/basic.frag");
+    /// 
+    /// // Load configuration file
+    /// var config = engine.LoadShaderSource("config.json");
+    /// 
+    /// // Use with graphics system
+    /// var shader = graphics.CreateShader(vertexShader, fragmentShader);
+    /// </code>
+    /// </example>
+    string LoadShaderSource(string filename);
 }

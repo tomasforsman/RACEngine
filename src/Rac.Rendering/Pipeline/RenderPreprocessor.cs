@@ -14,6 +14,7 @@
 
 using Rac.Rendering.Shader;
 using Rac.Rendering.VFX;
+using Rac.Assets.Types;
 using Silk.NET.OpenGL;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +57,10 @@ public class RenderPreprocessor : IDisposable
     
     // Post-processing resources
     private PostProcessing? _postProcessing;
-    
+
+    // Texture resources
+    private readonly Dictionary<string, uint> _textureHandles = new();
+
     /// <summary>
     /// Encapsulates uniform variable locations for performance optimization
     /// </summary>
@@ -73,7 +77,7 @@ public class RenderPreprocessor : IDisposable
             CameraMatrixLocation = gl.GetUniformLocation(programHandle, "uCameraMatrix");
         }
     }
-    
+
     /// <summary>
     /// Creates a new render preprocessor.
     /// </summary>
@@ -83,41 +87,77 @@ public class RenderPreprocessor : IDisposable
     {
         _gl = gl ?? throw new ArgumentNullException(nameof(gl));
     }
-    
+
     /// <summary>
     /// Indicates whether preprocessing has been completed successfully.
     /// </summary>
     public bool IsPreprocessed => _isPreprocessed;
-    
+
     /// <summary>
     /// Provides access to compiled shader programs.
     /// </summary>
     public IReadOnlyDictionary<ShaderMode, ShaderProgram> Shaders => _shaders;
-    
+
     /// <summary>
     /// Provides access to shader uniform locations.
     /// </summary>
     public IReadOnlyDictionary<ShaderMode, ShaderUniforms> Uniforms => _uniforms;
-    
+
     /// <summary>
     /// Provides access to vertex array object.
     /// </summary>
     public uint VertexArrayObject => _vao;
-    
+
     /// <summary>
     /// Provides access to vertex buffer object.
     /// </summary>
     public uint VertexBufferObject => _vbo;
-    
+
     /// <summary>
     /// Provides access to element buffer object.
     /// </summary>
     public uint ElementBufferObject => _ebo;
-    
+
     /// <summary>
     /// Provides access to post-processing system.
     /// </summary>
     public PostProcessing? PostProcessingSystem => _postProcessing;
+
+    /// <summary>
+    /// Gets a texture handle for the given texture, creating it if necessary.
+    /// </summary>
+    public uint GetOrCreateTextureHandle(Rac.Assets.Types.Texture texture)
+    {
+        if (_textureHandles.TryGetValue(texture.SourcePath, out var handle))
+        {
+            return handle;
+        }
+
+        var newHandle = CreateTextureHandle(texture);
+        _textureHandles[texture.SourcePath] = newHandle;
+        return newHandle;
+    }
+
+    private uint CreateTextureHandle(Rac.Assets.Types.Texture texture)
+    {
+        var handle = _gl.GenTexture();
+        _gl.BindTexture(TextureTarget.Texture2D, handle);
+
+        unsafe
+        {
+            fixed (byte* p = texture.PixelData)
+            {
+                _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)texture.Width, (uint)texture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, p);
+            }
+        }
+
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+        return handle;
+    }
     
     /// <summary>
     /// Performs complete preprocessing pipeline with comprehensive validation.
@@ -431,23 +471,34 @@ void main()
         _shaders.Clear();
         _uniforms.Clear();
         
+        // Dispose texture handles
+        foreach (var handle in _textureHandles.Values)
+        {
+            _gl.DeleteTexture(handle);
+            _gl.GetError(); // Clear any errors after deletion
+        }
+        _textureHandles.Clear();
+
         // Dispose OpenGL resources
         if (_vao != 0)
         {
             _gl.DeleteVertexArray(_vao);
             _vao = 0;
+            _gl.GetError(); // Clear any errors after deletion
         }
         
         if (_vbo != 0)
         {
             _gl.DeleteBuffer(_vbo);
             _vbo = 0;
+            _gl.GetError(); // Clear any errors after deletion
         }
         
         if (_ebo != 0)
         {
             _gl.DeleteBuffer(_ebo);
             _ebo = 0;
+            _gl.GetError(); // Clear any errors after deletion
         }
         
         // Dispose post-processing
