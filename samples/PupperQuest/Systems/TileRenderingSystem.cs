@@ -3,6 +3,8 @@ using Rac.ECS.Systems;
 using Rac.ECS.Components;
 using Rac.Engine;
 using PupperQuest.Components;
+using Rac.Rendering;
+using Rac.Rendering.Geometry;
 using Silk.NET.Maths;
 
 namespace PupperQuest.Systems;
@@ -102,26 +104,24 @@ public class TileRenderingSystem : ISystem
 
     private void RenderSprite(TransformComponent transform, SpriteComponent sprite)
     {
-        // Create a simple rectangle for the sprite
+        // Create a rectangle using the proper FullVertex structure
         var position = transform.LocalPosition;
         var size = sprite.Size;
         
-        // Generate vertices for a rectangle
-        var vertices = new float[]
+        // Generate vertices using GeometryGenerators with proper FullVertex structure
+        var vertices = GeometryGenerators.CreateRectangle(size.X, size.Y, sprite.Color);
+        
+        // Transform vertices to world position
+        for (int i = 0; i < vertices.Length; i++)
         {
-            // Bottom-left triangle
-            position.X - size.X/2, position.Y - size.Y/2,  // Bottom-left
-            position.X + size.X/2, position.Y - size.Y/2,  // Bottom-right
-            position.X + size.X/2, position.Y + size.Y/2,  // Top-right
-            
-            // Top-right triangle  
-            position.X - size.X/2, position.Y - size.Y/2,  // Bottom-left
-            position.X + size.X/2, position.Y + size.Y/2,  // Top-right
-            position.X - size.X/2, position.Y + size.Y/2,  // Top-left
-        };
+            vertices[i] = new FullVertex(
+                vertices[i].Position + position,  // Apply position offset
+                vertices[i].TexCoord,             // Keep original texture coordinates
+                vertices[i].Color                 // Keep original color
+            );
+        }
 
-        // Set color and render
-        _engine.Renderer.SetColor(sprite.Color);
+        // Render using the structured vertex data
         _engine.Renderer.UpdateVertices(vertices);
         _engine.Renderer.Draw();
     }
