@@ -10,7 +10,8 @@ public static class Program
         ["camerademo"] = ("Interactive camera system demonstration with dual-camera rendering", CameraDemonstration.Run),
         ["pipelinedemo"] = ("Educational 4-phase rendering pipeline demonstration", RenderingPipelineDemo.Run),
         ["containersample"] = ("Container system demonstration with inventory and equipment patterns", ContainerSample.Run),
-        ["assetdemo"] = ("Assets system demonstration", AssetDemo.Run)
+        ["assetdemo"] = ("Assets system demonstration", AssetDemo.Run),
+        ["assetpathdemo"] = ("Asset path configuration demonstration", AssetPathDemo.Run)
     };
 
     public static void Main(string[] args)

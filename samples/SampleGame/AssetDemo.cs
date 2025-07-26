@@ -3,6 +3,7 @@ using Rac.Assets.FileSystem;
 using Rac.Engine;
 using Rac.Assets.Types;
 using Rac.Rendering;
+using Rac.Rendering.Shader;
 using Rac.Core.Manager;
 using Rac.Input.Service;
 using Silk.NET.Maths;
@@ -30,15 +31,14 @@ public class AssetDemo
     private IEngineFacade? _engine;
     private Texture? _sampleTexture;
     private AudioClip? _sampleAudio;
-    private IAssetService? _assetService;
 
-    // Square geometry for rendering
-    private readonly BasicVertex[] _squareVertices = new[]
+    // Square geometry for texture rendering with proper UV coordinates
+    private readonly TexturedVertex[] _squareVertices = new[]
     {
-        new BasicVertex(new Vector2D<float>(-100, -100)), // Bottom-left
-        new BasicVertex(new Vector2D<float>( 100, -100)), // Bottom-right
-        new BasicVertex(new Vector2D<float>( 100,  100)), // Top-right
-        new BasicVertex(new Vector2D<float>(-100,  100))  // Top-left
+        new TexturedVertex(new Vector2D<float>(-100, -100), new Vector2D<float>(0, 1)), // Bottom-left (UV: 0,1)
+        new TexturedVertex(new Vector2D<float>( 100, -100), new Vector2D<float>(1, 1)), // Bottom-right (UV: 1,1)
+        new TexturedVertex(new Vector2D<float>( 100,  100), new Vector2D<float>(1, 0)), // Top-right (UV: 1,0)
+        new TexturedVertex(new Vector2D<float>(-100,  100), new Vector2D<float>(0, 0))  // Top-left (UV: 0,0)
     };
 
     public static void Run(string[] args)
@@ -127,9 +127,7 @@ public class AssetDemo
 
             // Load audio using Engine facade (recommended approach)
             Console.WriteLine("Loading SampleAudio.wav...");
-            var _path = Path.Combine(AppContext.BaseDirectory, "Assets");
-            var _fullPath = Path.Combine(_path, "SampleAudio.wav");
-            if (_engine != null) _sampleAudio = _engine.LoadAudio(_fullPath);
+            _sampleAudio = _engine.LoadAudio("SampleAudio.wav");
             Console.WriteLine($"✓ Audio loaded: {_sampleAudio.Duration:F2}s, {_sampleAudio.SampleRate}Hz, {_sampleAudio.Channels} channels, {_sampleAudio.MemorySize / 1024}KB");
 
             // Demonstrate asset service integration
@@ -190,6 +188,9 @@ public class AssetDemo
         {
             // Clear the screen
             _engine.Renderer.Clear();
+
+            // Set shader mode for rendering (this was the missing piece!)
+            _engine.Renderer.SetShaderMode(ShaderMode.Normal);
 
             // Render textured square in the center of the screen
             if (_sampleTexture != null)
