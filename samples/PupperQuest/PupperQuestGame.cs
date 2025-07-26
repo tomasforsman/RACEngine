@@ -28,6 +28,7 @@ public class PupperQuestGame
 {
     private EngineFacade _engine = null!;
     private DungeonGenerator _dungeonGenerator = null!;
+    private GameStateSystem _gameStateSystem = null!;
     private int _currentLevel = 1;
     private const int LevelWidth = 25;
     private const int LevelHeight = 20;
@@ -72,8 +73,15 @@ public class PupperQuestGame
         _engine = new EngineFacade(windowManager, inputService, configurationManager);
         
         // Initialize game systems
+        var gameStateSystem = new GameStateSystem();
         _engine.AddSystem(new PlayerInputSystem(inputService));
         _engine.AddSystem(new GridMovementSystem());
+        _engine.AddSystem(new SimpleAISystem());
+        _engine.AddSystem(gameStateSystem);
+        _engine.AddSystem(new TileRenderingSystem(_engine));
+        
+        // Store reference for game loop
+        _gameStateSystem = gameStateSystem;
         
         Console.WriteLine("✅ Engine initialized");
     }
@@ -197,6 +205,7 @@ public class PupperQuestGame
             _engine.World.SetComponent(enemy, new GridPositionComponent(position.X, position.Y));
             _engine.World.SetComponent(enemy, new EnemyComponent(enemyType, 10, 3));
             _engine.World.SetComponent(enemy, new AIComponent(AIBehavior.Hostile, 0, Array.Empty<Vector2D<int>>()));
+            _engine.World.SetComponent(enemy, new MovementComponent(Vector2D<int>.Zero, 0));
             
             // Visual representation
             var color = GetEnemyColor(enemyType);
@@ -243,6 +252,24 @@ public class PupperQuestGame
     private void RunGameLoop()
     {
         Console.WriteLine("🎮 Starting game loop...");
+        
+        // Add update event to check for level progression
+        _engine.UpdateEvent += (deltaTime) =>
+        {
+            if (_gameStateSystem.ShouldAdvanceLevel)
+            {
+                _currentLevel++;
+                LoadLevel(_currentLevel);
+                _gameStateSystem.ResetLevelProgression();
+            }
+            
+            if (_gameStateSystem.IsGameLost)
+            {
+                Console.WriteLine("💔 Game Over! Press any key to exit...");
+                Environment.Exit(0);
+            }
+        };
+        
         _engine.Run();
     }
 
