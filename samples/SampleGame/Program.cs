@@ -33,6 +33,10 @@ public static class Program
                 ContainerSample.Run(args); // Container system demonstration
                 break;
 
+            case "pupperquest":
+                RunPupperQuest(args); // Grid-based roguelike puppy adventure
+                break;
+
             // ─── add more samples here ────────────────────
             // case "othersample": OtherSample.Run(args); break;
 
@@ -76,6 +80,7 @@ public static class Program
         Console.WriteLine("  camerademo      - Interactive camera system demonstration with dual-camera rendering");
         Console.WriteLine("  pipelinedemo    - Educational 4-phase rendering pipeline demonstration");
         Console.WriteLine("  containersample - Container system demonstration with inventory and equipment patterns");
+        Console.WriteLine("  pupperquest     - Grid-based roguelike puppy adventure game");
         // … list additional samples here …
         Console.Write("Enter sample name (or press Enter for default 'boidsample'): ");
         
@@ -114,10 +119,39 @@ public static class Program
         Console.WriteLine("  dotnet run -- camerademo");
         Console.WriteLine("  dotnet run -- pipelinedemo");
         Console.WriteLine("  dotnet run -- containersample");
+        Console.WriteLine("  dotnet run -- pupperquest");
         Console.WriteLine();
         Console.WriteLine("All samples demonstrate shader mode switching and engine features.");
         Console.WriteLine("The bloomtest specifically demonstrates HDR color bloom effects.");
         Console.WriteLine("The pipelinedemo provides educational insight into the 4-phase rendering architecture.");
         Console.WriteLine("The containersample showcases the ECS Container System with inventory and equipment patterns.");
+        Console.WriteLine("The pupperquest demonstrates grid-based roguelike gameplay with procedural generation and AI.");
+    }
+
+    private static void RunPupperQuest(string[] args)
+    {
+        Console.WriteLine("🐶 Launching PupperQuest...");
+        
+        // Create a new process to run PupperQuest
+        var pupperQuestPath = Path.Combine("..", "PupperQuest");
+        
+        if (Directory.Exists(pupperQuestPath))
+        {
+            var processStartInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "run",
+                WorkingDirectory = pupperQuestPath,
+                UseShellExecute = false
+            };
+            
+            using var process = System.Diagnostics.Process.Start(processStartInfo);
+            process?.WaitForExit();
+        }
+        else
+        {
+            Console.WriteLine("❌ PupperQuest project not found. Please ensure it's built properly.");
+            Console.WriteLine($"Expected path: {Path.GetFullPath(pupperQuestPath)}");
+        }
     }
 }
