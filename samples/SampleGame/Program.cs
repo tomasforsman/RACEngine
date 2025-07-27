@@ -1,71 +1,48 @@
-﻿namespace SampleGame;
+namespace SampleGame;
 
 public static class Program
 {
+    private static readonly Dictionary<string, (string description, Action<string[]> action)> Samples = new()
+    {
+        ["shootersample"] = ("Interactive shooter with shader mode switching (Normal/SoftGlow/Bloom)", ShooterSample.Run),
+        ["boidsample"] = ("Flocking simulation with visual effects demonstration", BoidSample.Run),
+        ["bloomtest"] = ("HDR bloom effect demonstration (Issue #51)", BloomTest.Run),
+        ["camerademo"] = ("Interactive camera system demonstration with dual-camera rendering", CameraDemonstration.Run),
+        ["pipelinedemo"] = ("Educational 4-phase rendering pipeline demonstration", RenderingPipelineDemo.Run),
+        ["containersample"] = ("Container system demonstration with inventory and equipment patterns", ContainerSample.Run),
+        ["assetdemo"] = ("Assets system demonstration", AssetDemo.Run),
+        ["assetpathdemo"] = ("Asset path configuration demonstration", AssetPathDemo.Run)
+    };
+
     public static void Main(string[] args)
     {
-        // Determine which sample to run
         string sample = args.Length > 0 ? args[0].ToLowerInvariant() : GetDefaultSample();
 
-        switch (sample)
+        if (Samples.TryGetValue(sample, out var sampleInfo))
         {
-            case "shootersample":
-                ShooterSample.Run(args);
-                break;
-
-            case "boidsample":
-                BoidSample.Run(args); // assume you add BoidSample.Run
-                break;
-
-            case "bloomtest":
-                BloomTest.Run(args); // HDR bloom demonstration test
-                break;
-
-            case "camerademo":
-                CameraDemonstration.Run(args); // Camera system demonstration
-                break;
-                
-            case "pipelinedemo":
-                RenderingPipelineDemo.Run(args); // 4-phase rendering pipeline demonstration
-                break;
-                
-            case "containersample":
-                ContainerSample.Run(args); // Container system demonstration
-                break;
-
-            case "pupperquest":
-                RunPupperQuest(args); // Grid-based roguelike puppy adventure
-                break;
-
-            // ─── add more samples here ────────────────────
-            // case "othersample": OtherSample.Run(args); break;
-
-            default:
-                Console.WriteLine($"Unknown sample: '{sample}'");
-                ShowUsage();
-                break;
+            sampleInfo.action(args);
+        }
+        else
+        {
+            Console.WriteLine($"Unknown sample: '{sample}'");
+            ShowUsage();
         }
     }
 
     private static string GetDefaultSample()
     {
-        // Check if we're in an interactive console environment
         try
         {
-            // Test if console input is available without actually reading
             if (Console.IsInputRedirected || !Environment.UserInteractive)
             {
-                // Non-interactive environment, use default
                 Console.WriteLine("Non-interactive environment detected, using default sample: boidsample");
                 return "boidsample";
             }
-            
-            // Interactive environment, show prompt
+
             return PromptForSample();
         }
         catch (Exception ex)
         {
-            // If any console detection fails, use default to avoid Windows bell sounds
             Console.WriteLine($"Console detection failed ({ex.Message}), using default sample: boidsample");
             return "boidsample";
         }
@@ -74,32 +51,27 @@ public static class Program
     private static string PromptForSample()
     {
         Console.WriteLine("Available samples:");
-        Console.WriteLine("  shootersample   - Interactive shooter with shader mode switching (Normal/SoftGlow/Bloom)");
-        Console.WriteLine("  boidsample      - Flocking simulation with visual effects demonstration");
-        Console.WriteLine("  bloomtest       - HDR bloom effect demonstration (Issue #51)");
-        Console.WriteLine("  camerademo      - Interactive camera system demonstration with dual-camera rendering");
-        Console.WriteLine("  pipelinedemo    - Educational 4-phase rendering pipeline demonstration");
-        Console.WriteLine("  containersample - Container system demonstration with inventory and equipment patterns");
-        Console.WriteLine("  pupperquest     - Grid-based roguelike puppy adventure game");
-        // … list additional samples here …
+        foreach (var (name, (description, _)) in Samples.OrderBy(kvp => kvp.Key))
+        {
+            Console.WriteLine($"  {name.PadRight(15)} - {description}");
+        }
+
         Console.Write("Enter sample name (or press Enter for default 'boidsample'): ");
-        
+
         try
         {
             string? input = Console.ReadLine();
-            
-            // Handle null input or empty input gracefully
+
             if (string.IsNullOrWhiteSpace(input))
             {
                 Console.WriteLine("No input detected, defaulting to 'boidsample'");
                 return "boidsample";
             }
-            
+
             return input.Trim().ToLowerInvariant();
         }
         catch (Exception ex)
         {
-            // Handle console input errors that might cause Windows bell sounds
             Console.WriteLine($"Console input error: {ex.Message}");
             Console.WriteLine("Defaulting to 'boidsample'");
             return "boidsample";
@@ -113,45 +85,11 @@ public static class Program
         Console.WriteLine("  dotnet run -- <sampleName>");
         Console.WriteLine();
         Console.WriteLine("Examples:");
-        Console.WriteLine("  dotnet run -- shootersample");
-        Console.WriteLine("  dotnet run -- boidsample");
-        Console.WriteLine("  dotnet run -- bloomtest");
-        Console.WriteLine("  dotnet run -- camerademo");
-        Console.WriteLine("  dotnet run -- pipelinedemo");
-        Console.WriteLine("  dotnet run -- containersample");
-        Console.WriteLine("  dotnet run -- pupperquest");
+        foreach (var sampleName in Samples.Keys.OrderBy(x => x))
+        {
+            Console.WriteLine($"  dotnet run -- {sampleName}");
+        }
         Console.WriteLine();
         Console.WriteLine("All samples demonstrate shader mode switching and engine features.");
-        Console.WriteLine("The bloomtest specifically demonstrates HDR color bloom effects.");
-        Console.WriteLine("The pipelinedemo provides educational insight into the 4-phase rendering architecture.");
-        Console.WriteLine("The containersample showcases the ECS Container System with inventory and equipment patterns.");
-        Console.WriteLine("The pupperquest demonstrates grid-based roguelike gameplay with procedural generation and AI.");
-    }
-
-    private static void RunPupperQuest(string[] args)
-    {
-        Console.WriteLine("🐶 Launching PupperQuest...");
-        
-        // Create a new process to run PupperQuest
-        var pupperQuestPath = Path.Combine("..", "PupperQuest");
-        
-        if (Directory.Exists(pupperQuestPath))
-        {
-            var processStartInfo = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = "run",
-                WorkingDirectory = pupperQuestPath,
-                UseShellExecute = false
-            };
-            
-            using var process = System.Diagnostics.Process.Start(processStartInfo);
-            process?.WaitForExit();
-        }
-        else
-        {
-            Console.WriteLine("❌ PupperQuest project not found. Please ensure it's built properly.");
-            Console.WriteLine($"Expected path: {Path.GetFullPath(pupperQuestPath)}");
-        }
     }
 }

@@ -13,6 +13,13 @@
       <Link>Shader\Files\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="bin\Debug\net8.0\SampleAudio.wav" />
+    <Content Include="bin\Debug\net8.0\SampleTexture.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\Debug\net8.0\config.ini" />

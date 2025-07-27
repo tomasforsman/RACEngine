@@ -22,4 +22,8 @@
   <ItemGroup>
     <Folder Include="Shader\Files\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Rac.Assets\Rac.Assets.csproj" />
+  </ItemGroup>
 </Project>

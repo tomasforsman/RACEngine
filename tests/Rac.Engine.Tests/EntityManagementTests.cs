@@ -1,4 +1,5 @@
 using Rac.Assets;
+using Rac.Assets.Types;
 using Rac.Audio;
 using Rac.Core.Manager;
 using Rac.ECS.Core;
@@ -535,4 +536,9 @@ internal class TestEngineFacade : IEngineFacade
     public Entity CreateContainer(string containerName) => throw new NotImplementedException();
     public void PlaceInContainer(Entity item, Entity container) => throw new NotImplementedException();
     public void PlaceInContainer(Entity item, Entity container, Vector2D<float> localPosition) => throw new NotImplementedException();
+
+    // Asset loading methods (not used in tests)
+    public Texture LoadTexture(string filename) => throw new NotImplementedException();
+    public AudioClip LoadAudio(string filename) => throw new NotImplementedException();
+    public string LoadShaderSource(string filename) => throw new NotImplementedException();
 }

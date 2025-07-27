@@ -2,6 +2,7 @@
 
 using Rac.Rendering.Shader;
 using Rac.Rendering.Camera;
+using Rac.Assets.Types;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
@@ -22,6 +23,9 @@ public interface IRenderer
 
     /// <summary>Set the RGBA color for subsequent draw calls.</summary>
     void SetColor(Vector4D<float> rgba);
+
+    /// <summary>Binds a texture for use in subsequent draw calls.</summary>
+    void SetTexture(Assets.Types.Texture texture);
 
     /// <summary>Upload vertex positions (2D) into the VBO.</summary>
     void UpdateVertices(float[] vertices);

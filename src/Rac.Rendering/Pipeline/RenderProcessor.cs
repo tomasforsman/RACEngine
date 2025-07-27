@@ -14,6 +14,7 @@
 
 using Rac.Rendering.Camera;
 using Rac.Rendering.Shader;
+using Rac.Assets.Types;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
@@ -159,6 +160,13 @@ public class RenderProcessor
     public void SetColor(Vector4D<float> color)
     {
         _currentColor = color;
+    }
+
+    public void SetTexture(Rac.Assets.Types.Texture texture)
+    {
+        var handle = _preprocessor.GetOrCreateTextureHandle(texture);
+        _gl.ActiveTexture(TextureUnit.Texture0);
+        _gl.BindTexture(TextureTarget.Texture2D, handle);
     }
     
     /// <summary>

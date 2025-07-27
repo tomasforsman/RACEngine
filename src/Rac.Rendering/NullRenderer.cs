@@ -1,6 +1,7 @@
 using System;
 using Rac.Rendering.Shader;
 using Rac.Rendering.Camera;
+using Rac.Assets.Types;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
@@ -42,6 +43,11 @@ public class NullRenderer : IRenderer
     public void SetColor(Vector4D<float> rgba)
     {
         // No-op: no color to set
+    }
+
+    public void SetTexture(Assets.Types.Texture texture)
+    {
+        // No-op: no texture to set
     }
 
     public void SetCameraMatrix(Matrix4X4<float> cameraMatrix)

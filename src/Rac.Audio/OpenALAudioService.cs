@@ -89,15 +89,22 @@ public sealed class OpenALAudioService : IAudioService, IDisposable
             // Open the default audio device
             _device = _alc.OpenDevice(string.Empty);
             if (_device == null)
+            {
+                Console.WriteLine("OpenAL Error: Failed to open OpenAL audio device.");
                 throw new InvalidOperationException("Failed to open OpenAL audio device");
+            }
 
             // Create audio context
             _context = _alc.CreateContext(_device, null);
             if (_context == null)
+            {
+                Console.WriteLine("OpenAL Error: Failed to create OpenAL context.");
                 throw new InvalidOperationException("Failed to create OpenAL context");
+            }
 
             // Make context current
             _alc.MakeContextCurrent(_context);
+            Console.WriteLine("OpenAL: Context made current.");
 
             // Initialize collections
             _activeSounds = new ConcurrentDictionary<int, Sound>();
@@ -110,6 +117,11 @@ public sealed class OpenALAudioService : IAudioService, IDisposable
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"OpenAL Initialization Error: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+            }
             throw new InvalidOperationException("Failed to initialize OpenAL audio service", ex);
         }
     }
@@ -446,22 +458,84 @@ public sealed class OpenALAudioService : IAudioService, IDisposable
         if (_audioBuffers.TryGetValue(filePath, out var existingBufferId))
             return existingBufferId;
 
-        // Verify file exists
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException($"Audio file not found: {filePath}");
+        // Load and decode WAV data
+        var (data, sampleRate, format) = LoadWav(filePath);
 
-        // For now, we'll create a placeholder buffer
-        // In a real implementation, you would load the audio file using a library like
-        // NVorbis for OGG files or similar libraries for other formats
+        // Generate buffer and upload data
         var bufferId = _al.GenBuffer();
-        
-        // This is a simplified implementation - in reality you would:
-        // 1. Load the audio file and decode it to PCM data
-        // 2. Determine the audio format (mono/stereo, sample rate, bit depth)
-        // 3. Upload the data to OpenAL using _al.BufferData()
-        
+        _al.BufferData(bufferId, format, data, sampleRate);
+
         _audioBuffers[filePath] = bufferId;
         return bufferId;
+    }
+
+    /// <summary>
+    /// Loads and decodes a WAV file.
+    /// </summary>
+    /// <returns>Tuple of audio data (byte array), sample rate (int), and OpenAL format (BufferFormat).</returns>
+    /// <exception cref="FormatException">Thrown if the WAV file is invalid or unsupported.</exception>
+    private (byte[] Data, int SampleRate, BufferFormat Format) LoadWav(string filePath)
+    {
+        using var stream = File.OpenRead(filePath);
+        using var reader = new BinaryReader(stream);
+
+        // RIFF header
+        var riffId = new string(reader.ReadChars(4));
+        if (riffId != "RIFF") throw new FormatException("Not a WAV file (missing RIFF header)");
+        reader.ReadInt32(); // File size
+
+        var waveId = new string(reader.ReadChars(4));
+        if (waveId != "WAVE") throw new FormatException("Not a WAV file (missing WAVE header)");
+
+        // FMT sub-chunk
+        var fmtId = new string(reader.ReadChars(4));
+        if (fmtId != "fmt ") throw new FormatException("Not a WAV file (missing fmt sub-chunk)");
+        var fmtSize = reader.ReadInt32(); // Format chunk size
+        if (fmtSize < 16) throw new FormatException("WAV fmt chunk too small");
+
+        var audioFormat = reader.ReadInt16(); // Audio format (1 for PCM)
+        if (audioFormat != 1) throw new FormatException("Only PCM WAV files are supported");
+
+        var channels = reader.ReadInt16();
+        var sampleRate = reader.ReadInt32();
+        reader.ReadInt32(); // Byte rate
+        reader.ReadInt16(); // Block align
+        var bitsPerSample = reader.ReadInt16();
+
+        // Skip any extra format bytes
+        if (fmtSize > 16)
+        {
+            reader.ReadBytes(fmtSize - 16);
+        }
+
+        // DATA sub-chunk
+        var dataId = new string(reader.ReadChars(4));
+        while (dataId != "data")
+        {
+            // Skip unknown chunks
+            var chunkSize = reader.ReadInt32();
+            reader.ReadBytes(chunkSize);
+            dataId = new string(reader.ReadChars(4));
+        }
+
+        var dataSize = reader.ReadInt32();
+        var data = reader.ReadBytes(dataSize);
+
+        BufferFormat format;
+        if (bitsPerSample == 16)
+        {
+            format = channels == 1 ? BufferFormat.Mono16 : BufferFormat.Stereo16;
+        }
+        else if (bitsPerSample == 8)
+        {
+            format = channels == 1 ? BufferFormat.Mono8 : BufferFormat.Stereo8;
+        }
+        else
+        {
+            throw new FormatException($"Unsupported bits per sample: {bitsPerSample}");
+        }
+
+        return (data, sampleRate, format);
     }
 
     /// <summary>
