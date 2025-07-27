@@ -18,12 +18,15 @@ public readonly record struct GridPositionComponent(int X, int Y) : IComponent
 {
     /// <summary>
     /// Convert grid position to world coordinates for rendering.
+    /// Flips Y coordinate to match OpenGL convention (Y increases upward).
     /// </summary>
     /// <param name="tileSize">Size of each grid tile in world units</param>
     /// <returns>World position as Vector2D for rendering systems</returns>
     public Vector2D<float> ToWorldPosition(float tileSize)
     {
-        return new Vector2D<float>(X * tileSize, Y * tileSize);
+        // Flip Y coordinate: Grid Y=0 (top) becomes World Y=high (top in world space)
+        // This ensures that moving "up" in the game (decreasing grid Y) appears as moving up on screen
+        return new Vector2D<float>(X * tileSize, -Y * tileSize);
     }
 }
 

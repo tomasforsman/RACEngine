@@ -39,7 +39,7 @@ public class GridMovementSystem : ISystem
         // Process movement for entities with movement components
         foreach (var (entity, gridPos, movement) in _world.Query<GridPositionComponent, MovementComponent>())
         {
-            if (movement.MoveTimer <= 0 || movement.Direction == Vector2D<int>.Zero)
+            if (movement.Direction == Vector2D<int>.Zero)
                 continue;
 
             // Calculate target position
@@ -50,20 +50,12 @@ public class GridMovementSystem : ISystem
             // Check for collision before moving
             if (IsValidMove(targetGridPos))
             {
-                // Update grid position
+                // Update grid position (single step)
                 _world.SetComponent(entity, targetGridPos);
                 
-                // Update movement timer
-                var newTimer = Math.Max(0, movement.MoveTimer - deltaTime);
-                var newMovement = movement with { MoveTimer = newTimer };
-                
-                if (newTimer <= 0)
-                {
-                    // Movement complete, clear direction
-                    newMovement = newMovement with { Direction = Vector2D<int>.Zero };
-                }
-                
-                _world.SetComponent(entity, newMovement);
+                // Clear movement immediately after single step
+                var clearedMovement = movement with { Direction = Vector2D<int>.Zero, MoveTimer = 0 };
+                _world.SetComponent(entity, clearedMovement);
             }
             else
             {

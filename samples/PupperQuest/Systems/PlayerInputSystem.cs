@@ -64,10 +64,10 @@ public class PlayerInputSystem : ISystem
 
         _pendingDirection = key switch
         {
-            Key.W or Key.Up => new Vector2D<int>(0, -1),    // North
-            Key.S or Key.Down => new Vector2D<int>(0, 1),   // South
-            Key.A or Key.Left => new Vector2D<int>(-1, 0),  // West
-            Key.D or Key.Right => new Vector2D<int>(1, 0),  // East
+            Key.W => new Vector2D<int>(0, -1),    // North (move up: decrease grid Y since Y is flipped in rendering)
+            Key.S => new Vector2D<int>(0, 1),     // South (move down: increase grid Y since Y is flipped in rendering)
+            Key.A => new Vector2D<int>(-1, 0),    // West (move left: decrease X)
+            Key.D => new Vector2D<int>(1, 0),     // East (move right: increase X)
             _ => Vector2D<int>.Zero
         };
 

@@ -113,6 +113,7 @@ public class GameCamera : ICamera
     /// Camera zoom factor (multiplicative scale).
     /// Values > 1.0 zoom in (objects appear larger), values < 1.0 zoom out.
     /// Recommended range: 0.1 to 10.0 for typical 2D games.
+    /// NOTE: Higher values = closer view (standard zoom convention).
     /// </summary>
     public float Zoom
     {
@@ -215,14 +216,14 @@ public class GameCamera : ICamera
         // VIEW MATRIX COMPUTATION
         // ───────────────────────────────────────────────────────────────────────
         
-        // Create transformation matrices in TRS order (Translation × Rotation × Scale)
-        var scaleMatrix = Matrix4X4.CreateScale(_zoom, _zoom, 1f);
-        var rotationMatrix = Matrix4X4.CreateRotationZ(_rotation);
-        var translationMatrix = Matrix4X4.CreateTranslation(_position.X, _position.Y, 0f);
+        // Standard camera view matrix construction
+        // 1. Create individual transformation matrices
+        var translationMatrix = Matrix4X4.CreateTranslation(-_position.X, -_position.Y, 0f); // Negative for view
+        var rotationMatrix = Matrix4X4.CreateRotationZ(-_rotation); // Negative for view
+        var scaleMatrix = Matrix4X4.CreateScale(_zoom, _zoom, 1f); // Zoom affects world scale
         
-        // View matrix is inverse of camera transformation
-        var cameraTransform = translationMatrix * rotationMatrix * scaleMatrix;
-        Matrix4X4.Invert(cameraTransform, out _viewMatrix);
+        // 2. Combine in standard order: Scale * Rotation * Translation
+        _viewMatrix = translationMatrix * rotationMatrix * scaleMatrix;
         Matrix4X4.Invert(_viewMatrix, out _inverseViewMatrix);
         
         // ───────────────────────────────────────────────────────────────────────

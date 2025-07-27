@@ -20,6 +20,7 @@ public class SimpleAISystem : ISystem
 {
     private IWorld _world = null!;
     private readonly Random _random = new();
+    private GridPositionComponent _lastPlayerPosition = new(-1, -1);
 
     public void Initialize(IWorld world)
     {
@@ -41,17 +42,25 @@ public class SimpleAISystem : ISystem
 
         if (playerEntity == null) return;
 
+        // Check if player position has changed since last update
+        bool playerMoved = (_lastPlayerPosition.X != playerPos.X || _lastPlayerPosition.Y != playerPos.Y);
+        
+        if (!playerMoved) return;
+
+        // Update last known player position
+        _lastPlayerPosition = playerPos;
+
         // Process AI for each enemy
         foreach (var (entity, enemy, ai, gridPos, movement) in _world.Query<EnemyComponent, AIComponent, GridPositionComponent, MovementComponent>())
         {
-            // Skip if already moving
-            if (movement.MoveTimer > 0) continue;
+            // Skip if already has movement queued
+            if (movement.Direction != Vector2D<int>.Zero) continue;
 
             var direction = CalculateAIDirection(ai, gridPos, playerPos, enemy);
             
             if (direction != Vector2D<int>.Zero)
             {
-                var newMovement = movement with { Direction = direction, MoveTimer = 0.5f };
+                var newMovement = movement with { Direction = direction, MoveTimer = 0 };
                 _world.SetComponent(entity, newMovement);
             }
         }
