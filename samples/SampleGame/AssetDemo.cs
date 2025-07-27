@@ -15,18 +15,28 @@ using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 namespace SampleGame;
 
 /// <summary>
-/// Asset Demo showcasing texture and audio loading using the Engine facade.
+/// Enhanced Asset Demo showcasing texture and audio loading using the Engine facade with new 2D primitive drawing capabilities.
 ///
 /// EDUCATIONAL PURPOSE:
-/// This demo demonstrates the simplest asset loading patterns using the Engine facade:
+/// This demo demonstrates the enhanced asset loading and drawing patterns using the Engine facade:
 /// - Layer 1 asset loading (engine.LoadTexture, engine.LoadAudio)
-/// - Visual feedback with actual texture rendering
+/// - New simplified 2D quad drawing methods (DrawTexturedQuad, DrawSolidColorQuad)
+/// - Advanced rendering features (color tinting, custom UV coordinates, texture atlasing)
+/// - Visual feedback with multiple texture rendering examples
 /// - Interactive audio playback on mouse clicks
 /// - Camera zoom controls for interactive viewing
 /// - Error handling and graceful fallbacks
 ///
+/// NEW FEATURES DEMONSTRATED:
+/// - DrawTexturedQuad with default and custom UV coordinates
+/// - DrawSolidColorQuad for UI elements and fallbacks
+/// - Color tinting effects on textured quads
+/// - Dynamic animation using quad drawing parameters
+/// - Multiple quad rendering for complex scenes
+/// - Clean API replacing manual vertex array creation
+///
 /// INTERACTION:
-/// - Displays a textured square using the loaded SampleTexture.png
+/// - Displays multiple textured and colored quads showcasing different techniques
 /// - Click anywhere in the window to play SampleAudio.wav
 /// - Q/- keys to zoom out, E/+ keys to zoom in
 /// - Press ESC to exit the demo
@@ -45,20 +55,8 @@ public class AssetDemo
     // Input state tracking for real-time zoom
     private readonly HashSet<Key> _pressedKeys = new();
 
-    // Square geometry for texture rendering with proper triangulation and UV coordinates
-    // Matching PupperQuest pattern but with correct UV coordinates for texture sampling
-    private readonly FullVertex[] _squareVertices = new[]
-    {
-        // Triangle 1: Bottom-left → Bottom-right → Top-left
-        new FullVertex(new Vector2D<float>(-100, -100), new Vector2D<float>(0f, 0f), new Vector4D<float>(1, 1, 1, 1)), // Bottom-left: UV (0,0)
-        new FullVertex(new Vector2D<float>( 100, -100), new Vector2D<float>(1f, 0f), new Vector4D<float>(1, 1, 1, 1)), // Bottom-right: UV (1,0)
-        new FullVertex(new Vector2D<float>(-100,  100), new Vector2D<float>(0f, 1f), new Vector4D<float>(1, 1, 1, 1)), // Top-left: UV (0,1)
-
-        // Triangle 2: Top-right → Bottom-right → Top-left (corrected order and UVs)
-        new FullVertex(new Vector2D<float>( 100,  100), new Vector2D<float>(1f, 1f), new Vector4D<float>(1, 1, 1, 1)), // Top-right: UV (1,1)
-        new FullVertex(new Vector2D<float>( 100, -100), new Vector2D<float>(1f, 0f), new Vector4D<float>(1, 1, 1, 1)), // Bottom-right: UV (1,0)
-        new FullVertex(new Vector2D<float>(-100,  100), new Vector2D<float>(0f, 1f), new Vector4D<float>(1, 1, 1, 1))  // Top-left: UV (0,1)
-    };
+    // Demo state for enhanced examples
+    private float _animationTime = 0f;
 
     public static void Run(string[] args)
     {
@@ -198,6 +196,9 @@ public class AssetDemo
 
         try
         {
+            // Update animation time for enhanced examples
+            _animationTime += deltaTime;
+
             // Update camera zoom based on input (real-time)
             UpdateCameraZoom(deltaTime);
 
@@ -207,40 +208,151 @@ public class AssetDemo
             // Set active camera for world rendering
             _engine.Renderer.SetActiveCamera(_engine.CameraManager.GameCamera);
 
-            // Use Textured mode with debugging shader to see what's happening
-            _engine.Renderer.SetShaderMode(ShaderMode.Textured);
-            _engine.Renderer.SetPrimitiveType(PrimitiveType.Triangles); // Explicitly set primitive type like PupperQuest
+            // ENHANCED DEMO: Multiple quad examples showcasing the new drawing API
+            RenderQuadExamples();
 
-            // Render textured square
-            if (_sampleTexture != null)
-            {
-                // Set texture for rendering
-                _engine.Renderer.SetTexture(_sampleTexture);
-                _engine.Renderer.SetColor(new Vector4D<float>(1.0f, 1.0f, 1.0f, 1.0f)); // White color to display texture without tinting
-
-                Console.WriteLine($"🎨 Rendering texture: {_sampleTexture.Width}x{_sampleTexture.Height}, Format={_sampleTexture.Format}"); // Debug output
-            }
-            else
-            {
-                // Fallback color if texture failed to load
-                _engine.Renderer.SetColor(new Vector4D<float>(0.8f, 0.2f, 0.2f, 1.0f)); // Red color to indicate missing texture
-                Console.WriteLine("❌ No texture loaded - rendering red fallback");
-            }
-
-            // Render the square
-            _engine.Renderer.UpdateVertices(_squareVertices);
-            _engine.Renderer.Draw();
-
-            // Finalize frame like PupperQuest does
+            // Finalize frame
             _engine.Renderer.FinalizeFrame();
-
-            // Display status text (this would typically use a text rendering system)
-            // For now, the console output provides the information
         }
         catch (Exception ex)
         {
             Console.WriteLine($"✗ Rendering error: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Renders multiple quad examples showcasing the flexibility of the new DrawTexturedQuad and DrawSolidColorQuad methods.
+    /// 
+    /// EDUCATIONAL PURPOSE:
+    /// This method demonstrates various use cases for 2D quad rendering:
+    /// - Simple textured quad rendering (replacing manual vertex arrays)
+    /// - Color tinting effects on textures
+    /// - Custom UV coordinate mapping for texture atlasing/cropping
+    /// - Solid color quads for UI elements and fallbacks
+    /// - Dynamic positioning and sizing
+    /// - Animation through parameter changes
+    /// </summary>
+    private void RenderQuadExamples()
+    {
+        if (_engine == null) return;
+
+        // Example 1: Main textured quad (center) - Replaces the original manual vertex rendering
+        if (_sampleTexture != null)
+        {
+            Console.WriteLine($"🎨 Rendering textured quad using new API: {_sampleTexture.Width}x{_sampleTexture.Height}");
+            
+            // Simple textured quad at center - this replaces the original _squareVertices rendering
+            _engine.DrawTexturedQuad(
+                centerPosition: new Vector2D<float>(0f, 0f),
+                size: new Vector2D<float>(200f, 200f),
+                texture: _sampleTexture
+            );
+        }
+        else
+        {
+            Console.WriteLine("❌ No texture loaded - rendering red fallback using new API");
+            
+            // Fallback solid color quad - much cleaner than manual shader/vertex setup
+            _engine.DrawSolidColorQuad(
+                centerPosition: new Vector2D<float>(0f, 0f),
+                size: new Vector2D<float>(200f, 200f),
+                color: new Vector4D<float>(0.8f, 0.2f, 0.2f, 1.0f) // Red fallback
+            );
+        }
+
+        // Example 2: Color tinted quads (left side) - Shows tinting capabilities
+        if (_sampleTexture != null)
+        {
+            // Red tinted quad
+            _engine.DrawTexturedQuad(
+                centerPosition: new Vector2D<float>(-300f, 100f),
+                size: new Vector2D<float>(100f, 100f),
+                texture: _sampleTexture,
+                colorTint: new Vector4D<float>(1f, 0.5f, 0.5f, 1f) // Red tint
+            );
+
+            // Green tinted quad
+            _engine.DrawTexturedQuad(
+                centerPosition: new Vector2D<float>(-300f, 0f),
+                size: new Vector2D<float>(100f, 100f),
+                texture: _sampleTexture,
+                colorTint: new Vector4D<float>(0.5f, 1f, 0.5f, 1f) // Green tint
+            );
+
+            // Blue tinted quad
+            _engine.DrawTexturedQuad(
+                centerPosition: new Vector2D<float>(-300f, -100f),
+                size: new Vector2D<float>(100f, 100f),
+                texture: _sampleTexture,
+                colorTint: new Vector4D<float>(0.5f, 0.5f, 1f, 1f) // Blue tint
+            );
+        }
+
+        // Example 3: Custom UV coordinates (right side) - Shows texture cropping/atlasing
+        if (_sampleTexture != null)
+        {
+            // Top-left quarter of texture
+            var topLeftUVs = new Vector2D<float>[]
+            {
+                new Vector2D<float>(0f, 0f),    // bottom-left
+                new Vector2D<float>(0.5f, 0f),  // bottom-right
+                new Vector2D<float>(0f, 0.5f),  // top-left
+                new Vector2D<float>(0.5f, 0.5f) // top-right
+            };
+
+            _engine.DrawTexturedQuad(
+                centerPosition: new Vector2D<float>(300f, 100f),
+                size: new Vector2D<float>(100f, 100f),
+                texture: _sampleTexture,
+                textureCoordinates: topLeftUVs
+            );
+
+            // Bottom-right quarter of texture
+            var bottomRightUVs = new Vector2D<float>[]
+            {
+                new Vector2D<float>(0.5f, 0.5f), // bottom-left
+                new Vector2D<float>(1f, 0.5f),   // bottom-right
+                new Vector2D<float>(0.5f, 1f),   // top-left
+                new Vector2D<float>(1f, 1f)      // top-right
+            };
+
+            _engine.DrawTexturedQuad(
+                centerPosition: new Vector2D<float>(300f, -100f),
+                size: new Vector2D<float>(100f, 100f),
+                texture: _sampleTexture,
+                textureCoordinates: bottomRightUVs
+            );
+        }
+
+        // Example 4: Solid color UI elements (top) - Shows UI/debugging use cases
+        var panelColor = new Vector4D<float>(0.2f, 0.2f, 0.3f, 0.8f); // Semi-transparent dark blue
+        _engine.DrawSolidColorQuad(
+            centerPosition: new Vector2D<float>(0f, 250f),
+            size: new Vector2D<float>(600f, 60f),
+            color: panelColor
+        );
+
+        // Example 5: Animated quads (bottom) - Shows dynamic parameter usage
+        var animOffset = (float)Math.Sin(_animationTime * 2.0) * 50f;
+        var animColor = new Vector4D<float>(
+            0.5f + (float)Math.Sin(_animationTime) * 0.3f,        // Animated red
+            0.5f + (float)Math.Cos(_animationTime * 1.5) * 0.3f, // Animated green  
+            0.7f,                                                 // Constant blue
+            1f                                                    // Full alpha
+        );
+
+        _engine.DrawSolidColorQuad(
+            centerPosition: new Vector2D<float>(animOffset, -250f),
+            size: new Vector2D<float>(80f, 80f),
+            color: animColor
+        );
+
+        // Static comparison quad next to animated one
+        _engine.DrawSolidColorQuad(
+            centerPosition: new Vector2D<float>(150f, -250f),
+            size: new Vector2D<float>(80f, 80f),
+            color: new Vector4D<float>(0.5f, 0.5f, 0.7f, 1f) // Static color
+        );
     }
 
     private void OnMouseClick(Vector2D<float> position)
