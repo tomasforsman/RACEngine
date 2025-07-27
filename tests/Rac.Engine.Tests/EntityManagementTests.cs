@@ -541,4 +541,8 @@ internal class TestEngineFacade : IEngineFacade
     public Texture LoadTexture(string filename) => throw new NotImplementedException();
     public AudioClip LoadAudio(string filename) => throw new NotImplementedException();
     public string LoadShaderSource(string filename) => throw new NotImplementedException();
+
+    // 2D primitive drawing methods (can be overridden in derived test classes)
+    public virtual void DrawTexturedQuad(Vector2D<float> centerPosition, Vector2D<float> size, Texture texture, Vector4D<float>? colorTint = null, Vector2D<float>[]? textureCoordinates = null) => throw new NotImplementedException();
+    public virtual void DrawSolidColorQuad(Vector2D<float> centerPosition, Vector2D<float> size, Vector4D<float> color) => throw new NotImplementedException();
 }
