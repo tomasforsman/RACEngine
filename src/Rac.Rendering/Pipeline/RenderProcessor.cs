@@ -104,6 +104,9 @@ public class RenderProcessor
             return;
         }
         
+        // Activate the shader program before rendering
+        currentShader.Use();
+        
         // Update uniforms with current state
         UpdateShaderUniforms();
         
@@ -135,6 +138,9 @@ public class RenderProcessor
             Console.WriteLine($"Warning: No shader available for mode {_currentShaderMode}");
             return;
         }
+        
+        // Activate the shader program before rendering
+        currentShader.Use();
         
         // Update uniforms and draw
         UpdateShaderUniforms();

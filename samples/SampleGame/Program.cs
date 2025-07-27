@@ -1,4 +1,4 @@
-﻿namespace SampleGame;
+namespace SampleGame;
 
 public static class Program
 {
