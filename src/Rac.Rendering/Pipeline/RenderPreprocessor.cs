@@ -69,12 +69,14 @@ public class RenderPreprocessor : IDisposable
         public int AspectLocation { get; init; }
         public int ColorLocation { get; init; }
         public int CameraMatrixLocation { get; init; }
+        public int TextureLocation { get; init; }
 
         public ShaderUniforms(GL gl, uint programHandle)
         {
             AspectLocation = gl.GetUniformLocation(programHandle, "uAspect");
             ColorLocation = gl.GetUniformLocation(programHandle, "uColor");
             CameraMatrixLocation = gl.GetUniformLocation(programHandle, "uCameraMatrix");
+            TextureLocation = gl.GetUniformLocation(programHandle, "uTexture");
         }
     }
 
@@ -151,10 +153,13 @@ public class RenderPreprocessor : IDisposable
             }
         }
 
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+        // Use Clamp to Edge to prevent wrapping issues with UV coordinates at edges
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+        
+        // Use Nearest filtering for pixel-perfect sampling (especially important for grid textures)
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
         return handle;
     }

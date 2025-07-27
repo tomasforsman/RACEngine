@@ -6,8 +6,11 @@ using Rac.Rendering;
 using Rac.Rendering.Shader;
 using Rac.Core.Manager;
 using Rac.Input.Service;
+using Rac.Input.State;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
+using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace SampleGame;
 
@@ -17,13 +20,15 @@ namespace SampleGame;
 /// EDUCATIONAL PURPOSE:
 /// This demo demonstrates the simplest asset loading patterns using the Engine facade:
 /// - Layer 1 asset loading (engine.LoadTexture, engine.LoadAudio)
-/// - Visual feedback with textured rendering
+/// - Visual feedback with actual texture rendering
 /// - Interactive audio playback on mouse clicks
+/// - Camera zoom controls for interactive viewing
 /// - Error handling and graceful fallbacks
 ///
 /// INTERACTION:
-/// - Displays a textured square using SampleTexture.png
+/// - Displays a textured square using the loaded SampleTexture.png
 /// - Click anywhere in the window to play SampleAudio.wav
+/// - Q/- keys to zoom out, E/+ keys to zoom in
 /// - Press ESC to exit the demo
 /// </summary>
 public class AssetDemo
@@ -32,13 +37,27 @@ public class AssetDemo
     private Texture? _sampleTexture;
     private AudioClip? _sampleAudio;
 
-    // Square geometry for texture rendering with proper UV coordinates
-    private readonly TexturedVertex[] _squareVertices = new[]
+    // Camera zoom settings (matching PupperQuest pattern)
+    private const float ZoomSpeed = 0.5f;            // Zoom change per second
+    private const float MinZoom = 0.01f;              // Minimum zoom level (zoomed out)
+    private const float MaxZoom = 5.0f;              // Maximum zoom level (zoomed in)
+
+    // Input state tracking for real-time zoom
+    private readonly HashSet<Key> _pressedKeys = new();
+
+    // Square geometry for texture rendering with proper triangulation and UV coordinates
+    // Matching PupperQuest pattern but with correct UV coordinates for texture sampling
+    private readonly FullVertex[] _squareVertices = new[]
     {
-        new TexturedVertex(new Vector2D<float>(-100, -100), new Vector2D<float>(0, 1)), // Bottom-left (UV: 0,1)
-        new TexturedVertex(new Vector2D<float>( 100, -100), new Vector2D<float>(1, 1)), // Bottom-right (UV: 1,1)
-        new TexturedVertex(new Vector2D<float>( 100,  100), new Vector2D<float>(1, 0)), // Top-right (UV: 1,0)
-        new TexturedVertex(new Vector2D<float>(-100,  100), new Vector2D<float>(0, 0))  // Top-left (UV: 0,0)
+        // Triangle 1: Bottom-left → Bottom-right → Top-left
+        new FullVertex(new Vector2D<float>(-100, -100), new Vector2D<float>(0f, 0f), new Vector4D<float>(1, 1, 1, 1)), // Bottom-left: UV (0,0)
+        new FullVertex(new Vector2D<float>( 100, -100), new Vector2D<float>(1f, 0f), new Vector4D<float>(1, 1, 1, 1)), // Bottom-right: UV (1,0)
+        new FullVertex(new Vector2D<float>(-100,  100), new Vector2D<float>(0f, 1f), new Vector4D<float>(1, 1, 1, 1)), // Top-left: UV (0,1)
+
+        // Triangle 2: Top-right → Bottom-right → Top-left (corrected order and UVs)
+        new FullVertex(new Vector2D<float>( 100,  100), new Vector2D<float>(1f, 1f), new Vector4D<float>(1, 1, 1, 1)), // Top-right: UV (1,1)
+        new FullVertex(new Vector2D<float>( 100, -100), new Vector2D<float>(1f, 0f), new Vector4D<float>(1, 1, 1, 1)), // Bottom-right: UV (1,0)
+        new FullVertex(new Vector2D<float>(-100,  100), new Vector2D<float>(0f, 1f), new Vector4D<float>(1, 1, 1, 1))  // Top-left: UV (0,1)
     };
 
     public static void Run(string[] args)
@@ -46,7 +65,7 @@ public class AssetDemo
         Console.WriteLine("RACEngine Asset System Demo");
         Console.WriteLine("===========================");
         Console.WriteLine("Loading texture and audio assets using Engine facade...");
-        Console.WriteLine("Click in the window to play audio, press ESC to exit.");
+        Console.WriteLine("Click in the window to play audio, Q/- to zoom out, E/+ to zoom in, ESC to exit.");
         Console.WriteLine();
 
         var demo = new AssetDemo();
@@ -95,15 +114,8 @@ public class AssetDemo
         // Handle mouse clicks to play audio
         _engine.LeftClickEvent += OnMouseClick;
 
-        // Handle key presses for exit
-        _engine.KeyEvent += (key, keyEvent) =>
-        {
-            if (key == Silk.NET.Input.Key.Escape && keyEvent == Rac.Input.State.KeyboardKeyState.KeyEvent.Pressed)
-            {
-                Console.WriteLine("ESC pressed - exiting demo...");
-                _engine.WindowManager.NativeWindow.Close();
-            };
-        };
+        // Handle key presses for exit and zoom controls
+        _engine.KeyEvent += OnKeyEvent;
 
         // Handle render events
         _engine.RenderEvent += OnRender;
@@ -186,28 +198,41 @@ public class AssetDemo
 
         try
         {
+            // Update camera zoom based on input (real-time)
+            UpdateCameraZoom(deltaTime);
+
             // Clear the screen
             _engine.Renderer.Clear();
 
-            // Set shader mode for rendering (this was the missing piece!)
-            _engine.Renderer.SetShaderMode(ShaderMode.Normal);
+            // Set active camera for world rendering
+            _engine.Renderer.SetActiveCamera(_engine.CameraManager.GameCamera);
 
-            // Render textured square in the center of the screen
+            // Use Textured mode with debugging shader to see what's happening
+            _engine.Renderer.SetShaderMode(ShaderMode.Textured);
+            _engine.Renderer.SetPrimitiveType(PrimitiveType.Triangles); // Explicitly set primitive type like PupperQuest
+
+            // Render textured square
             if (_sampleTexture != null)
             {
                 // Set texture for rendering
                 _engine.Renderer.SetTexture(_sampleTexture);
-                _engine.Renderer.SetColor(new Vector4D<float>(1.0f, 1.0f, 1.0f, 1.0f)); // Use white to not tint the texture
+                _engine.Renderer.SetColor(new Vector4D<float>(1.0f, 1.0f, 1.0f, 1.0f)); // White color to display texture without tinting
+
+                Console.WriteLine($"🎨 Rendering texture: {_sampleTexture.Width}x{_sampleTexture.Height}, Format={_sampleTexture.Format}"); // Debug output
             }
             else
             {
                 // Fallback color if texture failed to load
                 _engine.Renderer.SetColor(new Vector4D<float>(0.8f, 0.2f, 0.2f, 1.0f)); // Red color to indicate missing texture
+                Console.WriteLine("❌ No texture loaded - rendering red fallback");
             }
 
             // Render the square
             _engine.Renderer.UpdateVertices(_squareVertices);
             _engine.Renderer.Draw();
+
+            // Finalize frame like PupperQuest does
+            _engine.Renderer.FinalizeFrame();
 
             // Display status text (this would typically use a text rendering system)
             // For now, the console output provides the information
@@ -260,6 +285,50 @@ public class AssetDemo
         catch (Exception ex)
         {
             Console.WriteLine($"✗ Cleanup error: {ex.Message}");
+        }
+    }
+
+    private void OnKeyEvent(Key key, KeyboardKeyState.KeyEvent keyEvent)
+    {
+        // Handle ESC for exit
+        if (key == Key.Escape && keyEvent == KeyboardKeyState.KeyEvent.Pressed)
+        {
+            Console.WriteLine("ESC pressed - exiting demo...");
+            _engine?.WindowManager.NativeWindow.Close();
+            return;
+        }
+
+        // Track key state for real-time zoom
+        switch (keyEvent)
+        {
+            case KeyboardKeyState.KeyEvent.Pressed:
+                _pressedKeys.Add(key);
+                break;
+            case KeyboardKeyState.KeyEvent.Released:
+                _pressedKeys.Remove(key);
+                break;
+        }
+    }
+
+    private void UpdateCameraZoom(float deltaTime)
+    {
+        if (_engine?.CameraManager?.GameCamera == null) return;
+
+        var camera = _engine.CameraManager.GameCamera;
+        var currentZoom = camera.Zoom;
+        var zoomChange = 0f;
+
+        // Handle zoom controls (matching PupperQuest pattern)
+        if (_pressedKeys.Contains(Key.E) || _pressedKeys.Contains(Key.KeypadAdd) || _pressedKeys.Contains(Key.Equal))
+            zoomChange += ZoomSpeed * deltaTime;  // E/+ zooms in
+        if (_pressedKeys.Contains(Key.Q) || _pressedKeys.Contains(Key.KeypadSubtract) || _pressedKeys.Contains(Key.Minus))
+            zoomChange -= ZoomSpeed * deltaTime;  // Q/- zooms out
+
+        if (zoomChange != 0f)
+        {
+            var newZoom = Math.Clamp(currentZoom + zoomChange, MinZoom, MaxZoom);
+            camera.Zoom = newZoom;
+            Console.WriteLine($"📷 Camera Zoom: {camera.Zoom:F2}x (Q/- to zoom out, E/+ to zoom in)");
         }
     }
 }

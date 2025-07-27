@@ -8,6 +8,9 @@ public enum ShaderMode
     /// <summary>Standard flat color rendering.</summary>
     Normal,
     
+    /// <summary>Basic textured rendering with texture sampling and color blending.</summary>
+    Textured,
+    
     /// <summary>Soft edge glow effect with radial gradient alpha.</summary>
     SoftGlow,
     

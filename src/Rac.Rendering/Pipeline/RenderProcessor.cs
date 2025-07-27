@@ -353,6 +353,10 @@ public class RenderProcessor
             };
             _gl.UniformMatrix4(uniforms.CameraMatrixLocation, 1, false, matrixArray);
         }
+        
+        // Update texture uniform (bind to texture unit 0)
+        if (uniforms.TextureLocation >= 0)
+            _gl.Uniform1(uniforms.TextureLocation, 0);
     }
     
     private void ConfigureBlendingForMode(ShaderMode mode)

@@ -39,19 +39,17 @@ out vec4 fragColor;
 void main()
 {
     // ---------------------------------------------------------------------------
-    // COORDINATE SYSTEM CONVERSION FOR VISUALIZATION
+    // COORDINATE SYSTEM VISUALIZATION
     // ---------------------------------------------------------------------------
     //
-    // RACEngine uses centered coordinates around (0,0) for procedural effects,
-    // but UV debugging requires [0,1] range for proper color visualization.
-    // Convert centered coordinates to [0,1] range for debugging display.
+    // RACEngine uses standard UV coordinates in [0,1] range for texture mapping.
+    // These coordinates are already in the correct range for color visualization.
     //
-    // Mathematical transformation:
-    // Input: vTexCoord in [-0.5, 0.5] (centered around origin)
-    // Output: debugUV in [0,1] (standard UV visualization range)
-    // Formula: debugUV = vTexCoord + 0.5
+    // UV coordinate mapping:
+    // Input: vTexCoord in [0,1] (standard texture coordinates)
+    // Output: Direct mapping to color channels
     
-    vec2 debugUV = vTexCoord + vec2(0.5, 0.5);
+    vec2 debugUV = vTexCoord;
     
     // ---------------------------------------------------------------------------
     // UV COORDINATE TO COLOR MAPPING
@@ -67,10 +65,10 @@ void main()
     // Alpha = 1.0 (full opacity)
     //
     // VISUALIZATION INTERPRETATION:
-    // - (0,0) Black: Bottom-left corner of geometry (original vTexCoord = -0.5, -0.5)
-    // - (1,0) Red: Bottom-right corner of geometry (original vTexCoord = +0.5, -0.5)
-    // - (0,1) Green: Top-left corner of geometry (original vTexCoord = -0.5, +0.5)
-    // - (1,1) Yellow: Top-right corner of geometry (original vTexCoord = +0.5, +0.5)
+    // - (0,0) Black: Bottom-left corner of geometry (vTexCoord = 0.0, 0.0)
+    // - (1,0) Red: Bottom-right corner of geometry (vTexCoord = 1.0, 0.0)
+    // - (0,1) Green: Top-left corner of geometry (vTexCoord = 0.0, 1.0)
+    // - (1,1) Yellow: Top-right corner of geometry (vTexCoord = 1.0, 1.0)
     
     vec3 debugColor = vec3(
         debugUV.x,          // U coordinate -> Red channel

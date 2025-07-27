@@ -261,6 +261,7 @@ public static class ShaderLoader
         return mode switch
         {
             ShaderMode.Normal => "normal.frag",
+            ShaderMode.Textured => "textured.frag",
             ShaderMode.SoftGlow => "softglow.frag",
             ShaderMode.Bloom => "bloom.frag",
             ShaderMode.DebugUV => "debuguv.frag",
