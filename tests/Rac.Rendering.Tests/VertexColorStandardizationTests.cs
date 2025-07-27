@@ -253,6 +253,7 @@ public class VertexColorStandardizationTests
         public void Initialize(Silk.NET.Windowing.IWindow window) { }
         public void Clear() { }
         public void SetColor(Vector4D<float> rgba) { }
+        public void SetTexture(Rac.Assets.Types.Texture texture) { }
         public void SetCameraMatrix(Matrix4X4<float> cameraMatrix) { }
         public void SetActiveCamera(ICamera camera) { }
         public void SetShaderMode(Rac.Rendering.Shader.ShaderMode mode) { }
