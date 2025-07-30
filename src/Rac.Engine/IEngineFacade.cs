@@ -275,4 +275,103 @@ public interface IEngineFacade
     /// </code>
     /// </example>
     string LoadShaderSource(string filename);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 2D PRIMITIVE DRAWING CONVENIENCE METHODS (LAYER 1: BEGINNER API)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Draws a textured quad on the screen, centered at the specified position.
+    /// 
+    /// EDUCATIONAL PURPOSE:
+    /// This method demonstrates 2D primitive rendering with advanced features:
+    /// - Dynamic vertex generation eliminates manual vertex array creation
+    /// - Encapsulates complex rendering pipeline setup and state management
+    /// - Demonstrates UV mapping and texture coordinate systems
+    /// - Shows how color tinting can modify texture appearance
+    /// - Provides flexibility through optional parameters with sensible defaults
+    /// 
+    /// RENDERING PIPELINE INTEGRATION:
+    /// - Automatically generates six FullVertex instances for two triangles forming a quad
+    /// - Sets renderer to textured shader mode for proper texture sampling
+    /// - Configures primitive type to triangles for correct geometry interpretation
+    /// - Handles texture binding and color state management
+    /// - Calls UpdateVertices and Draw in correct sequence
+    /// 
+    /// UV COORDINATE SYSTEM:
+    /// - Default UV coordinates map texture to full quad: (0,0) to (1,1)
+    /// - Bottom-left corner maps to UV (0,0), top-right to UV (1,1)
+    /// - Custom coordinates enable texture atlasing, sprite sheets, and effects
+    /// - Coordinates outside [0,1] range enable texture repetition if supported
+    /// </summary>
+    /// <param name="centerPosition">The center point of the quad in world coordinates</param>
+    /// <param name="size">The width and height of the quad</param>
+    /// <param name="texture">The texture to apply to the quad</param>
+    /// <param name="colorTint">Optional color tint to apply to the texture (defaults to white for no tinting)</param>
+    /// <param name="textureCoordinates">Optional array of 4 UV coordinates (bottom-left, bottom-right, top-left, top-right). If null, defaults to standard (0,0)-(1,1) range</param>
+    /// <exception cref="ArgumentNullException">Thrown when texture is null</exception>
+    /// <exception cref="ArgumentException">Thrown when size has non-positive values or textureCoordinates array has incorrect length</exception>
+    /// <example>
+    /// <code>
+    /// // Draw a simple textured quad
+    /// var texture = engine.LoadTexture("player.png");
+    /// engine.DrawTexturedQuad(new Vector2D&lt;float&gt;(0, 0), new Vector2D&lt;float&gt;(100, 100), texture);
+    /// 
+    /// // Draw with red tint
+    /// engine.DrawTexturedQuad(position, size, texture, new Vector4D&lt;float&gt;(1, 0.5f, 0.5f, 1));
+    /// 
+    /// // Draw using only top-left quarter of texture
+    /// var customUVs = new[] {
+    ///     new Vector2D&lt;float&gt;(0f, 0f),    // bottom-left
+    ///     new Vector2D&lt;float&gt;(0.5f, 0f),  // bottom-right  
+    ///     new Vector2D&lt;float&gt;(0f, 0.5f),  // top-left
+    ///     new Vector2D&lt;float&gt;(0.5f, 0.5f) // top-right
+    /// };
+    /// engine.DrawTexturedQuad(position, size, texture, null, customUVs);
+    /// </code>
+    /// </example>
+    void DrawTexturedQuad(Vector2D<float> centerPosition, Vector2D<float> size, Texture texture, Vector4D<float>? colorTint = null, Vector2D<float>[]? textureCoordinates = null);
+
+    /// <summary>
+    /// Draws a solid color quad on the screen, centered at the specified position.
+    /// 
+    /// EDUCATIONAL PURPOSE:
+    /// This method demonstrates simple 2D shape rendering:
+    /// - Shows how to render geometry without textures using solid colors
+    /// - Demonstrates vertex generation for basic geometric shapes
+    /// - Illustrates shader mode switching for different rendering techniques
+    /// - Provides a foundation for more complex shape rendering systems
+    /// 
+    /// RENDERING PIPELINE INTEGRATION:
+    /// - Generates six FullVertex instances with dummy UV coordinates (not used for solid color)
+    /// - Sets renderer to solid color shader mode (non-textured rendering)
+    /// - Configures primitive type to triangles for proper shape rendering
+    /// - Sets vertex colors to the specified solid color
+    /// - Calls UpdateVertices and Draw to complete the rendering
+    /// 
+    /// USE CASES:
+    /// - UI elements (buttons, panels, overlays)
+    /// - Debug visualization (collision boxes, grid lines, debug shapes)
+    /// - Simple geometric game objects (platforms, obstacles)
+    /// - Fallback rendering when textures fail to load
+    /// - Performance-critical scenarios where texture sampling is unnecessary
+    /// </summary>
+    /// <param name="centerPosition">The center point of the quad in world coordinates</param>
+    /// <param name="size">The width and height of the quad</param>
+    /// <param name="color">The solid color of the quad (RGBA format)</param>
+    /// <exception cref="ArgumentException">Thrown when size has non-positive values</exception>
+    /// <example>
+    /// <code>
+    /// // Draw a red square
+    /// engine.DrawSolidColorQuad(new Vector2D&lt;float&gt;(0, 0), new Vector2D&lt;float&gt;(50, 50), 
+    ///                          new Vector4D&lt;float&gt;(1, 0, 0, 1));
+    /// 
+    /// // Draw a semi-transparent blue rectangle
+    /// engine.DrawSolidColorQuad(position, size, new Vector4D&lt;float&gt;(0, 0, 1, 0.5f));
+    /// 
+    /// // Draw a white background panel
+    /// engine.DrawSolidColorQuad(centerPos, panelSize, new Vector4D&lt;float&gt;(1, 1, 1, 1));
+    /// </code>
+    /// </example>
+    void DrawSolidColorQuad(Vector2D<float> centerPosition, Vector2D<float> size, Vector4D<float> color);
 }
