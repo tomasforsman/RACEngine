@@ -61,7 +61,7 @@ dotnet run -- shootersample
 ### 2. Understanding the Codebase
 
 #### Project Structure
-```
+```text
 RACEngine/
 ├── src/
 │   ├── Rac.Core/           # Core utilities and math
