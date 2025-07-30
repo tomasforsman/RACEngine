@@ -16,7 +16,7 @@
 
 ## 📁 Project Structure
 
-```
+```text
 RACEngine/
 ├── src/
 │   ├── Rac.ECS/            # Core ECS module
@@ -31,8 +31,6 @@ RACEngine/
     ├── SampleGame/         # Multiple game samples and demos
     └── TicTacToe/          # Simple turn-based game example
 ```
-
----
 
 ---
 

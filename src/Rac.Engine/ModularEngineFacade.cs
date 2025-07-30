@@ -89,14 +89,67 @@ public class ModularEngineFacade : IEngineFacade
     }
 
     // Properties never return null (Null Object pattern)
+    /// <summary>
+    /// Gets the ECS World instance that manages all entities and components.
+    /// Provides access to entity creation, destruction, and component management.
+    /// </summary>
+    /// <value>The active World instance. Never returns null due to Null Object pattern.</value>
     public IWorld World => _world;
+
+    /// <summary>
+    /// Gets the system scheduler that manages and executes all game systems.
+    /// Used for registering new systems and controlling system execution order.
+    /// </summary>
+    /// <value>The active SystemScheduler instance. Never returns null.</value>
     public SystemScheduler Systems => _systems;
+
+    /// <summary>
+    /// Gets the rendering service for drawing graphics to the screen.
+    /// Handles all 4-phase rendering pipeline operations and GPU interactions.
+    /// </summary>
+    /// <value>The active renderer instance. Returns NullRenderer if graphics are unavailable.</value>
     public IRenderer Renderer => _renderer;
+
+    /// <summary>
+    /// Gets the audio service for playing sounds and music.
+    /// Handles 3D audio, volume management, and audio resource loading.
+    /// </summary>
+    /// <value>The active audio service. Returns NullAudioService if audio is unavailable.</value>
     public IAudioService Audio => _audio;
+
+    /// <summary>
+    /// Gets the asset management service for loading and managing game resources.
+    /// Handles textures, models, audio files, and other game assets.
+    /// </summary>
+    /// <value>The active asset service instance. Never returns null.</value>
     public IAssetService Assets => _assets;
+
+    /// <summary>
+    /// Gets the camera management service for controlling viewports and projection.
+    /// Manages multiple cameras, viewport switching, and projection matrix calculations.
+    /// </summary>
+    /// <value>The active camera manager instance. Never returns null.</value>
     public ICameraManager CameraManager => _cameraManager;
+
+    /// <summary>
+    /// Gets the window management service for controlling the game window.
+    /// Handles window creation, resizing, and platform-specific window operations.
+    /// </summary>
+    /// <value>The active window manager instance. Never returns null.</value>
     public IWindowManager WindowManager => _windowManager;
+
+    /// <summary>
+    /// Gets the container service for managing spatial relationships between entities.
+    /// Provides inventory management, equipment systems, and parent-child relationships.
+    /// </summary>
+    /// <value>The active container service instance. Never returns null.</value>
     public IContainerService Container => _container;
+
+    /// <summary>
+    /// Gets the transform system that manages entity positioning and spatial hierarchy.
+    /// Handles position, rotation, scale transformations and parent-child relationships.
+    /// </summary>
+    /// <value>The active transform system instance. Never returns null.</value>
     public TransformSystem TransformSystem => _transformSystem;
 
     /// <summary>Fires once on init/load (before first UpdateEvent)</summary>

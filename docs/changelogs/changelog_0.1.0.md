@@ -80,7 +80,7 @@ The implementation demonstrates:
 
 ### Project Structure
 Initial project organization:
-```
+```text
 src/
 ├── Core/              # Core engine functionality
 ├── Rendering/         # Graphics and rendering

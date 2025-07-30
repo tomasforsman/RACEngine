@@ -55,7 +55,7 @@ The EngineFacade serves as the primary integration point:
 - **Extension Points**: Clear extension points for adding new engine functionality
 
 ### Project Structure
-```
+```text
 src/
 ├── Rac.Engine/           # Core engine with EngineFacade
 ├── Rac.Rendering/        # Rendering subsystem

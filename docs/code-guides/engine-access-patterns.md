@@ -210,7 +210,7 @@ engine.Renderer.Draw();  // Safe for headless scenarios
 ```
 
 **In development builds**, you'll see warnings:
-```
+```text
 [NullAudioService] Attempted to play sound: explosion.wav
 ```
 

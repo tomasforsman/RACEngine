@@ -110,14 +110,14 @@ Game intelligence and behavior:
 ## Data Flow Architecture
 
 ### ECS Data Flow
-```
+```text
 Entities (IDs) → Components (Data) → Systems (Logic) → World (Storage)
      ↑                                    ↓
      └────── Entity Creation/Destruction ──────┘
 ```
 
 ### Rendering Pipeline Flow
-```
+```text
 Configuration → Preprocessing → Processing → Post-processing
      ↓               ↓              ↓            ↓
  Shader Setup   → Culling →    GPU Commands → Effects
@@ -125,7 +125,7 @@ Configuration → Preprocessing → Processing → Post-processing
 ```
 
 ### System Integration Flow
-```
+```text
 Input → Game Logic → Physics → Animation → Rendering → Audio
   ↓         ↓          ↓          ↓           ↓        ↓
 Events → Components → Forces → Transforms → Visuals → Sound
